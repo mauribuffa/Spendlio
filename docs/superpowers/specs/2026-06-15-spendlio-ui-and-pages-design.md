@@ -115,19 +115,26 @@ degradation, and add a nav entry in `app/_components/AppShell.tsx`.
 - **Data layer:** `listAccounts()` already exists but is unused. Add `getAccountBalances()`.
 - **Backend delta:** add a **balance rollup** — `GET /accounts/balances` returning, per
   account, the net of its non-deleted transactions in the account's currency (+ converted
-  to the user's base via the latest `fx_rates`). Core math in `packages/core`; thin
-  controller/service in `apps/api`. Filter strictly by `user_id`.
+  to the user's base via the latest `fx_rates`). Core math in a **new** `packages/core/src/
+  accounts.ts` (not `balances.ts`, which is the who-owes-whom split graph); thin
+  controller/service in `apps/api`. Filter strictly by `user_id`. Converted value is `null`
+  (UI shows "—") when no FX pair connects.
 
 ### Slice B — Receipts / scan (OCR)
 
 - **Route:** `/receipts`. List with status badges (processing / parsed / failed) using
   `Badge` + `Card`; a "scan receipt" upload affordance; detail view shows parsed merchant,
-  total, line items, and a "create transaction from receipt" action.
+  total, and line items.
 - **Data layer:** backend is fully ready (`/receipts`, `/receipts/presign`, `/receipts/:id`,
   OCR worker). Add web resource functions: `listReceipts()`, `presignReceipt()`,
-  `registerReceipt(key)`, `getReceipt(id)`. Upload = presign → client `PUT` → register.
-  Status polling via revalidation.
+  `registerReceipt(key)`, `getReceipt(id)`. Note: `presign` takes `?contentType=` as a query
+  param and returns `{ url, method:'PUT', key, expiresIn }`; `register` is `POST /receipts`
+  with body `{ imageKey }`. Upload = presign → client `PUT` → register. Status polling via
+  revalidation.
 - **Backend delta:** none (endpoints + worker exist).
+- **Gap found during planning:** "create transaction from receipt" is **not** supported by
+  the backend (no link/convert route; nothing sets `Receipt.transactionId` from the API).
+  That action is **omitted from v1** and noted as future work.
 
 ### Slice C — Monthly recap (dedicated)
 
@@ -142,9 +149,11 @@ degradation, and add a nav entry in `app/_components/AppShell.tsx`.
   whom per currency); "settle up" records a payment and updates balances.
 - **Data layer:** add `listSettlements()`, `createSettlement(input)`.
 - **Backend delta:** add `POST /settlements` (record `fromPersonId → toPersonId`, amount,
-  currency) and `GET /settlements`. `settlements` table + contract already exist; balance
-  math already nets settlements in `SplitsService`. Add a `Settlement` create DTO to
-  `contracts` if missing; filter by `user_id`.
+  currency) and `GET /settlements`, filtered by `user_id`. **Confirmed during planning:**
+  `CreateSettlementInput` already exists in `contracts/src/split.ts`, and `SplitsService`
+  already nets settlements with `status='settled'`. So **no core/contract changes are needed
+  for netting** — but the new payment must be inserted with `status:'settled'` + `settledAt`
+  (the column defaults to `pending`, which balances ignore) or it won't move balances.
 
 ### Slice E — People management
 
@@ -160,7 +169,11 @@ degradation, and add a nav entry in `app/_components/AppShell.tsx`.
   + `Select`/`Input`.
 - **Data layer:** add `updateMe(input)`.
 - **Backend delta:** add `PATCH /me` to update the user's `defaultCurrency` / `name`
-  (currently `/me` is GET only). Validate with an `UpdateUserInput` contract.
+  (currently `/me` is GET only; `MeController` uses the `db` client directly, no service).
+  **Confirmed during planning:** `UpdateUserInput` already exists but is a broad
+  `CreateUserInput.partial()` — **narrow it** to `pick({ name, defaultCurrency }).partial()`
+  so Settings can't mutate email/locale/timezone. The currency `Select` uses
+  `Object.keys(CURRENCY_DECIMALS)` (the 17 supported currencies; no enum exists).
 
 ### Sequencing
 
@@ -174,8 +187,11 @@ shippable and verifiable.
 - **Per package:** `pnpm --filter @spendlio/ui typecheck|test`,
   `pnpm --filter @spendlio/contracts test` (new DTOs), `pnpm --filter @spendlio/core test`
   (balance/settlement math).
-- **API:** typecheck + a focused test per new endpoint (`GET /accounts/balances`,
-  `POST/GET /settlements`, `PATCH /me`), each asserting `user_id` scoping.
+- **API:** `apps/api` has **no test runner** today. Push pure logic into `packages/core`
+  (account/FX math) and `packages/contracts` (Zod schemas) where Vitest already runs; verify
+  each new endpoint (`GET /accounts/balances`, `POST/GET /settlements`, `PATCH /me`) with a
+  documented `curl` smoke including a cross-user isolation check. (Adding Vitest to `apps/api`
+  is an optional pre-flight decision — see the plan INDEX.)
 - **Web:** `pnpm --filter web typecheck`; manual smoke of each new route against the running
   stack (`pnpm dev` / mprocs) confirming real data renders and empty states degrade
   gracefully when the API is down.
