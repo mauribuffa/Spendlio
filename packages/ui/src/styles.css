@@ -178,3 +178,34 @@
   color: var(--color-ink);
   box-shadow: var(--shadow-sm);
 }
+
+/* ---- IconButton ---- */
+.spl-iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-ink-muted);
+  cursor: pointer;
+  flex: none;
+  transition: background var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out);
+}
+.spl-iconbtn:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+.spl-iconbtn:active:not(:disabled) { transform: scale(var(--press-scale)); }
+.spl-iconbtn:disabled { opacity: 0.45; pointer-events: none; }
+.spl-iconbtn[data-size='sm'] { width: 32px; height: 32px; }
+.spl-iconbtn[data-size='md'] { width: 40px; height: 40px; }
+.spl-iconbtn[data-size='lg'] { width: 48px; height: 48px; }
+.spl-iconbtn[data-size='sm'] svg { width: 16px; height: 16px; }
+.spl-iconbtn[data-size='md'] svg { width: 19px; height: 19px; }
+.spl-iconbtn[data-size='lg'] svg { width: 22px; height: 22px; }
+.spl-iconbtn[data-variant='ghost']:hover:not(:disabled) { background: var(--neutral-100); color: var(--color-ink); }
+.spl-iconbtn[data-variant='solid'] { background: var(--color-surface); border-color: var(--color-border); box-shadow: var(--shadow-sm); }
+.spl-iconbtn[data-variant='solid']:hover:not(:disabled) { background: var(--neutral-100); color: var(--color-ink); }
+.spl-iconbtn[data-variant='brand'] { background: var(--color-primary); color: var(--color-on-primary); }
+.spl-iconbtn[data-variant='brand']:hover:not(:disabled) { background: var(--green-700); }
