@@ -43,3 +43,6 @@ export type { ToastProps, ToastTone } from './components/Toast';
 
 export { SegmentedControl } from './components/SegmentedControl';
 export type { SegmentedControlProps, SegmentedOption } from './components/SegmentedControl';
+
+export { Tag } from './components/Tag';
+export type { TagProps } from './components/Tag';
