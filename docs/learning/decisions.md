@@ -72,6 +72,11 @@ Format: `ADR-NNN · status · title` — context → decision → alternatives.
 - **Decision:** i18n-ready from the start. `user.locale` and `user.timezone` are stored **separately from `defaultCurrency`** (locale ≠ currency). UI strings come from ICU message catalogs in the apps (not `contracts`/`core`); store category **keys**, translate labels in the UI; format numbers/dates/money via `Intl`; use logical CSS for RTL. Proposed tooling: `next-intl` (web), `i18next` (mobile).
 - **Why / full guide:** `13-i18n.md`.
 
+### ADR-018 · ✅ · `@spendlio/contracts` entity shapes authored from the table list
+- **Context:** step 03 told us to port the design-system project's `contracts/src/*` shapes, but **those source files were not bundled into this repo**. Only `money/enums/common/transaction/jobs` were given verbatim in `docs/build/03-contracts-package.md`.
+- **Decision:** authored the remaining entities (`user`, `account`, `category`, `budget`+`BudgetStatus`, `receipt`+`ReceiptLineItem`, `split`: `Person`/`Group`/`SplitShare`/`Split`/`Settlement`/`Balance`, `recap`: `MonthlySummary`/`CategorySpend`) from the table list in `03-database.md` + the `transaction.ts` template — minimal fields, consistent conventions (integer-cents money, `ownedEntity`/`baseEntity`, `Create*/Update*` DTOs). Specific choices: `user` carries `defaultCurrency` + separate `locale`/`timezone` (ADR-016/017); `category.userId` is nullable (null = built-in default); `Balance`/`BudgetStatus` are computed (not stored) and live in contracts; `CreateSplitInput` takes `participantIds`/`weights` and `core` computes the per-person `shares`; `receipt` stores an `imageKey` (storage key, not URL) + raw OCR payload. `recurring_rules` and `notifications` were intentionally deferred — not in step 03's file list; they arrive with their features.
+- **Alternatives:** block and ask for every field (rejected: unproductive; shapes are easy to extend and the DB step will reconcile). These shapes are provisional and may be refined when `core` (step 05) and the API (step 06) firm up the split/budget contracts.
+
 ---
 
 ## Open questions parked for you
