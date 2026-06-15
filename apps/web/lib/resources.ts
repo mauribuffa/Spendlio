@@ -28,6 +28,9 @@ import {
   type MonthlySummary,
   UserSchema,
   type User,
+  ReceiptSchema,
+  type Receipt,
+  type CreateReceiptInput,
 } from '@spendlio/contracts';
 import { api } from './api';
 
@@ -119,6 +122,37 @@ export function getMe(): Promise<User> {
   return api.get(`/me`, UserSchema);
 }
 
+// ---- Receipts (OCR) ----
+const ReceiptPage = Page(ReceiptSchema);
+
+// The presign response shape mirrors @spendlio/storage's PresignedUpload. We
+// validate it here so a drift between storage + the web edge fails loudly.
+const PresignedUpload = z.object({
+  url: z.string().url(),
+  method: z.literal('PUT'),
+  key: z.string().min(1),
+  expiresIn: z.number().int().positive(),
+});
+export type PresignedUpload = z.infer<typeof PresignedUpload>;
+
+export function listReceipts(): Promise<z.infer<typeof ReceiptPage>> {
+  return api.get(`/receipts`, ReceiptPage);
+}
+
+export function getReceipt(id: string): Promise<Receipt> {
+  return api.get(`/receipts/${id}`, ReceiptSchema);
+}
+
+/** Step 1 of upload: ask the API for a short-lived PUT url for this MIME type. */
+export function presignReceipt(contentType: string): Promise<PresignedUpload> {
+  return api.post(`/receipts/presign?contentType=${encodeURIComponent(contentType)}`, undefined, PresignedUpload);
+}
+
+/** Step 3 of upload: register the uploaded object key → creates the row + enqueues OCR. */
+export function registerReceipt(input: CreateReceiptInput): Promise<Receipt> {
+  return api.post(`/receipts`, input, ReceiptSchema);
+}
+
 export type {
   Transaction,
   Budget,
@@ -131,4 +165,5 @@ export type {
   BalanceT as Balance,
   MonthlySummary,
   User,
+  Receipt,
 };
