@@ -9,12 +9,14 @@ import {
   Users,
   Sparkles,
   Settings,
+  Landmark,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 const NAV = [
   { href: '/', label: 'Overview', icon: LayoutDashboard },
   { href: '/transactions', label: 'Transactions', icon: ArrowLeftRight },
+  { href: '/accounts', label: 'Accounts', icon: Landmark },
   { href: '/budgets', label: 'Budgets', icon: Wallet },
   { href: '/split', label: 'Split', icon: Users },
   { href: '/insights', label: 'Insights', icon: Sparkles },
