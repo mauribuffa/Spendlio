@@ -2,14 +2,14 @@
 
 > **Single source of truth for "where are we."** Claude Code updates this after **every** completed step: tick the box, set the status line, and add a Build-Log entry. Humans skim the top; details live in the log.
 
-**Current status:** _Phase 1 · step 01 (monorepo skeleton) complete. Next: step 02 (Docker & env)._
+**Current status:** _Phase 1 · step 02 (Docker & env) complete. Next: step 03 (`@spendlio/contracts`)._
 **Last updated:** _2026-06-15_
 
 ---
 
 ## Phase 1 · Foundation
 - [x] 01 · Monorepo skeleton (pnpm + Turborepo + `packages/config`) — `docs/build/01-monorepo-skeleton.md`
-- [ ] 02 · Docker & env (Postgres + Redis + MinIO + `.env`) — `docs/build/02-docker-and-env.md`
+- [x] 02 · Docker & env (Postgres + Redis + MinIO + `.env`) — `docs/build/02-docker-and-env.md`
 - [ ] 03 · `@spendlio/contracts` (Zod) — `docs/build/03-contracts-package.md`
 - [ ] 04 · `@spendlio/db` (Drizzle schema + migrations + seed) — `docs/build/04-db-package-drizzle.md`
 - [ ] 05 · `@spendlio/core` (money + split engine + tests) — `docs/build/05-core-package.md`
@@ -48,4 +48,5 @@ Newest first. One row per completed step or notable decision.
 
 | Date | Step / change | Notes (what was done, anything surprising, ADRs added) |
 |------|---------------|--------------------------------------------------------|
+| 2026-06-15 | 02 · Docker & env | `docker-compose.yml` (Postgres 16 + Redis 7 + MinIO + one-shot `minio-setup` for the `receipts` bucket), `.env.example`, git-ignored `.env`. `docker compose up -d` ✓; Postgres healthy + `spendlio` db reachable, Redis `PONG`, MinIO `receipts` bucket created (setup exit 0), console HTTP 200 on :9001. |
 | 2026-06-15 | 01 · Monorepo skeleton | `git init` (branch `main`); root `package.json`/`pnpm-workspace.yaml`/`turbo.json`/`.gitignore`/`tsconfig.base.json` + `@spendlio/config` (shared eslint flat config). `pnpm install` ✓, `pnpm typecheck` ✓ (no-op, no packages yet). Deviation: pinned `packageManager` to `pnpm@10.33.4` (installed version) instead of doc's `pnpm@9.12.0` — reproducibility / avoid corepack mismatch. |
