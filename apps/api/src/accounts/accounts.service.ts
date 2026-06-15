@@ -1,7 +1,8 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { and, desc, eq } from 'drizzle-orm';
-import { accounts } from '@spendlio/db';
-import type { CreateAccountInput, UpdateAccountInput } from '@spendlio/contracts';
+import { and, desc, eq, isNull } from 'drizzle-orm';
+import { accounts, transactions, users, fxRates } from '@spendlio/db';
+import { sumNet, convertMinor, type RateRow } from '@spendlio/core';
+import type { CreateAccountInput, UpdateAccountInput, AccountBalance } from '@spendlio/contracts';
 import { DB } from '../db/db.module';
 
 @Injectable()
@@ -13,6 +14,62 @@ export class AccountsService {
       .where(eq(accounts.userId, userId))
       .orderBy(desc(accounts.createdAt));
     return { items, nextCursor: null };
+  }
+
+  /**
+   * Per-account balance rollup for the Accounts page. For each of the user's
+   * accounts: net its non-deleted transactions (in the account's own currency)
+   * and convert that to the user's base/default currency via the latest
+   * fx_rates. Strictly scoped to userId; fx_rates is global. Converted value is
+   * null when no rate connects the pair (the UI renders "—").
+   */
+  async balances(userId: string): Promise<AccountBalance[]> {
+    const [user] = await this.db.select().from(users).where(eq(users.id, userId));
+    const baseCurrency: string = user?.defaultCurrency ?? 'USD';
+
+    const accountRows = await this.db.select().from(accounts)
+      .where(eq(accounts.userId, userId))
+      .orderBy(desc(accounts.createdAt));
+
+    // Non-deleted transactions for THIS user, with their account + currency + amount.
+    const txnRows = await this.db
+      .select({
+        accountId: transactions.accountId,
+        amount: transactions.amount,
+        currency: transactions.currency,
+      })
+      .from(transactions)
+      .where(and(eq(transactions.userId, userId), isNull(transactions.deletedAt)));
+
+    // Global fx_rates (no user scope). Loaded once and handed to core for picking.
+    const rateRows: RateRow[] = await this.db
+      .select({ base: fxRates.base, quote: fxRates.quote, date: fxRates.date, rate: fxRates.rate })
+      .from(fxRates);
+
+    // Net per account, in the account's own currency.
+    const netByAccount = new Map<string, number[]>();
+    for (const t of txnRows) {
+      if (!t.accountId) continue;
+      const arr = netByAccount.get(t.accountId) ?? [];
+      arr.push(t.amount);
+      netByAccount.set(t.accountId, arr);
+    }
+
+    return accountRows.map((a: any): AccountBalance => {
+      const balance = sumNet(netByAccount.get(a.id) ?? []);
+      const converted = convertMinor(balance, a.currency, baseCurrency, rateRows);
+      return {
+        accountId: a.id,
+        name: a.name,
+        type: a.type,
+        last4: a.last4 ?? null,
+        currency: a.currency,
+        balance,
+        baseCurrency,
+        baseBalance: converted.amount,
+        rateAsOf: converted.rateAsOf,
+      };
+    });
   }
 
   async create(userId: string, dto: CreateAccountInput) {

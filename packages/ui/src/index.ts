@@ -8,6 +8,9 @@ export type { ClassValue } from './cn';
 export { Button } from './components/Button';
 export type { ButtonProps, ButtonVariant, ButtonSize } from './components/Button';
 
+export { IconButton } from './components/IconButton';
+export type { IconButtonProps, IconButtonVariant, IconButtonSize } from './components/IconButton';
+
 export { Input } from './components/Input';
 export type { InputProps } from './components/Input';
 
@@ -40,3 +43,24 @@ export type { ToastProps, ToastTone } from './components/Toast';
 
 export { SegmentedControl } from './components/SegmentedControl';
 export type { SegmentedControlProps, SegmentedOption } from './components/SegmentedControl';
+
+export { Tag } from './components/Tag';
+export type { TagProps } from './components/Tag';
+
+export { Select } from './components/Select';
+export type { SelectProps, SelectOption } from './components/Select';
+
+export { Switch } from './components/Switch';
+export type { SwitchProps } from './components/Switch';
+
+export { Checkbox } from './components/Checkbox';
+export type { CheckboxProps } from './components/Checkbox';
+
+export { AmountInput } from './components/AmountInput';
+export type { AmountInputProps, AmountInputSize } from './components/AmountInput';
+
+export { EmptyState } from './components/EmptyState';
+export type { EmptyStateProps } from './components/EmptyState';
+
+export { Skeleton, SkeletonRow } from './components/Skeleton';
+export type { SkeletonProps } from './components/Skeleton';

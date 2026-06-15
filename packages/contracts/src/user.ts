@@ -16,5 +16,7 @@ export type User = z.infer<typeof UserSchema>;
 export const CreateUserInput = UserSchema.omit({ id: true, createdAt: true, updatedAt: true });
 export type CreateUserInput = z.infer<typeof CreateUserInput>;
 
-export const UpdateUserInput = CreateUserInput.partial();
+// Settings (Slice F): only name + defaultCurrency are user-editable.
+// (email/locale/timezone are managed elsewhere; not exposed to PATCH /me.)
+export const UpdateUserInput = UserSchema.pick({ name: true, defaultCurrency: true }).partial();
 export type UpdateUserInput = z.infer<typeof UpdateUserInput>;
