@@ -12,6 +12,7 @@ import {
   CalendarRange,
   Settings,
   Landmark,
+  UserPlus,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 
@@ -22,6 +23,7 @@ const NAV = [
   { href: '/accounts', label: 'Accounts', icon: Landmark },
   { href: '/budgets', label: 'Budgets', icon: Wallet },
   { href: '/split', label: 'Split', icon: Users },
+  { href: '/people', label: 'People', icon: UserPlus },
   { href: '/insights', label: 'Insights', icon: Sparkles },
   { href: '/recap', label: 'Recap', icon: CalendarRange },
   { href: '/settings', label: 'Settings', icon: Settings },
