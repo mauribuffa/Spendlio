@@ -1,0 +1,67 @@
+<!-- @dsCard group="Components" viewport="700x500" name="Data — Money, Transactions, Categories, Budgets, Stats" subtitle="Finance primitives" -->
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  body{margin:0;padding:24px;background:var(--surface-canvas);font-family:var(--font-sans)}
+  .grid{display:grid;grid-template-columns:1.1fr 1fr;gap:22px;align-items:start}
+  .lbl{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-subtle);margin-bottom:8px}
+  .panel{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:var(--radius-card);box-shadow:var(--shadow-sm);padding:8px 16px}
+  .stats{display:flex;gap:26px;margin-bottom:20px}
+  .cats{display:flex;gap:10px;margin-bottom:20px}
+  .budgets{display:flex;flex-direction:column;gap:16px}
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="../../_ds_bundle.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const NS = window.SpendlioDesignSystem_5a5954;
+const { MoneyAmount, TransactionRow, CategoryIcon, ProgressBar, Stat } = NS;
+
+function Demo(){
+  React.useEffect(()=>{ window.lucide && lucide.createIcons(); });
+  return (
+    <div>
+      <div className="stats">
+        <Stat label="Spent this month" value="$2,480" delta="−12%" deltaCaption="vs April" goodWhen="down"/>
+        <Stat label="Income" value="$3,200" delta="+4%" goodWhen="up"/>
+        <Stat label="You're owed" value="$86" delta="2 people" deltaDirection="flat"/>
+      </div>
+      <div className="cats">
+        <CategoryIcon category="groceries"/><CategoryIcon category="dining"/><CategoryIcon category="transport"/>
+        <CategoryIcon category="shopping"/><CategoryIcon category="travel"/><CategoryIcon category="subscriptions"/>
+      </div>
+      <div className="grid">
+        <div>
+          <div className="lbl">Transaction rows</div>
+          <div className="panel">
+            <TransactionRow title="Whole Foods" category="groceries" merchant="Card ••4821" subtitle="Split with Maya" amount={-58.20} meta="Today"/>
+            <TransactionRow title="Salary" category="income" merchant="Acme Inc" amount={3200} signed meta="May 31"/>
+            <TransactionRow title="Lisbon Airbnb" category="travel" subtitle="Trip to Lisbon · your share" amount={-142.5} meta="Mon"/>
+          </div>
+        </div>
+        <div>
+          <div className="lbl">Budgets</div>
+          <div className="budgets">
+            <ProgressBar label="Dining" valueLabel="$420 / $500" value={420} max={500}/>
+            <ProgressBar label="Groceries" valueLabel="$310 / $400" value={310} max={400}/>
+            <ProgressBar label="Shopping" valueLabel="$560 / $500" value={560} max={500}/>
+          </div>
+          <div className="lbl" style={{marginTop:20}}>Money amounts</div>
+          <div style={{display:'flex',gap:18,alignItems:'baseline'}}>
+            <MoneyAmount value={-24.5}/>
+            <MoneyAmount value={1200} signed/>
+            <MoneyAmount value={2480.5} display size={26}/>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo/>);
+</script>
+</body></html>

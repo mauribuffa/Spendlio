@@ -1,0 +1,5 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Spendlio">
+  <rect x="2" y="2" width="60" height="60" rx="19" fill="#1B6E4F"></rect>
+  <circle cx="32" cy="32" r="12.75" fill="none" stroke="#FFFFFF" stroke-width="8.5"></circle>
+  <path d="M 32 19.25 A 12.75 12.75 0 0 1 43.98 36.36" fill="none" stroke="#E0BD78" stroke-width="8.5" stroke-linecap="butt"></path>
+</svg>

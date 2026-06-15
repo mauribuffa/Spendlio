@@ -1,0 +1,22 @@
+/* ============================================================
+   SPENDLIO — RADIUS TOKENS  (soft, rounded shape language)
+   ============================================================ */
+
+:root {
+  --radius-xs:   6px;
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   22px;
+  --radius-2xl:  28px;
+  --radius-3xl:  36px;
+  --radius-pill: 999px;
+  --radius-round: 50%;
+
+  /* Role aliases */
+  --radius-control: var(--radius-pill);   /* buttons, chips, inputs lean pill */
+  --radius-input:   var(--radius-md);
+  --radius-card:    var(--radius-xl);
+  --radius-sheet:   var(--radius-2xl);
+  --radius-tag:     var(--radius-pill);
+}

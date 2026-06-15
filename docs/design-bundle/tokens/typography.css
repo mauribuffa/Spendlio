@@ -1,0 +1,56 @@
+/* ============================================================
+   SPENDLIO — TYPOGRAPHY TOKENS
+   ============================================================ */
+
+:root {
+  /* Families */
+  --font-display: 'Space Grotesk', 'Hanken Grotesk', system-ui, sans-serif;
+  --font-sans:    'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+  --font-mono:    'Space Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  /* Type scale — 1.20 minor-third-ish, tuned for UI density */
+  --text-2xs:  11px;
+  --text-xs:   12px;
+  --text-sm:   13px;
+  --text-base: 15px;
+  --text-md:   17px;
+  --text-lg:   20px;
+  --text-xl:   24px;
+  --text-2xl:  30px;
+  --text-3xl:  38px;
+  --text-4xl:  48px;
+  --text-5xl:  60px;
+  --text-6xl:  76px;
+
+  /* Weights */
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+  --weight-extra:    800;
+
+  /* Line heights */
+  --leading-tight:  1.1;
+  --leading-snug:   1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+
+  /* Letter spacing */
+  --tracking-tighter: -0.03em;
+  --tracking-tight:   -0.015em;
+  --tracking-normal:  0;
+  --tracking-wide:    0.02em;
+  --tracking-caps:    0.08em;   /* for overline / eyebrow caps */
+
+  /* Tabular figures — apply to every monetary number */
+  --num-tabular: "tnum" 1, "lnum" 1; /* @kind other */
+
+  /* ---- Semantic role aliases ---- */
+  --font-eyebrow: var(--weight-semibold) var(--text-2xs)/1.2 var(--font-sans);
+}
+
+/* Convenience utility classes for the design system & cards */
+.ds-display { font-family: var(--font-display); font-weight: var(--weight-bold); letter-spacing: var(--tracking-tight); line-height: var(--leading-tight); color: var(--text-strong); }
+.ds-eyebrow { font-family: var(--font-sans); font-weight: var(--weight-semibold); font-size: var(--text-2xs); letter-spacing: var(--tracking-caps); text-transform: uppercase; color: var(--text-subtle); }
+.ds-money   { font-family: var(--font-sans); font-feature-settings: var(--num-tabular); font-variant-numeric: tabular-nums lining-nums; }
+.ds-mono    { font-family: var(--font-mono); font-feature-settings: "tnum" 1; }
