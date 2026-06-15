@@ -14,6 +14,8 @@ import {
   type Category,
   AccountSchema,
   type Account,
+  AccountBalanceSchema,
+  type AccountBalance,
   PersonSchema,
   type Person,
   type CreatePersonInput,
@@ -82,6 +84,10 @@ export function listAccounts(): Promise<Account[]> {
   return api.get(`/accounts`, z.array(AccountSchema));
 }
 
+export function getAccountBalances(): Promise<AccountBalance[]> {
+  return api.get(`/accounts/balances`, z.array(AccountBalanceSchema));
+}
+
 // ---- Split: people, splits, balances ----
 export function listPeople(): Promise<Person[]> {
   return api.get(`/people`, z.array(PersonSchema));
@@ -119,6 +125,7 @@ export type {
   BudgetStatus,
   Category,
   Account,
+  AccountBalance,
   Person,
   Split,
   BalanceT as Balance,
