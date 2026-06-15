@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { CreateTransactionInput } from '@spendlio/contracts';
+import { CreateTransactionInput, toMinorUnits } from '@spendlio/contracts';
 import { createTransaction, deleteTransaction } from '../../lib/resources';
 import { ApiError } from '../../lib/api';
 
@@ -46,7 +46,9 @@ export async function createTransactionAction(
   }
 
   const { title, amountMajor, direction, currency, category, merchant, occurredAt } = parsed.data;
-  const magnitude = Math.round(Math.abs(amountMajor) * 100); // assumes 2-dp entry currency
+  // Major → integer minor units using the currency's real decimal places
+  // (USD/ARS=2, JPY/CLP=0, BHD=3) — not a hardcoded ×100.
+  const magnitude = toMinorUnits(Math.abs(amountMajor), currency.toUpperCase());
   const amount = direction === 'expense' ? -magnitude : magnitude;
 
   const input = CreateTransactionInput.safeParse({
