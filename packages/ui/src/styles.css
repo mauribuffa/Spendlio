@@ -235,3 +235,33 @@
 .spl-tag__dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
 .spl-tag__x { display: inline-flex; margin-right: -3px; opacity: 0.6; cursor: pointer; }
 .spl-tag__x:hover { opacity: 1; }
+
+/* ---- Select ---- */
+.spl-select { display: flex; flex-direction: column; gap: 6px; font-family: var(--font-body); }
+.spl-select__label { font-size: var(--text-sm); font-weight: var(--weight-semibold); color: var(--color-ink); }
+.spl-select__box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  height: 44px;
+  transition: border-color var(--motion-fast) var(--ease-out);
+}
+.spl-select__box:focus-within { border-color: var(--color-primary); }
+.spl-select select {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  outline: none;
+  background: none;
+  font: inherit;
+  font-size: var(--text-base);
+  color: var(--color-ink);
+  padding: 0 40px 0 14px;
+  height: 100%;
+  width: 100%;
+  cursor: pointer;
+}
+.spl-select__chevron { position: absolute; right: 14px; pointer-events: none; color: var(--color-ink-subtle); display: inline-flex; }

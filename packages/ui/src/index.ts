@@ -46,3 +46,6 @@ export type { SegmentedControlProps, SegmentedOption } from './components/Segmen
 
 export { Tag } from './components/Tag';
 export type { TagProps } from './components/Tag';
+
+export { Select } from './components/Select';
+export type { SelectProps, SelectOption } from './components/Select';
