@@ -54,3 +54,24 @@ describe('netForUser', () => {
     expect(overall).toBe(500 - 200 + 125); // +425 net to me
   });
 });
+
+describe('netForUser — settlements net against a debt', () => {
+  it('a payment reverse-edge reduces what I owe', () => {
+    // I owe alice 1000 (from a split where alice paid). A settlement where I (me)
+    // pay alice 600 is modeled as a reverse edge debtor=alice creditor=me.
+    const edges: Edge[] = [
+      { debtorId: 'me', creditorId: 'alice', amount: 1000 }, // split: I owe alice
+      { debtorId: 'alice', creditorId: 'me', amount: 600 },  // settlement: I paid alice 600
+    ];
+    const net = netForUser(edges, 'me');
+    expect(net.get('alice')).toBe(-400); // still owe 400 after paying 600
+  });
+
+  it('a full settlement clears the balance to zero', () => {
+    const edges: Edge[] = [
+      { debtorId: 'me', creditorId: 'bob', amount: 750 },
+      { debtorId: 'bob', creditorId: 'me', amount: 750 },
+    ];
+    expect(netForUser(edges, 'me').get('bob')).toBe(0);
+  });
+});
