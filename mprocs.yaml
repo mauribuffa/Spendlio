@@ -1,0 +1,13 @@
+# Dev process runner — `pnpm dev` (full, via scripts/dev.sh) or `pnpm dev:apps` (just these).
+# Each proc gets its own pane; press its number to focus, `r` to restart, `x` to stop, `q` to quit.
+procs:
+  api:
+    shell: pnpm --filter @spendlio/api dev
+  worker:
+    shell: pnpm --filter @spendlio/worker dev
+  web:
+    shell: pnpm --filter @spendlio/web dev
+  # Drizzle Studio (DB GUI at https://local.drizzle.studio) — start it manually with `s`/Enter.
+  db-studio:
+    shell: pnpm --filter @spendlio/db studio
+    autostart: false
