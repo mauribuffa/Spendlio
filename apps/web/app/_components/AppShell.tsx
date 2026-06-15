@@ -13,6 +13,7 @@ import {
   Settings,
   Landmark,
   UserPlus,
+  TrendingUp,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Avatar } from '@spendlio/ui';
@@ -27,7 +28,8 @@ const NAV = [
   { href: '/budgets', label: 'Budgets', icon: Wallet },
   { href: '/split', label: 'Split & settle', icon: Users },
   { href: '/people', label: 'People', icon: UserPlus },
-  { href: '/insights', label: 'Assistant', icon: Sparkles },
+  { href: '/assistant', label: 'Assistant', icon: Sparkles },
+  { href: '/insights', label: 'Insights', icon: TrendingUp },
   { href: '/recap', label: 'Recap', icon: CalendarRange },
 ] as const;
 
@@ -117,7 +119,7 @@ export function AppShell({
         {/* Bottom group: AI promo + profile, pinned to the foot of the sidebar. */}
         <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <Link
-            href="/insights"
+            href="/assistant"
             style={{
               display: 'block',
               background: 'var(--green-900)',
