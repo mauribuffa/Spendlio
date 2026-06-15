@@ -1,0 +1,42 @@
+# Glossary
+
+Plain-English definitions of every term used in these docs. If something is jargon, it goes here.
+
+- **ADR (Architecture Decision Record):** a short note capturing one decision, why we made it, and what we considered. Logged in `decisions.md`.
+- **Monorepo:** one git repository containing all apps and shared packages.
+- **Workspace (pnpm):** how pnpm links local packages so they can import each other without publishing.
+- **Turborepo:** a task runner that builds/tests packages in order and caches results.
+- **Package:** a unit of code in the monorepo (`contracts`, `core`, `db`, `ui`, …).
+- **`contracts`:** our package of shared shapes (types + validators) — the single source of truth for data going between apps.
+- **`core`:** our package of pure domain logic (money/split math) with no framework or database.
+- **Zod:** a TypeScript library to declare a data shape once and get both a static type and a runtime validator from it.
+- **`z.infer`:** Zod's way of deriving the TypeScript type from a schema.
+- **DTO (Data Transfer Object):** the shape of data sent to/from the API (e.g. `CreateTransactionInput`).
+- **ORM (Object-Relational Mapper):** library to define DB tables and query them in TypeScript (we use Drizzle).
+- **Drizzle:** our chosen ORM — typed, close to SQL.
+- **Migration:** a versioned change to the database schema, committed to git.
+- **Minor units:** the smallest unit of a currency (cents for USD). We store money as an integer count of these.
+- **`numeric` / decimal:** an exact (non-floating-point) number type in Postgres.
+- **`timestamptz`:** a Postgres timestamp that's timezone-aware; we store UTC.
+- **Soft delete:** marking a row deleted (`deleted_at`) instead of removing it, to preserve history.
+- **Row-level security (RLS):** Postgres feature that restricts which rows a query can see — a backstop for user data isolation.
+- **Queue:** a list of background jobs to be processed outside the request/response cycle.
+- **BullMQ:** our chosen Node queue library.
+- **Redis:** an in-memory data store; BullMQ uses it to hold jobs.
+- **Worker:** a process that pulls jobs off the queue and runs them.
+- **Idempotent:** safe to run more than once with the same result (critical for retried jobs).
+- **Dead-letter:** where permanently-failed jobs go so we can inspect them.
+- **Cron / repeatable job:** a job scheduled on a recurring time (daily recurring txns, monthly recap).
+- **NestJS:** our backend framework (controllers, services, modules, dependency injection).
+- **Controller / Service:** Nest split — controller handles HTTP, service holds business logic.
+- **Dependency injection (DI):** the framework supplies a class's dependencies instead of it constructing them — makes testing/swapping easy.
+- **Next.js App Router:** the modern Next.js routing + rendering model.
+- **Server Component (RSC):** a React component that runs on the server and ships no JS to the browser.
+- **Client Component:** a React component (`'use client'`) that runs in the browser for interactivity.
+- **Server Action:** a Next.js function that runs on the server, callable from the client for mutations.
+- **tRPC:** a way to call backend functions from the frontend with end-to-end TypeScript types, no codegen.
+- **OCR (Optical Character Recognition):** turning an image of text (a receipt) into structured data.
+- **LLM (Large Language Model):** the AI model behind categorization and the assistant.
+- **Tool / function calling:** giving an LLM typed functions to call (e.g. `spendByCategory`) so it uses real data instead of guessing.
+- **ISO 4217:** the standard 3-letter currency codes (`USD`, `EUR`).
+- **Cursor pagination:** paging a list with a pointer to the last item (stable for infinite scroll) instead of page numbers.
