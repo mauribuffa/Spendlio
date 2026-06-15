@@ -55,3 +55,6 @@ export type { SwitchProps } from './components/Switch';
 
 export { Checkbox } from './components/Checkbox';
 export type { CheckboxProps } from './components/Checkbox';
+
+export { AmountInput } from './components/AmountInput';
+export type { AmountInputProps, AmountInputSize } from './components/AmountInput';

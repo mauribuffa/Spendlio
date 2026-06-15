@@ -286,3 +286,13 @@
 .spl-check input:focus-visible + .spl-check__box { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; }
 .spl-check--round .spl-check__box { border-radius: 50%; }
 .spl-check--disabled { opacity: 0.5; pointer-events: none; }
+
+/* ---- AmountInput ---- */
+.spl-amount { display: flex; align-items: center; justify-content: center; gap: 4px; font-family: var(--font-display); color: var(--color-ink); background: var(--neutral-100); border-radius: var(--radius-card); padding: 18px 24px; border: 1px solid transparent; transition: border-color var(--motion-fast) var(--ease-out); }
+.spl-amount:focus-within { background: var(--color-surface); border-color: var(--color-primary); }
+.spl-amount__cur { font-size: 28px; font-weight: var(--weight-medium); color: var(--color-ink-muted); align-self: flex-start; margin-top: 6px; }
+.spl-amount input { border: none; outline: none; background: none; font: inherit; font-weight: var(--weight-bold); font-size: 48px; letter-spacing: -0.02em; color: var(--color-ink); text-align: center; width: 100%; max-width: 320px; }
+.spl-amount input::placeholder { color: var(--color-ink-subtle); }
+.spl-amount--compact { padding: 0 14px; height: 44px; border: 1px solid var(--color-border); background: var(--color-surface); border-radius: var(--radius-md); }
+.spl-amount--compact .spl-amount__cur { font-size: var(--text-base); margin-top: 0; font-family: var(--font-body); }
+.spl-amount--compact input { font-size: var(--text-lg); text-align: left; }
