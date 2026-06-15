@@ -27,10 +27,10 @@ export function PageHeader({
           <span
             style={{
               textTransform: 'uppercase',
-              letterSpacing: 'var(--tracking-eyebrow)',
+              letterSpacing: 'var(--tracking-caps)',
               fontSize: 'var(--text-xs)',
               fontWeight: 'var(--weight-semibold)',
-              color: 'var(--color-ink-subtle)',
+              color: 'var(--text-subtle)',
             }}
           >
             {eyebrow}
@@ -38,7 +38,7 @@ export function PageHeader({
         ) : null}
         <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--weight-bold)' }}>{title}</h1>
         {subtitle ? (
-          <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-ink-muted)' }}>{subtitle}</span>
+          <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>{subtitle}</span>
         ) : null}
       </div>
       {action}

@@ -36,7 +36,7 @@ export function SegmentedControl<T extends string>({
         padding: '3px',
         background: 'var(--neutral-100)',
         borderRadius: 'var(--radius-pill)',
-        fontFamily: 'var(--font-body)',
+        fontFamily: 'var(--font-sans)',
       }}
     >
       {options.map((opt) => {
@@ -55,11 +55,11 @@ export function SegmentedControl<T extends string>({
               border: 'none',
               borderRadius: 'var(--radius-pill)',
               background: 'transparent',
-              color: active ? 'var(--color-ink)' : 'var(--color-ink-muted)',
+              color: active ? 'var(--text-strong)' : 'var(--text-muted)',
               fontSize: 'var(--text-sm)',
               fontWeight: active ? 'var(--weight-semibold)' : 'var(--weight-medium)',
               cursor: 'pointer',
-              transition: 'color var(--motion-fast) var(--ease-out)',
+              transition: 'color var(--dur-fast) var(--ease-standard)',
             }}
           >
             {opt.label}

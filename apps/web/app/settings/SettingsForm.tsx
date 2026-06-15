@@ -13,7 +13,7 @@ const labelStyle = {
   display: 'block',
   fontSize: 'var(--text-sm)',
   fontWeight: 'var(--weight-medium)',
-  color: 'var(--color-ink-muted)',
+  color: 'var(--text-muted)',
   marginBottom: 'var(--space-1)',
 } as const;
 
@@ -30,7 +30,7 @@ export function SettingsForm({ user }: { user: User }) {
           <div style={{ fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-bold)', fontSize: 'var(--text-xl)' }}>
             {user.name}
           </div>
-          <div style={{ color: 'var(--color-ink-muted)', fontSize: 'var(--text-sm)' }}>{user.email}</div>
+          <div style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>{user.email}</div>
         </div>
       </div>
 
@@ -78,11 +78,11 @@ function Row({ label, value }: { label: string; value: string }) {
         display: 'flex',
         justifyContent: 'space-between',
         padding: 'var(--space-3) 0',
-        borderBottom: '1px solid var(--color-border)',
+        borderBottom: '1px solid var(--border-subtle)',
         fontSize: 'var(--text-sm)',
       }}
     >
-      <span style={{ color: 'var(--color-ink-muted)' }}>{label}</span>
+      <span style={{ color: 'var(--text-muted)' }}>{label}</span>
       <span style={{ fontWeight: 'var(--weight-medium)' }}>{value}</span>
     </div>
   );

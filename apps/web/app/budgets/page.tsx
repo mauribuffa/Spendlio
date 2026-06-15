@@ -19,7 +19,7 @@ export default async function BudgetsPage() {
 
       {data.length === 0 ? (
         <Card padding="lg">
-          <p style={{ textAlign: 'center', color: 'var(--color-ink-subtle)' }}>
+          <p style={{ textAlign: 'center', color: 'var(--text-subtle)' }}>
             No budgets yet. Once you set monthly limits, you will see how much is left here.
           </p>
         </Card>
@@ -38,13 +38,13 @@ export default async function BudgetsPage() {
                       </span>
                       {over ? <Badge tone="negative">Over budget</Badge> : null}
                     </div>
-                    <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-ink-muted)' }}>
+                    <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
                       {b.period}
                     </span>
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <MoneyAmount amount={b.remaining} currency={b.currency} size="md" />
-                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-ink-subtle)' }}>
+                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-subtle)' }}>
                       left of{' '}
                       <span data-money>
                         {new Intl.NumberFormat('en-US', { style: 'currency', currency: b.currency }).format(

@@ -89,7 +89,7 @@ export default async function RecapPage({
                         <span style={{ flex: 1, textTransform: 'capitalize', fontSize: 'var(--text-sm)' }}>
                           {c.category}
                         </span>
-                        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-ink-subtle)' }}>{pct}%</span>
+                        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-subtle)' }}>{pct}%</span>
                         <MoneyAmount amount={-c.amount} currency={data.currency} size="sm" color="off" />
                       </div>
                       <ProgressBar value={pct} max={100} />

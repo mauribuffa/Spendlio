@@ -96,7 +96,7 @@ export function CategoryIcon({
         height: box,
         flexShrink: 0,
         borderRadius: 'var(--radius-md)',
-        background: `color-mix(in srgb, ${color} 14%, var(--color-surface))`,
+        background: `color-mix(in srgb, ${color} 14%, var(--surface-card))`,
         color,
         ...style,
       }}

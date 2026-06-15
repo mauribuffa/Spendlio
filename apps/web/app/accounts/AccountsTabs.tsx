@@ -65,13 +65,13 @@ export function AccountsTabs({ balances }: { balances: AccountBalance[] }) {
                 }}
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
-                  <span style={{ fontWeight: 'var(--weight-semibold)', color: 'var(--color-ink)' }}>
+                  <span style={{ fontWeight: 'var(--weight-semibold)', color: 'var(--text-strong)' }}>
                     {b.name}
                   </span>
                   <span
                     style={{
                       fontSize: 'var(--text-sm)',
-                      color: 'var(--color-ink-muted)',
+                      color: 'var(--text-muted)',
                       display: 'flex',
                       gap: 'var(--space-2)',
                       alignItems: 'center',
@@ -89,7 +89,7 @@ export function AccountsTabs({ balances }: { balances: AccountBalance[] }) {
                 {amount === null ? (
                   <span
                     title="Conversion rate unavailable"
-                    style={{ color: 'var(--color-ink-subtle)', fontFamily: 'var(--font-display)' }}
+                    style={{ color: 'var(--text-subtle)', fontFamily: 'var(--font-display)' }}
                   >
                     —
                   </span>
@@ -103,7 +103,7 @@ export function AccountsTabs({ balances }: { balances: AccountBalance[] }) {
       </div>
 
       {isAll ? (
-        <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-ink-subtle)' }}>
+        <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-subtle)' }}>
           Converted to {baseCurrency} using the latest available rates — values are approximate.
         </p>
       ) : null}

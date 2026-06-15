@@ -45,8 +45,8 @@ export function ProgressBar({ value, max, label, className, style, ...rest }: Pr
           width: `${pct}%`,
           height: '100%',
           borderRadius: 'var(--radius-pill)',
-          background: over ? 'var(--negative-500)' : 'var(--color-primary)',
-          transition: 'width var(--motion-medium) var(--ease-out), background-color var(--motion-fast) var(--ease-out)',
+          background: over ? 'var(--negative-500)' : 'var(--action-primary)',
+          transition: 'width var(--dur-base) var(--ease-standard), background-color var(--dur-fast) var(--ease-standard)',
         }}
       />
     </div>

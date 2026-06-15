@@ -22,14 +22,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       style={{
         width: '100%',
         padding: '10px 14px',
-        fontFamily: 'var(--font-body)',
+        fontFamily: 'var(--font-sans)',
         fontSize: 'var(--text-base)',
-        color: 'var(--color-ink)',
-        background: 'var(--color-surface)',
-        border: `1px solid ${invalid ? 'var(--negative-500)' : 'var(--color-border)'}`,
+        color: 'var(--text-strong)',
+        background: 'var(--surface-card)',
+        border: `1px solid ${invalid ? 'var(--negative-500)' : 'var(--border-subtle)'}`,
         borderRadius: 'var(--radius-md)',
         outline: 'none',
-        transition: 'border-color var(--motion-fast) var(--ease-out)',
+        transition: 'border-color var(--dur-fast) var(--ease-standard)',
         ...style,
       }}
       {...rest}

@@ -63,7 +63,7 @@ export function Avatar({ name, src, size = 'md', className, style, ...rest }: Av
       style={{
         ...base,
         background: tintFor(name),
-        color: 'var(--color-on-primary)',
+        color: 'var(--text-on-brand)',
         fontFamily: 'var(--font-display)',
         fontWeight: 'var(--weight-semibold)',
         fontSize: px * 0.4,

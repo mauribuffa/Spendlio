@@ -8,7 +8,7 @@ export function Notice({ tone = 'info', children }: { tone?: 'info' | 'warn'; ch
   const styles =
     tone === 'warn'
       ? { background: '#F6ECD8', color: 'var(--sand-600)' }
-      : { background: 'var(--neutral-100)', color: 'var(--color-ink-muted)' };
+      : { background: 'var(--neutral-100)', color: 'var(--text-muted)' };
   return (
     <div
       role="status"

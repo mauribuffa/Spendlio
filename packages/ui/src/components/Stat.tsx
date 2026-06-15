@@ -18,16 +18,16 @@ export function Stat({ label, value, hint, className, style, ...rest }: StatProp
   return (
     <div
       className={cn('spl-stat', className)}
-      style={{ fontFamily: 'var(--font-body)', display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', ...style }}
+      style={{ fontFamily: 'var(--font-sans)', display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', ...style }}
       {...rest}
     >
       <span
         style={{
           textTransform: 'uppercase',
-          letterSpacing: 'var(--tracking-eyebrow)',
+          letterSpacing: 'var(--tracking-caps)',
           fontSize: 'var(--text-xs)',
           fontWeight: 'var(--weight-semibold)',
-          color: 'var(--color-ink-subtle)',
+          color: 'var(--text-subtle)',
         }}
       >
         {label}
@@ -37,14 +37,14 @@ export function Stat({ label, value, hint, className, style, ...rest }: StatProp
           fontFamily: 'var(--font-display)',
           fontSize: 'var(--text-2xl)',
           fontWeight: 'var(--weight-bold)',
-          color: 'var(--color-ink)',
+          color: 'var(--text-strong)',
           lineHeight: 'var(--leading-tight)',
         }}
       >
         {value}
       </span>
       {hint ? (
-        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-ink-muted)' }}>{hint}</span>
+        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>{hint}</span>
       ) : null}
     </div>
   );

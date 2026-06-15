@@ -47,10 +47,10 @@ export default async function ReceiptsPage() {
               <Card padding="md">
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-4)' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', minWidth: 0 }}>
-                    <span style={{ fontWeight: 'var(--weight-semibold)', color: 'var(--color-ink)' }}>
+                    <span style={{ fontWeight: 'var(--weight-semibold)', color: 'var(--text-strong)' }}>
                       {r.merchant ?? 'Receipt'}
                     </span>
-                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-ink-subtle)' }}>
+                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-subtle)' }}>
                       {r.purchasedAt
                         ? new Date(r.purchasedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                         : new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}

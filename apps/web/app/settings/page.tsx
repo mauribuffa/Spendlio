@@ -26,7 +26,7 @@ export default async function SettingsPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
             <Avatar name="Demo User" size="lg" />
             <div>
-              <p style={{ color: 'var(--color-ink-subtle)' }}>No profile loaded.</p>
+              <p style={{ color: 'var(--text-subtle)' }}>No profile loaded.</p>
               <Badge tone="neutral">Dev mode · demo user</Badge>
             </div>
           </div>

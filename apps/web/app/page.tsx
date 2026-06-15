@@ -55,7 +55,7 @@ export default async function OverviewPage() {
             Recent activity
           </h2>
           {recent.length === 0 ? (
-            <p style={{ padding: 'var(--space-6)', textAlign: 'center', color: 'var(--color-ink-subtle)' }}>
+            <p style={{ padding: 'var(--space-6)', textAlign: 'center', color: 'var(--text-subtle)' }}>
               No transactions yet.
             </p>
           ) : (
@@ -79,7 +79,7 @@ export default async function OverviewPage() {
             Budgets
           </h2>
           {budgets.data.length === 0 ? (
-            <p style={{ color: 'var(--color-ink-subtle)', fontSize: 'var(--text-sm)' }}>No budgets set.</p>
+            <p style={{ color: 'var(--text-subtle)', fontSize: 'var(--text-sm)' }}>No budgets set.</p>
           ) : (
             <div style={{ display: 'grid', gap: 'var(--space-4)' }}>
               {budgets.data.map((b) => (

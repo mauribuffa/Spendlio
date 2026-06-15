@@ -29,7 +29,7 @@ export default async function SplitPage() {
           Balances
         </h2>
         {balances.data.length === 0 ? (
-          <p style={{ color: 'var(--color-ink-subtle)', fontSize: 'var(--text-sm)' }}>
+          <p style={{ color: 'var(--text-subtle)', fontSize: 'var(--text-sm)' }}>
             You are all settled up. Split an expense to start tracking who owes whom.
           </p>
         ) : (
@@ -62,7 +62,7 @@ export default async function SplitPage() {
         <h2 style={{ fontSize: 'var(--text-lg)', fontFamily: 'var(--font-display)', marginBottom: 'var(--space-4)' }}>
           Settle up
         </h2>
-        <p style={{ color: 'var(--color-ink-subtle)', fontSize: 'var(--text-sm)', marginBottom: 'var(--space-4)' }}>
+        <p style={{ color: 'var(--text-subtle)', fontSize: 'var(--text-sm)', marginBottom: 'var(--space-4)' }}>
           Record a payment between two people to clear what they owe.
         </p>
         <SettleUpForm people={people.data.map((p) => ({ id: p.id, name: p.name }))} />
@@ -73,7 +73,7 @@ export default async function SplitPage() {
           People
         </h2>
         {people.data.length === 0 ? (
-          <p style={{ color: 'var(--color-ink-subtle)', fontSize: 'var(--text-sm)' }}>
+          <p style={{ color: 'var(--text-subtle)', fontSize: 'var(--text-sm)' }}>
             No people yet. Add friends or roommates to split bills with them.
           </p>
         ) : (

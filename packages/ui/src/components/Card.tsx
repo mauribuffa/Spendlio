@@ -26,8 +26,8 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
       ref={ref}
       className={cn('spl-card', className)}
       style={{
-        background: 'var(--color-surface)',
-        border: '1px solid var(--color-border)',
+        background: 'var(--surface-card)',
+        border: '1px solid var(--border-subtle)',
         borderRadius: 'var(--radius-card)',
         boxShadow: 'var(--shadow-sm)',
         padding: paddingValue[padding],

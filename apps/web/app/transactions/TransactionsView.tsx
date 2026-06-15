@@ -93,12 +93,12 @@ export function TransactionsView({
             gridTemplateColumns: COLS,
             gap: 'var(--space-4)',
             padding: 'var(--space-3) var(--space-5)',
-            borderBottom: '1px solid var(--color-border)',
+            borderBottom: '1px solid var(--border-subtle)',
             fontSize: 'var(--text-xs)',
             fontWeight: 'var(--weight-semibold)',
-            letterSpacing: 'var(--tracking-eyebrow)',
+            letterSpacing: 'var(--tracking-caps)',
             textTransform: 'uppercase',
-            color: 'var(--color-ink-subtle)',
+            color: 'var(--text-subtle)',
           }}
         >
           <span>Transaction</span>
@@ -109,7 +109,7 @@ export function TransactionsView({
         </div>
 
         {visible.length === 0 ? (
-          <p style={{ padding: 'var(--space-6)', textAlign: 'center', color: 'var(--color-ink-subtle)' }}>
+          <p style={{ padding: 'var(--space-6)', textAlign: 'center', color: 'var(--text-subtle)' }}>
             No transactions match. Try a different filter, or add one.
           </p>
         ) : (
@@ -124,7 +124,7 @@ export function TransactionsView({
                   gap: 'var(--space-4)',
                   alignItems: 'center',
                   padding: 'var(--space-4) var(--space-5)',
-                  borderBottom: i === visible.length - 1 ? 'none' : '1px solid var(--color-border)',
+                  borderBottom: i === visible.length - 1 ? 'none' : '1px solid var(--border-subtle)',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', minWidth: 0 }}>
@@ -133,7 +133,7 @@ export function TransactionsView({
                     <div
                       style={{
                         fontWeight: 'var(--weight-semibold)',
-                        color: 'var(--color-ink)',
+                        color: 'var(--text-strong)',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -142,7 +142,7 @@ export function TransactionsView({
                       {t.title}
                     </div>
                     {t.merchant ? (
-                      <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-ink-subtle)' }}>{t.merchant}</div>
+                      <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-subtle)' }}>{t.merchant}</div>
                     ) : null}
                   </div>
                 </div>
@@ -151,13 +151,13 @@ export function TransactionsView({
                   style={{
                     fontFamily: 'var(--font-mono)',
                     fontSize: 'var(--text-xs)',
-                    color: 'var(--color-ink-muted)',
+                    color: 'var(--text-muted)',
                   }}
                 >
                   {accountLabel(t)}
                 </span>
 
-                <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-ink-muted)' }}>
+                <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
                   {new Date(t.occurredAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 </span>
 

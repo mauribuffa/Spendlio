@@ -31,7 +31,7 @@ export function AddTransactionForm() {
     display: 'block',
     fontSize: 'var(--text-sm)',
     fontWeight: 'var(--weight-medium)',
-    color: 'var(--color-ink-muted)',
+    color: 'var(--text-muted)',
     marginBottom: 'var(--space-1)',
   } as const;
 
@@ -120,11 +120,11 @@ export function AddTransactionForm() {
 const selectStyle = {
   width: '100%',
   padding: '10px 14px',
-  fontFamily: 'var(--font-body)',
+  fontFamily: 'var(--font-sans)',
   fontSize: 'var(--text-base)',
-  color: 'var(--color-ink)',
-  background: 'var(--color-surface)',
-  border: '1px solid var(--color-border)',
+  color: 'var(--text-strong)',
+  background: 'var(--surface-card)',
+  border: '1px solid var(--border-subtle)',
   borderRadius: 'var(--radius-md)',
   appearance: 'none' as const,
 };

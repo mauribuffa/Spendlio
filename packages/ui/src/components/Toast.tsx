@@ -13,7 +13,7 @@ export interface ToastProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const toneMeta: Record<ToastTone, { icon: typeof Info; color: string }> = {
-  info: { icon: Info, color: 'var(--color-primary-ink)' },
+  info: { icon: Info, color: 'var(--green-900)' },
   success: { icon: CheckCircle2, color: 'var(--positive-500)' },
   error: { icon: AlertTriangle, color: 'var(--negative-500)' },
 };
@@ -41,7 +41,7 @@ export function Toast({ tone = 'info', action, onDismiss, className, style, chil
         color: 'var(--neutral-50)',
         borderRadius: 'var(--radius-md)',
         boxShadow: 'var(--shadow-lg)',
-        fontFamily: 'var(--font-body)',
+        fontFamily: 'var(--font-sans)',
         fontSize: 'var(--text-sm)',
         ...style,
       }}

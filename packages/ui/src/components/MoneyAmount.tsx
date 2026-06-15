@@ -56,11 +56,11 @@ export function MoneyAmount({
 }: MoneyAmountProps) {
   const text = formatSignedMoney(amount, currency, locale);
 
-  let semantic = 'var(--color-ink)';
+  let semantic = 'var(--text-strong)';
   if (color !== 'off') {
     if (amount > 0) semantic = 'var(--positive-500)';
     else if (amount < 0) semantic = 'var(--negative-500)';
-    else if (color === 'always') semantic = 'var(--color-ink-muted)';
+    else if (color === 'always') semantic = 'var(--text-muted)';
   }
 
   const tone = amount > 0 ? 'positive' : amount < 0 ? 'negative' : 'zero';

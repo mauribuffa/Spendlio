@@ -8,7 +8,7 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 const toneStyle: Record<BadgeTone, { background: string; color: string }> = {
-  neutral: { background: 'var(--neutral-100)', color: 'var(--color-ink-muted)' },
+  neutral: { background: 'var(--neutral-100)', color: 'var(--text-muted)' },
   primary: { background: 'var(--green-50)', color: 'var(--green-800)' },
   positive: { background: 'var(--green-50)', color: 'var(--positive-500)' },
   negative: { background: '#F7E7E4', color: 'var(--negative-500)' },
@@ -27,7 +27,7 @@ export function Badge({ tone = 'neutral', className, style, ...rest }: BadgeProp
         alignItems: 'center',
         gap: 'var(--space-1)',
         padding: '2px 10px',
-        fontFamily: 'var(--font-body)',
+        fontFamily: 'var(--font-sans)',
         fontSize: 'var(--text-xs)',
         fontWeight: 'var(--weight-medium)',
         lineHeight: 1.4,

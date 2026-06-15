@@ -51,7 +51,7 @@ export function Assistant() {
       >
         {messages.length === 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-            <p style={{ color: 'var(--color-ink-muted)' }}>
+            <p style={{ color: 'var(--text-muted)' }}>
               Ask about your spending. The assistant answers from your own data.
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
@@ -72,8 +72,8 @@ export function Assistant() {
                   maxWidth: '80%',
                   padding: 'var(--space-3) var(--space-4)',
                   borderRadius: 'var(--radius-card)',
-                  background: m.role === 'user' ? 'var(--color-primary)' : 'var(--neutral-100)',
-                  color: m.role === 'user' ? 'var(--color-on-primary)' : 'var(--color-ink)',
+                  background: m.role === 'user' ? 'var(--action-primary)' : 'var(--neutral-100)',
+                  color: m.role === 'user' ? 'var(--text-on-brand)' : 'var(--text-strong)',
                   fontSize: 'var(--text-sm)',
                   whiteSpace: 'pre-wrap',
                 }}
@@ -82,7 +82,7 @@ export function Assistant() {
               </div>
             ))}
             {status === 'streaming' ? (
-              <span style={{ color: 'var(--color-ink-subtle)', fontSize: 'var(--text-sm)' }}>Thinking…</span>
+              <span style={{ color: 'var(--text-subtle)', fontSize: 'var(--text-sm)' }}>Thinking…</span>
             ) : null}
           </div>
         )}

@@ -14,18 +14,18 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyle: Record<ButtonVariant, CSSProperties> = {
   primary: {
-    background: 'var(--color-primary)',
-    color: 'var(--color-on-primary)',
+    background: 'var(--action-primary)',
+    color: 'var(--text-on-brand)',
     border: '1px solid transparent',
   },
   secondary: {
-    background: 'var(--color-surface)',
-    color: 'var(--color-primary-ink)',
-    border: '1px solid var(--color-border)',
+    background: 'var(--surface-card)',
+    color: 'var(--green-900)',
+    border: '1px solid var(--border-subtle)',
   },
   ghost: {
     background: 'transparent',
-    color: 'var(--color-ink)',
+    color: 'var(--text-strong)',
     border: '1px solid transparent',
   },
 };
@@ -58,13 +58,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
         justifyContent: 'center',
         gap: 'var(--space-2)',
         width: fullWidth ? '100%' : undefined,
-        fontFamily: 'var(--font-body)',
+        fontFamily: 'var(--font-sans)',
         fontWeight: 'var(--weight-semibold)',
         lineHeight: 1,
         borderRadius: 'var(--radius-pill)',
         cursor: 'pointer',
         transition:
-          'transform var(--motion-fast) var(--ease-out), background-color var(--motion-fast) var(--ease-out), opacity var(--motion-fast) var(--ease-out)',
+          'transform var(--dur-fast) var(--ease-standard), background-color var(--dur-fast) var(--ease-standard), opacity var(--dur-fast) var(--ease-standard)',
         ...style,
       }}
       {...rest}

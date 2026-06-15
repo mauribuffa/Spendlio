@@ -44,7 +44,7 @@ function Logo() {
         width: 30,
         height: 30,
         borderRadius: 'var(--radius-md)',
-        background: 'var(--color-primary)',
+        background: 'var(--action-primary)',
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -52,8 +52,8 @@ function Logo() {
       }}
     >
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-        <circle cx="9" cy="9" r="6.5" stroke="var(--color-on-primary)" strokeWidth="2" />
-        <circle cx="9" cy="9" r="2" fill="var(--color-on-primary)" />
+        <circle cx="9" cy="9" r="6.5" stroke="var(--text-on-brand)" strokeWidth="2" />
+        <circle cx="9" cy="9" r="2" fill="var(--text-on-brand)" />
       </svg>
     </span>
   );
@@ -79,8 +79,8 @@ export function AppShell({
         style={{
           width: 248,
           flexShrink: 0,
-          borderRight: '1px solid var(--color-border)',
-          background: 'var(--color-surface)',
+          borderRight: '1px solid var(--border-subtle)',
+          background: 'var(--surface-card)',
           padding: 'var(--space-6) var(--space-4)',
           position: 'sticky',
           top: 0,
@@ -105,7 +105,7 @@ export function AppShell({
               fontFamily: 'var(--font-display)',
               fontWeight: 'var(--weight-bold)',
               fontSize: 'var(--text-lg)',
-              color: 'var(--color-primary-ink)',
+              color: 'var(--green-900)',
             }}
           >
             Spendlio
@@ -128,7 +128,7 @@ export function AppShell({
                   borderRadius: 'var(--radius-md)',
                   fontSize: 'var(--text-sm)',
                   fontWeight: active ? 'var(--weight-semibold)' : 'var(--weight-medium)',
-                  color: active ? 'var(--color-primary-ink)' : 'var(--color-ink-muted)',
+                  color: active ? 'var(--green-900)' : 'var(--text-muted)',
                   background: active ? 'var(--green-50)' : 'transparent',
                 }}
               >
@@ -145,8 +145,8 @@ export function AppShell({
             href="/insights"
             style={{
               display: 'block',
-              background: 'var(--color-primary-ink)',
-              color: 'var(--color-on-primary)',
+              background: 'var(--green-900)',
+              color: 'var(--text-on-brand)',
               borderRadius: 'var(--radius-card)',
               padding: 'var(--space-4)',
               textDecoration: 'none',
@@ -185,7 +185,7 @@ export function AppShell({
                 style={{
                   fontSize: 'var(--text-sm)',
                   fontWeight: 'var(--weight-semibold)',
-                  color: 'var(--color-ink)',
+                  color: 'var(--text-strong)',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -196,7 +196,7 @@ export function AppShell({
               <div
                 style={{
                   fontSize: 'var(--text-xs)',
-                  color: 'var(--color-ink-subtle)',
+                  color: 'var(--text-subtle)',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
