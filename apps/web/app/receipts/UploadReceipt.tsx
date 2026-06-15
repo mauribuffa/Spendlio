@@ -15,7 +15,7 @@ import { presignAction, registerReceiptAction } from './actions';
  *   3. registerReceiptAction(key, hash) — server (row + OCR, deduped on the hash)
  * Then router.refresh() pulls the freshly-revalidated server list.
  */
-export function UploadReceipt() {
+export function UploadReceipt({ onSuccess }: { onSuccess?: () => void } = {}) {
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -52,6 +52,7 @@ export function UploadReceipt() {
     }
 
     startTransition(() => router.refresh());
+    onSuccess?.(); // e.g. close the Scan modal
   }
 
   return (

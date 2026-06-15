@@ -30,6 +30,10 @@ export class ReceiptsController {
     return this.svc.create(u.id, dto);
   }
 
+  // A short-lived URL to view the receipt image (declared before ':id').
+  @Get(':id/image-url')
+  imageUrl(@CurrentUser() u: { id: string }, @Param('id') id: string) { return this.svc.imageUrl(u.id, id); }
+
   @Get(':id')
   get(@CurrentUser() u: { id: string }, @Param('id') id: string) { return this.svc.get(u.id, id); }
 

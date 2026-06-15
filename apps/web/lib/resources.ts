@@ -178,6 +178,12 @@ export function getReceipt(id: string): Promise<Receipt> {
   return api.get(`/receipts/${id}`, ReceiptSchema);
 }
 
+/** A short-lived presigned URL to view the receipt's uploaded image. */
+export async function getReceiptImageUrl(id: string): Promise<string> {
+  const { url } = await api.get<{ url: string }>(`/receipts/${id}/image-url`, z.object({ url: z.string().url() }));
+  return url;
+}
+
 /** Step 1 of upload: ask the API for a short-lived PUT url for this MIME type.
  *  The content hash makes the storage key content-addressed (dedup-friendly). */
 export function presignReceipt(contentType: string, sha256?: string): Promise<PresignedUpload> {

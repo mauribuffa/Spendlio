@@ -38,7 +38,7 @@ export class ReceiptsService {
         .from(receipts)
         .where(and(eq(receipts.userId, userId), eq(receipts.sha256, dto.sha256), isNull(receipts.deletedAt)))
         .limit(1);
-      if (existing) return existing; // already uploaded — skip re-OCR
+      if (existing) return this.toReceipt(existing); // already uploaded — skip re-OCR
     }
 
     const [row] = await this.db.insert(receipts)
@@ -46,21 +46,44 @@ export class ReceiptsService {
       .returning();
     // jobId auto-derives to `ocr-<receiptId>` (idempotent; BullMQ forbids ':').
     await enqueue('ocr', { receiptId: row.id });
-    return row;
+    return this.toReceipt(row);
   }
 
   async list(userId: string) {
-    const items = await this.db.select().from(receipts)
+    const rows = await this.db.select().from(receipts)
       .where(and(eq(receipts.userId, userId), isNull(receipts.deletedAt)))
       .orderBy(desc(receipts.createdAt));
-    return { items, nextCursor: null };
+    return { items: rows.map((r: any) => this.toReceipt(r)), nextCursor: null };
   }
 
   async get(userId: string, id: string) {
     const [row] = await this.db.select().from(receipts)
       .where(and(eq(receipts.id, id), eq(receipts.userId, userId), isNull(receipts.deletedAt)));
     if (!row) throw new NotFoundException();
-    return row;
+    return this.toReceipt(row);
+  }
+
+  /** A short-lived URL to view the receipt's image (user-scoped). */
+  async imageUrl(userId: string, id: string) {
+    const [row] = await this.db.select({ imageKey: receipts.imageKey }).from(receipts)
+      .where(and(eq(receipts.id, id), eq(receipts.userId, userId), isNull(receipts.deletedAt)));
+    if (!row) throw new NotFoundException();
+    const url = await this.blob.presignDownload({ key: row.imageKey });
+    return { url };
+  }
+
+  /**
+   * Reshape a db row to the ReceiptSchema contract: the worker stores the OCR
+   * result collapsed into the `ocr` JSONB column, so expand `lineItems` (and the
+   * raw payload) back out for the client — the row has no separate columns.
+   */
+  private toReceipt(row: any) {
+    const ocr = row.ocr ?? null;
+    return {
+      ...row,
+      lineItems: Array.isArray(ocr?.lineItems) ? ocr.lineItems : [],
+      raw: ocr ?? undefined,
+    };
   }
 
   async remove(userId: string, id: string) {

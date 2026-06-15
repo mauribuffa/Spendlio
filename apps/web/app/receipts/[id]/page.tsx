@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Card, MoneyAmount } from '@spendlio/ui';
-import { getReceipt } from '../../../lib/resources';
+import { getReceipt, getReceiptImageUrl } from '../../../lib/resources';
 import { ApiError } from '../../../lib/api';
 import { safe } from '../../../lib/safe';
 import { PageHeader } from '../../_components/PageHeader';
@@ -14,6 +14,8 @@ export const revalidate = 0;
 export default async function ReceiptDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { data: receipt, error } = await safe(() => getReceipt(id), null);
+  // The image lives in private storage; fetch a short-lived presigned URL to show it.
+  const { data: imageUrl } = await safe(() => getReceiptImageUrl(id), null);
 
   // A 404 from the API (wrong/deleted id) is a real not-found, not an outage.
   if (!receipt && error?.includes('(404)')) notFound();
@@ -48,6 +50,17 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
       >
         ← Back to receipts
       </Link>
+
+      {imageUrl ? (
+        <Card padding="sm" style={{ marginBottom: 'var(--space-5)' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element -- presigned storage URL, not a static asset */}
+          <img
+            src={imageUrl}
+            alt={receipt.merchant ? `Receipt from ${receipt.merchant}` : 'Receipt image'}
+            style={{ display: 'block', width: '100%', maxHeight: 520, objectFit: 'contain', borderRadius: 'var(--radius-md)' }}
+          />
+        </Card>
+      ) : null}
 
       <Card padding="lg" style={{ marginBottom: 'var(--space-5)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 'var(--space-4)' }}>
