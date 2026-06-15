@@ -3,17 +3,22 @@
 import { useState } from 'react';
 import { Plus, ScanLine } from 'lucide-react';
 import { Button, Modal } from '@spendlio/ui';
-import { AddTransactionForm } from '../transactions/AddTransactionForm';
+import { AddExpenseModal } from './AddExpenseModal';
 import { UploadReceipt } from '../receipts/UploadReceipt';
 
 /**
- * The global topbar actions: Scan a receipt + Add expense. Each opens a modal
- * that reuses the real, wired forms (no new endpoints). The add-expense modal
- * closes itself once a transaction is created.
+ * The global topbar actions: Scan a receipt + Add expense. Each opens a modal.
+ * Add expense is the full designed flow (amount, category, optional split);
+ * Scan reuses the real receipt-upload flow. No new endpoints.
  */
 export function TopbarActions() {
   const [addOpen, setAddOpen] = useState(false);
   const [scanOpen, setScanOpen] = useState(false);
+
+  const openScanFromAdd = () => {
+    setAddOpen(false);
+    setScanOpen(true);
+  };
 
   return (
     <>
@@ -34,11 +39,7 @@ export function TopbarActions() {
         Add expense
       </Button>
 
-      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Add expense" width={520}>
-        <div style={{ padding: '4px 22px 24px' }}>
-          <AddTransactionForm bare onSuccess={() => setAddOpen(false)} />
-        </div>
-      </Modal>
+      <AddExpenseModal open={addOpen} onClose={() => setAddOpen(false)} onScan={openScanFromAdd} />
 
       <Modal open={scanOpen} onClose={() => setScanOpen(false)} title="Scan receipt" width={460}>
         <div style={{ padding: '4px 22px 26px', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
