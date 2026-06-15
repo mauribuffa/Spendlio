@@ -1,7 +1,7 @@
 import { generateObject, generateText, streamText, stepCountIs, tool, type ModelMessage } from 'ai';
 import { z } from 'zod';
 import { CategoryKey, formatMoney } from '@spendlio/contracts';
-import { resolveLiveModel } from '../config';
+import { resolveLiveModel } from './model';
 import {
   ReceiptOcrResult,
   type AssistantTools,

@@ -1,6 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { categorizeByRules } from './rules';
 import { OfflineProvider } from './offline';
+import { LazyLiveProvider } from './live/lazy';
 import { parseIntent } from './offline/intent';
 import { getProvider } from './index';
 import type { AssistantTools } from './provider';
@@ -105,5 +106,21 @@ describe('getProvider', () => {
   it('returns the OfflineProvider when no AI key is configured', () => {
     for (const k of KEYS) delete process.env[k];
     expect(getProvider()).toBeInstanceOf(OfflineProvider);
+  });
+
+  it('returns the LazyLiveProvider when ANTHROPIC_API_KEY is set', () => {
+    for (const k of KEYS) delete process.env[k];
+    process.env.ANTHROPIC_API_KEY = 'sk-test';
+    expect(getProvider()).toBeInstanceOf(LazyLiveProvider);
+  });
+});
+
+describe('LazyLiveProvider runtime boundary', () => {
+  // The whole point of the lazy seam: consumers don't typecheck ./live, but the
+  // module must still load at runtime via the non-literal dynamic import().
+  it('resolves the live module (LiveProvider) at runtime', async () => {
+    const spec = './live/index';
+    const m = await import(spec);
+    expect(typeof m.LiveProvider).toBe('function');
   });
 });

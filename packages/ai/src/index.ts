@@ -1,23 +1,27 @@
 import { hasLiveProvider } from './config';
 import { OfflineProvider } from './offline';
-import { LiveProvider } from './live';
+import { LazyLiveProvider } from './live/lazy';
 import type { AssistantTools, ChatArgs, ChatMessage, ChatResult, ChatStream, LLMProvider } from './provider';
 
 // Public surface
 export * from './provider';
 export { categorizeByRules } from './rules';
 export { OfflineProvider } from './offline';
-export { LiveProvider } from './live';
-export { CLAUDE_MODEL, OPENAI_MODEL, hasAnthropicKey, wantsOpenAI, hasLiveProvider } from './config';
+export { createDbTools } from './tools/db-tools';
+export { AssistantChatRequest } from './chat-contract';
 
 /**
  * Provider factory. A live AI-SDK provider activates when a key is configured —
  * Anthropic (ANTHROPIC_API_KEY) or OpenAI (AI_PROVIDER=openai + OPENAI_API_KEY);
  * otherwise the deterministic offline engine is the default. This is the one
  * place the rest of the app gets a provider from.
+ *
+ * The live provider is loaded through `LazyLiveProvider` (an untyped runtime
+ * `import()` boundary) so consumers don't drag the Vercel AI SDK's generic type
+ * surface into their `tsc` runs — see `./live/lazy`.
  */
 export function getProvider(): LLMProvider {
-  return hasLiveProvider() ? new LiveProvider() : new OfflineProvider();
+  return hasLiveProvider() ? new LazyLiveProvider() : new OfflineProvider();
 }
 
 /**

@@ -1,0 +1,180 @@
+/* @spendlio/ui — design tokens
+ *
+ * The single stylesheet for the Spendlio design system. Import once in the
+ * web app's root layout: `import '@spendlio/ui/styles.css'`.
+ *
+ * Fonts: this package does NOT @import webfonts. The web app loads the three
+ * families itself (recommended: next/font/google) and exposes them so these
+ * CSS variables resolve. The exact family names expected here are:
+ *   - 'Space Grotesk'  (display + figures)
+ *   - 'Hanken Grotesk' (body + UI)
+ *   - 'Space Mono'     (ledger detail)
+ * Wire next/font with `variable` CSS vars and alias them to --font-display /
+ * --font-body / --font-mono, or set those families on :root / html.
+ */
+
+:root {
+  /* ---- Brand green scale ---- */
+  --green-50: #EAF4EF;
+  --green-100: #D2E7DC;
+  --green-200: #A9D0BE;
+  --green-300: #7DB59C;
+  --green-400: #4E9676;
+  --green-500: #2C8160;
+  --green-600: #1B6E4F; /* primary action */
+  --green-700: #155A41;
+  --green-800: #114734;
+  --green-900: #0E3A2B; /* deep brand ink */
+  --green-950: #0A2A20;
+
+  /* ---- Warm sand accent (use sparingly) ---- */
+  --sand-300: #E2C48C;
+  --sand-400: #D2A95C;
+  --sand-500: #BE8A30;
+  --sand-600: #9C7026;
+
+  /* ---- Warm neutrals ---- */
+  --neutral-0: #FFFFFF;  /* card surface */
+  --neutral-50: #FAFAF7; /* app canvas */
+  --neutral-100: #F2F1EB;
+  --neutral-200: #E6E4DB;
+  --neutral-300: #D6D3C7;
+  --neutral-400: #B4AF9F;
+  --neutral-500: #8C8678;
+  --neutral-600: #6B6657;
+  --neutral-700: #4E4A3E;
+  --neutral-800: #322F28;
+  --neutral-900: #1E1C17; /* ink */
+  --neutral-950: #12110D;
+
+  /* ---- Money semantics ---- */
+  --positive-500: #1B7A55; /* income / "you're owed" */
+  --negative-500: #C24A3E; /* expense / "you owe" */
+
+  /* ---- Data-viz ramp (categories) ---- */
+  --cat-1: #1B6E4F; /* green  */
+  --cat-2: #BE8A30; /* gold   */
+  --cat-3: #3A6EA5; /* blue   */
+  --cat-4: #C05A78; /* rose   */
+  --cat-5: #7A5BA8; /* violet */
+  --cat-6: #2E8B8B; /* teal   */
+  --cat-7: #B0613C; /* clay   */
+  --cat-8: #8C8678; /* stone  */
+
+  /* ---- Semantic surface / text aliases ---- */
+  --color-canvas: var(--neutral-50);
+  --color-surface: var(--neutral-0);
+  --color-ink: var(--neutral-900);
+  --color-ink-muted: var(--neutral-600);
+  --color-ink-subtle: var(--neutral-500);
+  --color-border: var(--neutral-200);
+  --color-primary: var(--green-600);
+  --color-primary-ink: var(--green-900);
+  --color-on-primary: var(--neutral-0);
+  --color-accent: var(--sand-500);
+  --color-focus-ring: var(--green-400);
+
+  /* ---- Typography ---- */
+  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Space Mono', ui-monospace, 'SF Mono', monospace;
+
+  --text-xs: 0.75rem;   /* 12 */
+  --text-sm: 0.875rem;  /* 14 */
+  --text-base: 1rem;    /* 16 */
+  --text-lg: 1.125rem;  /* 18 */
+  --text-xl: 1.375rem;  /* 22 */
+  --text-2xl: 1.75rem;  /* 28 */
+  --text-3xl: 2.25rem;  /* 36 */
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  --leading-tight: 1.15;
+  --leading-normal: 1.45;
+
+  --tracking-eyebrow: 0.08em; /* letter-spaced uppercase eyebrow — the only uppercase */
+
+  /* ---- Spacing scale (4px base) ---- */
+  --space-0: 0;
+  --space-1: 0.25rem; /* 4  */
+  --space-2: 0.5rem;  /* 8  */
+  --space-3: 0.75rem; /* 12 */
+  --space-4: 1rem;    /* 16 */
+  --space-5: 1.25rem; /* 20 */
+  --space-6: 1.5rem;  /* 24 */
+  --space-8: 2rem;    /* 32 */
+  --space-10: 2.5rem; /* 40 */
+  --space-12: 3rem;   /* 48 */
+
+  /* ---- Radii ---- */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-pill: 999px;  /* pill controls */
+  --radius-card: 22px;   /* cards */
+  --radius-sheet: 28px;  /* bottom sheets / modals */
+
+  /* ---- Soft, warm-tinted shadows ---- */
+  --shadow-sm: 0 1px 2px rgba(30, 28, 23, 0.04), 0 2px 8px rgba(30, 28, 23, 0.06);
+  --shadow-md: 0 2px 4px rgba(30, 28, 23, 0.05), 0 8px 24px rgba(30, 28, 23, 0.08);
+  --shadow-lg: 0 8px 16px rgba(30, 28, 23, 0.08), 0 24px 48px rgba(30, 28, 23, 0.12);
+
+  /* ---- Motion (short, soft ease-out, no bounce) ---- */
+  --motion-fast: 140ms;
+  --motion-medium: 220ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --press-scale: 0.97;
+}
+
+/* Money/ledger numerals: tabular lining figures so digits align in columns. */
+[data-money] {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
+}
+
+/* ---- Component interactions ----
+ * Components set their token-driven look via inline style; the few things
+ * inline style can't express (pseudo-classes) live here, all in tokens.
+ */
+
+.spl-button:focus-visible,
+.spl-input:focus-visible,
+.spl-segmented__option:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.spl-button:active:not(:disabled) {
+  transform: scale(var(--press-scale));
+}
+
+.spl-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spl-button[data-variant='primary']:hover:not(:disabled) {
+  background: var(--green-700);
+}
+.spl-button[data-variant='secondary']:hover:not(:disabled) {
+  background: var(--neutral-50);
+}
+.spl-button[data-variant='ghost']:hover:not(:disabled) {
+  background: var(--neutral-100);
+}
+
+.spl-input:focus {
+  border-color: var(--color-primary);
+}
+.spl-input::placeholder {
+  color: var(--color-ink-subtle);
+}
+
+.spl-segmented__option[data-active='true'] {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-sm);
+}
