@@ -58,3 +58,6 @@ export type { CheckboxProps } from './components/Checkbox';
 
 export { AmountInput } from './components/AmountInput';
 export type { AmountInputProps, AmountInputSize } from './components/AmountInput';
+
+export { EmptyState } from './components/EmptyState';
+export type { EmptyStateProps } from './components/EmptyState';

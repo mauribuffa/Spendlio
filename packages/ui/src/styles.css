@@ -296,3 +296,11 @@
 .spl-amount--compact { padding: 0 14px; height: 44px; border: 1px solid var(--color-border); background: var(--color-surface); border-radius: var(--radius-md); }
 .spl-amount--compact .spl-amount__cur { font-size: var(--text-base); margin-top: 0; font-family: var(--font-body); }
 .spl-amount--compact input { font-size: var(--text-lg); text-align: left; }
+
+/* ---- EmptyState ---- */
+.spl-empty { display: flex; flex-direction: column; align-items: center; text-align: center; font-family: var(--font-body); padding: 36px 24px; gap: 6px; }
+.spl-empty__art { width: 64px; height: 64px; border-radius: var(--radius-card); display: flex; align-items: center; justify-content: center; margin-bottom: 10px; background: var(--green-50); color: var(--green-600); }
+.spl-empty__art svg { width: 28px; height: 28px; }
+.spl-empty__title { font-family: var(--font-display); font-weight: var(--weight-bold); font-size: var(--text-lg); color: var(--color-ink); }
+.spl-empty__msg { font-size: var(--text-sm); color: var(--color-ink-muted); max-width: 320px; line-height: 1.5; }
+.spl-empty__action { margin-top: 12px; }
