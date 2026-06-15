@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
-import { CreateReceiptInput } from '@spendlio/contracts';
+import { CreateReceiptInput, ConfirmReceiptInput } from '@spendlio/contracts';
 import { ZodPipe } from '../common/zod.pipe';
 import { AuthGuard } from '../common/auth.guard';
 import { CurrentUser } from '../common/current-user.decorator';
@@ -33,6 +33,16 @@ export class ReceiptsController {
   // A short-lived URL to view the receipt image (declared before ':id').
   @Get(':id/image-url')
   imageUrl(@CurrentUser() u: { id: string }, @Param('id') id: string) { return this.svc.imageUrl(u.id, id); }
+
+  // Approve a reviewed receipt → create the linked expense.
+  @Post(':id/confirm')
+  confirm(
+    @CurrentUser() u: { id: string },
+    @Param('id') id: string,
+    @Body(new ZodPipe(ConfirmReceiptInput)) dto: ConfirmReceiptInput,
+  ) {
+    return this.svc.confirm(u.id, id, dto);
+  }
 
   @Get(':id')
   get(@CurrentUser() u: { id: string }, @Param('id') id: string) { return this.svc.get(u.id, id); }

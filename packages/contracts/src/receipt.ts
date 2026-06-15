@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { ownedEntity } from './common';
 import { CurrencyCode } from './money';
-import { ReceiptStatus } from './enums';
+import { ReceiptStatus, CategoryKey } from './enums';
 
 // Lowercase hex SHA-256 (64 chars) — the client-computed content hash.
 export const Sha256Hex = z.string().regex(/^[0-9a-f]{64}$/, 'expected a 64-char hex SHA-256');
@@ -38,3 +38,16 @@ export const CreateReceiptInput = z.object({
   sha256: Sha256Hex.optional(),
 });
 export type CreateReceiptInput = z.infer<typeof CreateReceiptInput>;
+
+// The user's reviewed/corrected values for a parsed receipt. Approving it
+// updates the receipt AND creates the linked expense. Money is integer minor
+// units (the web converts major→minor per-currency before sending).
+export const ConfirmReceiptInput = z.object({
+  merchant: z.string().min(1).nullable().optional(),
+  occurredAt: z.coerce.date(),
+  total: z.number().int(),            // minor units (magnitude; stored as a negative expense)
+  currency: CurrencyCode,
+  category: CategoryKey,
+  lineItems: z.array(ReceiptLineItem).default([]),
+});
+export type ConfirmReceiptInput = z.infer<typeof ConfirmReceiptInput>;

@@ -51,8 +51,9 @@ export function UploadReceipt({ onSuccess }: { onSuccess?: () => void } = {}) {
       return;
     }
 
-    startTransition(() => router.refresh());
     onSuccess?.(); // e.g. close the Scan modal
+    // Land on the receipt's review screen so the user can verify + approve it.
+    startTransition(() => router.push(registered.id ? `/receipts/${registered.id}` : '/receipts'));
   }
 
   return (

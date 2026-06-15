@@ -1,13 +1,13 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Card, MoneyAmount } from '@spendlio/ui';
-import { getReceipt, getReceiptImageUrl } from '../../../lib/resources';
-import { ApiError } from '../../../lib/api';
+import { Card, MoneyAmount, Badge } from '@spendlio/ui';
+import { getReceipt, getReceiptImageUrl, listCategories, type Category } from '../../../lib/resources';
 import { safe } from '../../../lib/safe';
 import { PageHeader } from '../../_components/PageHeader';
 import { Notice } from '../../_components/Notice';
 import { StatusBadge } from '../StatusBadge';
 import { PollWhileProcessing } from '../PollWhileProcessing';
+import { ReceiptReviewForm } from '../ReceiptReviewForm';
 
 export const revalidate = 0;
 
@@ -16,6 +16,7 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
   const { data: receipt, error } = await safe(() => getReceipt(id), null);
   // The image lives in private storage; fetch a short-lived presigned URL to show it.
   const { data: imageUrl } = await safe(() => getReceiptImageUrl(id), null);
+  const { data: categories } = await safe(() => listCategories(), [] as Category[]);
 
   // A 404 from the API (wrong/deleted id) is a real not-found, not an outage.
   if (!receipt && error?.includes('(404)')) notFound();
@@ -62,68 +63,100 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
         </Card>
       ) : null}
 
-      <Card padding="lg" style={{ marginBottom: 'var(--space-5)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 'var(--space-4)' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
-            <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
-              {receipt.merchant ?? 'Merchant pending'}
-            </span>
-            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-subtle)' }}>
-              {receipt.purchasedAt
-                ? new Date(receipt.purchasedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                : 'Date pending'}
-            </span>
+      {receipt.status === 'parsed' && !receipt.transactionId ? (
+        // Review & approve: OCR is a suggestion — the user has the final word on
+        // every value before it becomes a real expense.
+        <Card padding="lg">
+          <div style={{ marginBottom: 'var(--space-4)' }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 'var(--weight-bold)', fontSize: 'var(--text-lg)', color: 'var(--text-strong)' }}>
+              Review & approve
+            </div>
+            <p style={{ margin: '4px 0 0', fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
+              We pulled these from the receipt — check the amounts and category, then add it as an expense.
+            </p>
           </div>
-          {receipt.total != null && receipt.currency ? (
-            <MoneyAmount amount={-Math.abs(receipt.total)} currency={receipt.currency} size="xl" color="off" />
-          ) : (
-            <span style={{ color: 'var(--text-subtle)' }}>
-              {receipt.status === 'processing' ? 'Reading total…' : 'No total found'}
-            </span>
-          )}
-        </div>
-      </Card>
-
-      {receipt.lineItems.length > 0 ? (
-        <Card padding="sm">
-          <div style={{ display: 'grid', gap: '2px' }}>
-            {receipt.lineItems.map((li, i) => (
-              <div
-                key={i}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  gap: 'var(--space-4)',
-                  padding: 'var(--space-3) var(--space-4)',
-                }}
-              >
-                <span style={{ color: 'var(--text-strong)' }}>
-                  {li.quantity > 1 ? `${li.quantity}× ` : ''}{li.description}
-                </span>
-                {receipt.currency ? (
-                  <MoneyAmount amount={-Math.abs(li.amount)} currency={receipt.currency} size="sm" color="off" />
-                ) : null}
-              </div>
-            ))}
-          </div>
+          <ReceiptReviewForm
+            receiptId={receipt.id}
+            merchant={receipt.merchant ?? null}
+            occurredAt={receipt.purchasedAt ? new Date(receipt.purchasedAt).toISOString() : null}
+            currency={receipt.currency ?? 'USD'}
+            totalMinor={receipt.total ?? null}
+            lineItems={receipt.lineItems}
+            categories={categories.map((c) => ({ value: c.key, label: c.label }))}
+          />
         </Card>
       ) : (
-        <Notice tone="info">
-          {receipt.status === 'processing'
-            ? 'Still reading the receipt — line items will appear here once OCR finishes.'
-            : receipt.status === 'failed'
-              ? 'We couldn\'t read this receipt. Try scanning a clearer photo.'
-              : 'No line items were detected on this receipt.'}
-        </Notice>
-      )}
+        <>
+          {receipt.transactionId ? (
+            <Card padding="lg" style={{ marginBottom: 'var(--space-5)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-4)' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                  <Badge tone="positive" dot>Added to expenses</Badge>
+                </span>
+                <Link href="/transactions" style={{ color: 'var(--text-brand)', fontSize: 'var(--text-sm)', fontWeight: 'var(--weight-semibold)' }}>
+                  View in transactions →
+                </Link>
+              </div>
+            </Card>
+          ) : null}
 
-      {/*
-        Note: there is no backend route to create a transaction from a receipt
-        (the receipts controller exposes no link/convert endpoint, and nothing
-        sets ReceiptSchema.transactionId). The "create transaction from receipt"
-        action is intentionally omitted until that endpoint exists.
-      */}
+          <Card padding="lg" style={{ marginBottom: 'var(--space-5)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 'var(--space-4)' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+                <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
+                  {receipt.merchant ?? 'Merchant pending'}
+                </span>
+                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-subtle)' }}>
+                  {receipt.purchasedAt
+                    ? new Date(receipt.purchasedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                    : 'Date pending'}
+                </span>
+              </div>
+              {receipt.total != null && receipt.currency ? (
+                <MoneyAmount amount={-Math.abs(receipt.total)} currency={receipt.currency} size="xl" color="off" />
+              ) : (
+                <span style={{ color: 'var(--text-subtle)' }}>
+                  {receipt.status === 'processing' ? 'Reading total…' : 'No total found'}
+                </span>
+              )}
+            </div>
+          </Card>
+
+          {receipt.lineItems.length > 0 ? (
+            <Card padding="sm">
+              <div style={{ display: 'grid', gap: '2px' }}>
+                {receipt.lineItems.map((li, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: 'var(--space-4)',
+                      padding: 'var(--space-3) var(--space-4)',
+                    }}
+                  >
+                    <span style={{ color: 'var(--text-strong)' }}>
+                      {li.quantity > 1 ? `${li.quantity}× ` : ''}{li.description}
+                    </span>
+                    {receipt.currency ? (
+                      <MoneyAmount amount={-Math.abs(li.amount)} currency={receipt.currency} size="sm" color="off" />
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          ) : (
+            <Notice tone="info">
+              {receipt.status === 'processing'
+                ? 'Still reading the receipt — line items will appear here once OCR finishes.'
+                : receipt.status === 'failed'
+                  ? 'We couldn\'t read this receipt. Try scanning a clearer photo.'
+                  : 'No line items were detected on this receipt.'}
+            </Notice>
+          )}
+        </>
+      )}
     </div>
   );
 }

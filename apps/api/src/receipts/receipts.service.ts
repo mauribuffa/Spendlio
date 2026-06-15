@@ -1,10 +1,10 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { and, desc, eq, isNull } from 'drizzle-orm';
-import { receipts } from '@spendlio/db';
+import { receipts, transactions } from '@spendlio/db';
 // (sha256 is validated at the API edge by CreateReceiptInput / the presign query.)
 import { getBlobStore, receiptKey } from '@spendlio/storage';
 import { enqueue } from '@spendlio/queue';
-import type { CreateReceiptInput } from '@spendlio/contracts';
+import type { CreateReceiptInput, ConfirmReceiptInput } from '@spendlio/contracts';
 import { DB } from '../db/db.module';
 
 @Injectable()
@@ -61,6 +61,51 @@ export class ReceiptsService {
       .where(and(eq(receipts.id, id), eq(receipts.userId, userId), isNull(receipts.deletedAt)));
     if (!row) throw new NotFoundException();
     return this.toReceipt(row);
+  }
+
+  /**
+   * Approve a reviewed receipt: persist the user-corrected values and create the
+   * linked expense transaction. The user has the final word on every money value
+   * (OCR is only a suggestion). Rejects a receipt that isn't parsed yet or has
+   * already been converted. `total` is integer minor units; stored as a negative
+   * expense amount.
+   */
+  async confirm(userId: string, id: string, dto: ConfirmReceiptInput) {
+    const [row] = await this.db.select().from(receipts)
+      .where(and(eq(receipts.id, id), eq(receipts.userId, userId), isNull(receipts.deletedAt)));
+    if (!row) throw new NotFoundException();
+    if (row.status !== 'parsed') {
+      throw new BadRequestException('Receipt is still being read — try again once it has been scanned.');
+    }
+    if (row.transactionId) {
+      throw new BadRequestException('This receipt has already been turned into an expense.');
+    }
+
+    const [txn] = await this.db.insert(transactions).values({
+      userId,
+      title: dto.merchant ?? 'Receipt',
+      merchant: dto.merchant ?? null,
+      amount: -Math.abs(dto.total),       // expense — stored negative
+      currency: dto.currency,
+      category: dto.category,
+      occurredAt: dto.occurredAt,
+      status: 'cleared',
+      source: 'ocr',
+      receiptId: id,
+    }).returning();
+
+    const ocr = { ...(row.ocr ?? {}), lineItems: dto.lineItems };
+    await this.db.update(receipts).set({
+      merchant: dto.merchant ?? null,
+      total: dto.total,
+      currency: dto.currency,
+      purchasedAt: dto.occurredAt,
+      ocr,
+      transactionId: txn.id,
+      updatedAt: new Date(),
+    }).where(and(eq(receipts.id, id), eq(receipts.userId, userId)));
+
+    return txn;
   }
 
   /** A short-lived URL to view the receipt's image (user-scoped). */

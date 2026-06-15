@@ -35,6 +35,7 @@ import {
   ReceiptSchema,
   type Receipt,
   type CreateReceiptInput,
+  type ConfirmReceiptInput,
   SettlementSchema,
   type Settlement,
   type CreateSettlementInput,
@@ -194,6 +195,11 @@ export function presignReceipt(contentType: string, sha256?: string): Promise<Pr
 /** Step 3 of upload: register the uploaded object key → creates the row + enqueues OCR. */
 export function registerReceipt(input: CreateReceiptInput): Promise<Receipt> {
   return api.post(`/receipts`, input, ReceiptSchema);
+}
+
+/** Approve a reviewed receipt → creates the linked expense, returns it. */
+export function confirmReceipt(id: string, input: ConfirmReceiptInput): Promise<Transaction> {
+  return api.post(`/receipts/${id}/confirm`, input, TransactionSchema);
 }
 
 export type {
