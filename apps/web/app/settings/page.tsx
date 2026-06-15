@@ -9,29 +9,31 @@ export default async function SettingsPage() {
   const { data, error } = await safe<User | null>(() => getMe(), null);
 
   return (
-    <div>
-      <PageHeader eyebrow="Account" title="Settings" />
+    <>
+      <PageHeader eyebrow="Account" title="Settings" hideActions />
 
-      {error ? (
-        <Notice tone="warn">
-          The API is not reachable yet. Your profile will appear once apps/api is running and the
-          demo user is seeded.
-        </Notice>
-      ) : null}
+      <div style={{ maxWidth: 760 }}>
+        {error ? (
+          <Notice tone="warn">
+            The API is not reachable yet. Your profile will appear once apps/api is running and the
+            demo user is seeded.
+          </Notice>
+        ) : null}
 
-      {data ? (
-        <SettingsForm user={data} />
-      ) : (
-        <Card padding="lg">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-            <Avatar name="Demo User" size="lg" />
-            <div>
-              <p style={{ color: 'var(--text-subtle)' }}>No profile loaded.</p>
-              <Badge tone="neutral">Dev mode · demo user</Badge>
+        {data ? (
+          <SettingsForm user={data} />
+        ) : (
+          <Card padding="lg" style={{ borderRadius: 'var(--radius-xl)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <Avatar name="Demo User" size="lg" />
+              <div>
+                <p style={{ margin: '0 0 var(--space-2)', color: 'var(--text-subtle)' }}>No profile loaded.</p>
+                <Badge tone="neutral">Dev mode · demo user</Badge>
+              </div>
             </div>
-          </div>
-        </Card>
-      )}
-    </div>
+          </Card>
+        )}
+      </div>
+    </>
   );
 }

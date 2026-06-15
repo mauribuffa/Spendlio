@@ -1,25 +1,44 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { Search } from 'lucide-react';
 import { Card, Badge, Button, Input, MoneyAmount, CategoryIcon, Tag } from '@spendlio/ui';
+import type { BadgeTone } from '@spendlio/ui';
 import type { TransactionStatus } from '@spendlio/contracts';
 import type { Transaction, Account } from '../../lib/resources';
 import { AddTransactionForm } from './AddTransactionForm';
 
-type Tone = 'neutral' | 'primary' | 'positive' | 'negative' | 'accent';
-
-const STATUS_BADGE: Record<TransactionStatus, { tone: Tone; label: string }> = {
-  cleared: { tone: 'neutral', label: 'Cleared' },
-  pending: { tone: 'accent', label: 'Pending' },
-  split: { tone: 'primary', label: 'Split' },
-  recurring: { tone: 'accent', label: 'Recurring' },
+/** Status pill mapping — mirrors the canonical Transactions table. */
+const STATUS_BADGE: Record<TransactionStatus, { tone: BadgeTone; label: string }> = {
+  split: { tone: 'brand', label: 'Split' },
   income: { tone: 'positive', label: 'Income' },
+  recurring: { tone: 'info', label: 'Recurring' },
+  pending: { tone: 'warning', label: 'Pending' },
+  cleared: { tone: 'neutral', label: 'Cleared' },
 };
+
+/** Fixed filter set + leading dot color, per the design bundle. */
+const FILTERS = [
+  { key: 'all', label: 'All', color: null },
+  { key: 'groceries', label: 'Groceries', color: 'var(--cat-1)' },
+  { key: 'dining', label: 'Dining', color: 'var(--cat-2)' },
+  { key: 'split', label: 'Split', color: 'var(--cat-5)' },
+  { key: 'income', label: 'Income', color: 'var(--cat-1)' },
+] as const;
+
+type FilterKey = (typeof FILTERS)[number]['key'];
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-/** Column template shared by the header row and each transaction row. */
-const COLS = '1fr 140px 90px 110px 120px';
+const th: React.CSSProperties = {
+  textAlign: 'left',
+  fontSize: 'var(--text-2xs)',
+  fontWeight: 'var(--weight-bold)',
+  letterSpacing: 'var(--tracking-caps)',
+  textTransform: 'uppercase',
+  color: 'var(--text-subtle)',
+  padding: '16px var(--space-4) 12px',
+};
 
 export function TransactionsView({
   transactions,
@@ -29,26 +48,27 @@ export function TransactionsView({
   accounts: Account[];
 }) {
   const [showForm, setShowForm] = useState(false);
-  const [cat, setCat] = useState<string>('all');
+  const [filter, setFilter] = useState<FilterKey>('all');
   const [query, setQuery] = useState('');
 
   const accountById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts]);
 
-  // Distinct categories present, in first-seen order, for the filter chips.
-  const categories = useMemo(() => {
-    const seen: string[] = [];
-    for (const t of transactions) if (!seen.includes(t.category)) seen.push(t.category);
-    return seen;
-  }, [transactions]);
-
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     return transactions.filter((t) => {
-      if (cat !== 'all' && t.category !== cat) return false;
+      const matchesFilter =
+        filter === 'all'
+          ? true
+          : filter === 'split'
+            ? t.status === 'split' || !!t.splitId
+            : filter === 'income'
+              ? t.status === 'income'
+              : t.category === filter;
+      if (!matchesFilter) return false;
       if (!q) return true;
       return t.title.toLowerCase().includes(q) || (t.merchant ?? '').toLowerCase().includes(q);
     });
-  }, [transactions, cat, query]);
+  }, [transactions, filter, query]);
 
   const accountLabel = (t: Transaction): string => {
     const a = t.accountId ? accountById.get(t.accountId) : undefined;
@@ -59,119 +79,158 @@ export function TransactionsView({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
       {/* Toolbar: filter chips · search · add-expense */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexWrap: 'wrap', flex: 1 }}>
-          <Tag selectable selected={cat === 'all'} onClick={() => setCat('all')}>
-            All
-          </Tag>
-          {categories.map((c) => (
-            <Tag key={c} selectable selected={cat === c} onClick={() => setCat(c)} style={{ textTransform: 'capitalize' }}>
-              {c}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 'var(--space-4)',
+          flexWrap: 'wrap',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+          {FILTERS.map((f) => (
+            <Tag
+              key={f.key}
+              selectable
+              selected={filter === f.key}
+              color={f.color}
+              onClick={() => setFilter(f.key)}
+            >
+              {f.label}
             </Tag>
           ))}
         </div>
-        <div style={{ width: 220 }}>
-          <Input
-            type="search"
-            placeholder="Search transactions"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+          <div style={{ position: 'relative', width: 240 }}>
+            <Search
+              size={17}
+              strokeWidth={2}
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                left: 12,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: 'var(--text-subtle)',
+                pointerEvents: 'none',
+              }}
+            />
+            <Input
+              type="search"
+              placeholder="Search transactions"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              style={{ paddingLeft: 36 }}
+            />
+          </div>
+          <Button type="button" variant="primary" onClick={() => setShowForm((v) => !v)}>
+            {showForm ? 'Close' : 'Add expense'}
+          </Button>
         </div>
-        <Button type="button" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? 'Close' : '+ Add expense'}
-        </Button>
       </div>
 
       {showForm ? <AddTransactionForm /> : null}
 
       <Card padding="none">
-        {/* Header row */}
-        <div
+        <table
           style={{
-            display: 'grid',
-            gridTemplateColumns: COLS,
-            gap: 'var(--space-4)',
-            padding: 'var(--space-3) var(--space-5)',
-            borderBottom: '1px solid var(--border-subtle)',
-            fontSize: 'var(--text-xs)',
-            fontWeight: 'var(--weight-semibold)',
-            letterSpacing: 'var(--tracking-caps)',
-            textTransform: 'uppercase',
-            color: 'var(--text-subtle)',
+            width: '100%',
+            borderCollapse: 'collapse',
+            fontFamily: 'var(--font-sans)',
           }}
         >
-          <span>Transaction</span>
-          <span>Account</span>
-          <span>Date</span>
-          <span>Status</span>
-          <span style={{ textAlign: 'right' }}>Amount</span>
-        </div>
-
-        {visible.length === 0 ? (
-          <p style={{ padding: 'var(--space-6)', textAlign: 'center', color: 'var(--text-subtle)' }}>
-            No transactions match. Try a different filter, or add one.
-          </p>
-        ) : (
-          visible.map((t, i) => {
-            const badge = STATUS_BADGE[t.status];
-            return (
-              <div
-                key={t.id}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: COLS,
-                  gap: 'var(--space-4)',
-                  alignItems: 'center',
-                  padding: 'var(--space-4) var(--space-5)',
-                  borderBottom: i === visible.length - 1 ? 'none' : '1px solid var(--border-subtle)',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', minWidth: 0 }}>
-                  <CategoryIcon category={t.category} size="sm" />
-                  <div style={{ minWidth: 0 }}>
-                    <div
-                      style={{
-                        fontWeight: 'var(--weight-semibold)',
-                        color: 'var(--text-strong)',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
-                    >
-                      {t.title}
-                    </div>
-                    {t.merchant ? (
-                      <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-subtle)' }}>{t.merchant}</div>
-                    ) : null}
-                  </div>
-                </div>
-
-                <span
+          <thead>
+            <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+              <th style={th}>Transaction</th>
+              <th style={th}>Account</th>
+              <th style={th}>Date</th>
+              <th style={th}>Status</th>
+              <th style={{ ...th, textAlign: 'right' }}>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {visible.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={5}
                   style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 'var(--text-xs)',
-                    color: 'var(--text-muted)',
+                    padding: 'var(--space-6)',
+                    textAlign: 'center',
+                    color: 'var(--text-subtle)',
+                    fontSize: 'var(--text-sm)',
                   }}
                 >
-                  {accountLabel(t)}
-                </span>
-
-                <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
-                  {new Date(t.occurredAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                </span>
-
-                <span>
-                  <Badge tone={badge.tone}>{badge.label}</Badge>
-                </span>
-
-                <span style={{ textAlign: 'right' }}>
-                  <MoneyAmount amount={t.amount} currency={t.currency} color="auto" />
-                </span>
-              </div>
-            );
-          })
-        )}
+                  No transactions match. Try a different filter, or add one.
+                </td>
+              </tr>
+            ) : (
+              visible.map((t) => {
+                const badge = STATUS_BADGE[t.status];
+                return (
+                  <tr key={t.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                    <td style={{ padding: '12px var(--space-4)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', minWidth: 0 }}>
+                        <CategoryIcon category={t.category} size="sm" />
+                        <div style={{ minWidth: 0 }}>
+                          <div
+                            style={{
+                              fontSize: 'var(--text-sm)',
+                              fontWeight: 'var(--weight-semibold)',
+                              color: 'var(--text-strong)',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            }}
+                          >
+                            {t.title}
+                          </div>
+                          {t.merchant ? (
+                            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
+                              {t.merchant}
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                    </td>
+                    <td
+                      style={{
+                        padding: '12px var(--space-4)',
+                        fontSize: 'var(--text-sm)',
+                        color: 'var(--text-muted)',
+                        fontFamily: 'var(--font-mono)',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {accountLabel(t)}
+                    </td>
+                    <td
+                      style={{
+                        padding: '12px var(--space-4)',
+                        fontSize: 'var(--text-sm)',
+                        color: 'var(--text-muted)',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {new Date(t.occurredAt).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </td>
+                    <td style={{ padding: '12px var(--space-4)' }}>
+                      <Badge tone={badge.tone} size="sm">
+                        {badge.label}
+                      </Badge>
+                    </td>
+                    <td style={{ padding: '12px var(--space-4)', textAlign: 'right' }}>
+                      <MoneyAmount amount={t.amount} currency={t.currency} size="sm" color="auto" />
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
       </Card>
     </div>
   );

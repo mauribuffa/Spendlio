@@ -1,13 +1,16 @@
 'use client';
 
 import { useActionState, useEffect, useRef, useState } from 'react';
-import { Button, Input, Card, SegmentedControl } from '@spendlio/ui';
+import { Button, Input, Card, SegmentedControl, Select } from '@spendlio/ui';
 import { createTransactionAction, type ActionResult } from './actions';
 
 const CATEGORIES = [
   'groceries', 'dining', 'transport', 'housing', 'utilities', 'shopping',
   'health', 'entertainment', 'travel', 'subscriptions', 'income', 'transfer',
 ] as const;
+
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const CATEGORY_OPTIONS = CATEGORIES.map((c) => ({ value: c, label: cap(c) }));
 
 const initial: ActionResult = { ok: false };
 
@@ -77,17 +80,7 @@ export function AddTransactionForm() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 'var(--space-4)' }}>
           <div>
             <label htmlFor="category" style={labelStyle}>Category</label>
-            <select
-              id="category"
-              name="category"
-              defaultValue="dining"
-              className="spl-input"
-              style={selectStyle}
-            >
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
+            <Select id="category" name="category" defaultValue="dining" options={CATEGORY_OPTIONS} />
           </div>
           <div>
             <label htmlFor="currency" style={labelStyle}>Currency</label>
@@ -116,18 +109,6 @@ export function AddTransactionForm() {
     </Card>
   );
 }
-
-const selectStyle = {
-  width: '100%',
-  padding: '10px 14px',
-  fontFamily: 'var(--font-sans)',
-  fontSize: 'var(--text-base)',
-  color: 'var(--text-strong)',
-  background: 'var(--surface-card)',
-  border: '1px solid var(--border-subtle)',
-  borderRadius: 'var(--radius-md)',
-  appearance: 'none' as const,
-};
 
 function FieldError({ children }: { children: React.ReactNode }) {
   return (
