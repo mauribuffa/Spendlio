@@ -8,6 +8,9 @@ export type { ClassValue } from './cn';
 export { Button } from './components/Button';
 export type { ButtonProps, ButtonVariant, ButtonSize } from './components/Button';
 
+export { Divider } from './components/Divider';
+export type { DividerProps } from './components/Divider';
+
 export { IconButton } from './components/IconButton';
 export type { IconButtonProps, IconButtonVariant, IconButtonSize } from './components/IconButton';
 
@@ -20,8 +23,8 @@ export type { CardProps } from './components/Card';
 export { Badge } from './components/Badge';
 export type { BadgeProps, BadgeTone } from './components/Badge';
 
-export { Avatar } from './components/Avatar';
-export type { AvatarProps, AvatarSize } from './components/Avatar';
+export { Avatar, AvatarGroup } from './components/Avatar';
+export type { AvatarProps, AvatarGroupProps, AvatarSize } from './components/Avatar';
 
 export { MoneyAmount, formatSignedMoney } from './components/MoneyAmount';
 export type { MoneyAmountProps } from './components/MoneyAmount';

@@ -329,11 +329,33 @@
 .spl-button[data-variant='primary']:hover:not(:disabled) {
   background: var(--action-primary-hover);
 }
+.spl-button[data-variant='primary']:active:not(:disabled) {
+  background: var(--action-primary-press);
+}
 .spl-button[data-variant='secondary']:hover:not(:disabled) {
   background: var(--surface-sunken);
+  border-color: var(--border-strong);
 }
 .spl-button[data-variant='ghost']:hover:not(:disabled) {
-  background: var(--surface-sunken);
+  background: var(--surface-brand-sub);
+}
+.spl-button[data-variant='accent']:hover:not(:disabled) {
+  background: var(--action-accent-hover);
+}
+.spl-button[data-variant='danger']:hover:not(:disabled) {
+  background: var(--negative-600);
+}
+.spl-button[data-variant='quiet']:hover:not(:disabled) {
+  background: var(--surface-inset);
+}
+
+/* ---- Card (interactive) ---- */
+.spl-card--interactive:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-default);
+}
+.spl-card--interactive:active {
+  transform: scale(0.995);
 }
 
 .spl-input:focus {
