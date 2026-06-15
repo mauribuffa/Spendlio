@@ -304,3 +304,11 @@
 .spl-empty__title { font-family: var(--font-display); font-weight: var(--weight-bold); font-size: var(--text-lg); color: var(--color-ink); }
 .spl-empty__msg { font-size: var(--text-sm); color: var(--color-ink-muted); max-width: 320px; line-height: 1.5; }
 .spl-empty__action { margin-top: 12px; }
+/* ---- Skeleton ---- */
+@keyframes spl-shimmer { 100% { background-position: -200% 0; } }
+.spl-skel { display: block; border-radius: var(--radius-sm); background: linear-gradient(90deg, var(--neutral-100) 0%, var(--neutral-50) 40%, var(--neutral-100) 80%); background-size: 200% 100%; animation: spl-shimmer 1.4s var(--ease-out) infinite; }
+@media (prefers-reduced-motion: reduce) { .spl-skel { animation: none; } }
+.spl-skel--text { height: 0.8em; border-radius: var(--radius-xs); }
+.spl-skel--circle { border-radius: 50%; }
+.spl-skel-row { display: flex; align-items: center; gap: 13px; padding: 12px 4px; }
+.spl-skel-row__body { flex: 1; display: flex; flex-direction: column; gap: 7px; }
