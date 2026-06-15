@@ -178,9 +178,11 @@ export function getReceipt(id: string): Promise<Receipt> {
   return api.get(`/receipts/${id}`, ReceiptSchema);
 }
 
-/** Step 1 of upload: ask the API for a short-lived PUT url for this MIME type. */
-export function presignReceipt(contentType: string): Promise<PresignedUpload> {
-  return api.post(`/receipts/presign?contentType=${encodeURIComponent(contentType)}`, undefined, PresignedUpload);
+/** Step 1 of upload: ask the API for a short-lived PUT url for this MIME type.
+ *  The content hash makes the storage key content-addressed (dedup-friendly). */
+export function presignReceipt(contentType: string, sha256?: string): Promise<PresignedUpload> {
+  const qs = `?contentType=${encodeURIComponent(contentType)}${sha256 ? `&sha256=${sha256}` : ''}`;
+  return api.post(`/receipts/presign${qs}`, undefined, PresignedUpload);
 }
 
 /** Step 3 of upload: register the uploaded object key → creates the row + enqueues OCR. */

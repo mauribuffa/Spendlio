@@ -4,13 +4,15 @@ import { useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@spendlio/ui';
 import { uploadToPresignedUrl } from '../../lib/uploadToPresignedUrl';
+import { sha256Hex } from '../../lib/sha256';
 import { presignAction, registerReceiptAction } from './actions';
 
 /**
- * Scan-receipt control. Three steps, the middle one client-side:
- *   1. presignAction(file.type)  — server (x-user-id stays server-side)
+ * Scan-receipt control. Four steps, the first two client-side:
+ *   0. sha256Hex(file) — browser (content hash; bytes never hit our API)
+ *   1. presignAction(file.type, hash) — server (content-addressed key)
  *   2. PUT bytes to the presigned URL — browser (no Spendlio creds on this URL)
- *   3. registerReceiptAction(key) — server (creates row + enqueues OCR + revalidates)
+ *   3. registerReceiptAction(key, hash) — server (row + OCR, deduped on the hash)
  * Then router.refresh() pulls the freshly-revalidated server list.
  */
 export function UploadReceipt() {
@@ -22,7 +24,15 @@ export function UploadReceipt() {
   async function handleFile(file: File) {
     setError(null);
 
-    const presign = await presignAction(file.type || 'image/jpeg');
+    let hash: string;
+    try {
+      hash = await sha256Hex(file);
+    } catch {
+      setError('Could not read the file.');
+      return;
+    }
+
+    const presign = await presignAction(file.type || 'image/jpeg', hash);
     if (!presign.ok || !presign.presigned) {
       setError(presign.error ?? 'Could not start the upload.');
       return;
@@ -35,7 +45,7 @@ export function UploadReceipt() {
       return;
     }
 
-    const registered = await registerReceiptAction(presign.presigned.key);
+    const registered = await registerReceiptAction(presign.presigned.key, hash);
     if (!registered.ok) {
       setError(registered.error ?? 'Could not save the receipt.');
       return;

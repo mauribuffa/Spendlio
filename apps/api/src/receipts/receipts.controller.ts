@@ -14,9 +14,14 @@ export class ReceiptsController {
   list(@CurrentUser() u: { id: string }) { return this.svc.list(u.id); }
 
   // Step 1: get a presigned PUT url; the client uploads the image bytes directly.
+  // The client passes the content hash it computed so the key is content-addressed.
   @Post('presign')
-  presign(@CurrentUser() u: { id: string }, @Query('contentType') contentType?: string) {
-    return this.svc.presign(u.id, contentType);
+  presign(
+    @CurrentUser() u: { id: string },
+    @Query('contentType') contentType?: string,
+    @Query('sha256') sha256?: string,
+  ) {
+    return this.svc.presign(u.id, contentType, sha256);
   }
 
   // Step 2: register the uploaded key → create row + enqueue OCR.

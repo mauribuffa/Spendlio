@@ -15,6 +15,13 @@
       "when": 1781550893133,
       "tag": "0001_empty_colossus",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781554020096,
+      "tag": "0002_known_spectrum",
+      "breakpoints": true
     }
   ]
 }
