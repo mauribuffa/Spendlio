@@ -1,7 +1,11 @@
 import { z } from 'zod';
 import { ownedEntity } from './common';
 import { CurrencyCode } from './money';
-import { ReceiptStatus } from './enums';
+import { ReceiptStatus, CategoryKey } from './enums';
+
+// Lowercase hex SHA-256 (64 chars) — the client-computed content hash.
+export const Sha256Hex = z.string().regex(/^[0-9a-f]{64}$/, 'expected a 64-char hex SHA-256');
+export type Sha256Hex = z.infer<typeof Sha256Hex>;
 
 export const ReceiptLineItem = z.object({
   description: z.string(),
@@ -13,6 +17,7 @@ export type ReceiptLineItem = z.infer<typeof ReceiptLineItem>;
 export const ReceiptSchema = z.object({
   ...ownedEntity,
   imageKey: z.string().min(1),                       // object-storage key (S3/MinIO)
+  sha256: Sha256Hex.nullable().optional(),           // client content hash (null on legacy rows)
   status: ReceiptStatus,
   merchant: z.string().nullable().optional(),
   total: z.number().int().nullable().optional(),     // minor units, OCR-parsed
@@ -25,6 +30,24 @@ export const ReceiptSchema = z.object({
 });
 export type Receipt = z.infer<typeof ReceiptSchema>;
 
-// Client creates a receipt by registering an uploaded image key; OCR fills the rest.
-export const CreateReceiptInput = z.object({ imageKey: z.string().min(1) });
+// Client creates a receipt by registering an uploaded image key (+ the content
+// hash it computed before upload); OCR fills the rest. sha256 is optional so the
+// flow degrades gracefully, but the web client always sends it.
+export const CreateReceiptInput = z.object({
+  imageKey: z.string().min(1),
+  sha256: Sha256Hex.optional(),
+});
 export type CreateReceiptInput = z.infer<typeof CreateReceiptInput>;
+
+// The user's reviewed/corrected values for a parsed receipt. Approving it
+// updates the receipt AND creates the linked expense. Money is integer minor
+// units (the web converts major→minor per-currency before sending).
+export const ConfirmReceiptInput = z.object({
+  merchant: z.string().min(1).nullable().optional(),
+  occurredAt: z.coerce.date(),
+  total: z.number().int(),            // minor units (magnitude; stored as a negative expense)
+  currency: CurrencyCode,
+  category: CategoryKey,
+  lineItems: z.array(ReceiptLineItem).default([]),
+});
+export type ConfirmReceiptInput = z.infer<typeof ConfirmReceiptInput>;

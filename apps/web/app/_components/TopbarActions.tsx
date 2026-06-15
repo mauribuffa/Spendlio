@@ -73,7 +73,7 @@ export function TopbarActions() {
             <span style={{ fontSize: 'var(--text-sm)', color: 'var(--green-800)', maxWidth: 280, lineHeight: 1.5 }}>
               Upload a photo of your receipt. We&rsquo;ll read the line items and add them for you.
             </span>
-            <UploadReceipt />
+            <UploadReceipt onSuccess={() => setScanOpen(false)} />
           </div>
         </div>
       </Modal>

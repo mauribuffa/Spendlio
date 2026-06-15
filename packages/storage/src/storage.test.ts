@@ -55,6 +55,15 @@ describe('receiptKey', () => {
   it('strips a leading dot from the extension', () => {
     expect(receiptKey('u', '.png')).toMatch(/\.png$/);
   });
+
+  it('is content-addressed (stable) when given a sha256', () => {
+    const u = '00000000-0000-0000-0000-000000000001';
+    const h = 'a'.repeat(64);
+    const a = receiptKey(u, 'jpg', h);
+    const b = receiptKey(u, 'jpg', h);
+    expect(a).toBe(`receipts/${u}/${h}.jpg`);
+    expect(a).toBe(b); // same content -> same key (dedup)
+  });
 });
 
 // Round-trip against a real MinIO (docker compose up; bucket `receipts` exists).
