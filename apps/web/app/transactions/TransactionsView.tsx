@@ -2,11 +2,10 @@
 
 import { useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
-import { Card, Badge, Button, Input, MoneyAmount, CategoryIcon, Tag } from '@spendlio/ui';
+import { Card, Badge, Input, MoneyAmount, CategoryIcon, Tag } from '@spendlio/ui';
 import type { BadgeTone } from '@spendlio/ui';
 import type { TransactionStatus } from '@spendlio/contracts';
 import type { Transaction, Account } from '../../lib/resources';
-import { AddTransactionForm } from './AddTransactionForm';
 
 /** Status pill mapping — mirrors the canonical Transactions table. */
 const STATUS_BADGE: Record<TransactionStatus, { tone: BadgeTone; label: string }> = {
@@ -47,7 +46,6 @@ export function TransactionsView({
   transactions: Transaction[];
   accounts: Account[];
 }) {
-  const [showForm, setShowForm] = useState(false);
   const [filter, setFilter] = useState<FilterKey>('all');
   const [query, setQuery] = useState('');
 
@@ -78,7 +76,7 @@ export function TransactionsView({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-      {/* Toolbar: filter chips · search · add-expense */}
+      {/* Toolbar: filter chips · search (Add expense lives in the topbar) */}
       <div
         style={{
           display: 'flex',
@@ -101,36 +99,29 @@ export function TransactionsView({
             </Tag>
           ))}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-          <div style={{ position: 'relative', width: 240 }}>
-            <Search
-              size={17}
-              strokeWidth={2}
-              aria-hidden="true"
-              style={{
-                position: 'absolute',
-                left: 12,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: 'var(--text-subtle)',
-                pointerEvents: 'none',
-              }}
-            />
-            <Input
-              type="search"
-              placeholder="Search transactions"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              style={{ paddingLeft: 36 }}
-            />
-          </div>
-          <Button type="button" variant="primary" onClick={() => setShowForm((v) => !v)}>
-            {showForm ? 'Close' : 'Add expense'}
-          </Button>
+        <div style={{ position: 'relative', width: 260 }}>
+          <Search
+            size={17}
+            strokeWidth={2}
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              left: 12,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: 'var(--text-subtle)',
+              pointerEvents: 'none',
+            }}
+          />
+          <Input
+            type="search"
+            placeholder="Search transactions"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            style={{ paddingLeft: 36 }}
+          />
         </div>
       </div>
-
-      {showForm ? <AddTransactionForm /> : null}
 
       <Card padding="none">
         <table

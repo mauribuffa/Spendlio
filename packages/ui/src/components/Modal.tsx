@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import type { ReactNode } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '../cn';
@@ -36,9 +37,11 @@ export function Modal({ open, onClose, title, children, width = 480, className }
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || typeof document === 'undefined') return null;
 
-  return (
+  // Portal to <body> so a transformed/blurred ancestor (e.g. the sticky
+  // backdrop-blurred topbar) can't become the fixed-position containing block.
+  return createPortal(
     <div
       style={{
         position: 'fixed',
@@ -118,6 +121,7 @@ export function Modal({ open, onClose, title, children, width = 480, className }
         )}
         <div style={{ flex: 1, overflowY: 'auto' }}>{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
