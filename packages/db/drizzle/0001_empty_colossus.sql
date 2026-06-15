@@ -1,0 +1,1 @@
+ALTER TABLE "people" ADD COLUMN "is_self" boolean DEFAULT false NOT NULL;

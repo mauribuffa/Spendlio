@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { CreatePersonInput } from '@spendlio/contracts';
 import { ZodPipe } from '../common/zod.pipe';
 import { AuthGuard } from '../common/auth.guard';
@@ -16,5 +16,10 @@ export class PeopleController {
   @Post()
   create(@CurrentUser() u: { id: string }, @Body(new ZodPipe(CreatePersonInput)) dto: CreatePersonInput) {
     return this.svc.create(u.id, dto);
+  }
+
+  @Post(':id/remind')
+  remind(@CurrentUser() u: { id: string }, @Param('id') id: string) {
+    return this.svc.remind(u.id, id);
   }
 }

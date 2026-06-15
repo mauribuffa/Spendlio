@@ -5,6 +5,7 @@ import { CategoriesModule } from './categories/categories.module';
 import { AccountsModule } from './accounts/accounts.module';
 import { BudgetsModule } from './budgets/budgets.module';
 import { SplitsModule } from './splits/splits.module';
+import { GroupsModule } from './groups/groups.module';
 import { SettlementsModule } from './settlements/settlements.module';
 import { ReceiptsModule } from './receipts/receipts.module';
 import { AssistantModule } from './assistant/assistant.module';
@@ -20,6 +21,7 @@ import { RecapsModule } from './recaps/recaps.module';
     AccountsModule,
     BudgetsModule,
     SplitsModule,
+    GroupsModule,
     SettlementsModule,
     ReceiptsModule,
     AssistantModule,

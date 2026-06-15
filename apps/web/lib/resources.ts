@@ -19,6 +19,9 @@ import {
   PersonSchema,
   type Person,
   type CreatePersonInput,
+  GroupSchema,
+  type Group,
+  type CreateGroupInput,
   SplitSchema,
   type Split,
   type CreateSplitInput,
@@ -104,6 +107,20 @@ export function createPerson(input: CreatePersonInput): Promise<Person> {
   return api.post(`/people`, input, PersonSchema);
 }
 
+/** Nudge a person to settle up (records an in-app settle_reminder). */
+export function remindPerson(personId: string): Promise<void> {
+  return api.post(`/people/${personId}/remind`, undefined);
+}
+
+// ---- Split: groups ----
+export function listGroups(): Promise<Group[]> {
+  return api.get(`/groups`, z.array(GroupSchema));
+}
+
+export function createGroup(input: CreateGroupInput): Promise<Group> {
+  return api.post(`/groups`, input, GroupSchema);
+}
+
 export function listSplits(): Promise<Split[]> {
   return api.get(`/splits`, z.array(SplitSchema));
 }
@@ -179,6 +196,7 @@ export type {
   Account,
   AccountBalance,
   Person,
+  Group,
   Split,
   BalanceT as Balance,
   MonthlySummary,
