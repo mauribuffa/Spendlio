@@ -6,6 +6,7 @@ import {
   formatMoney,
   CreateSettlementInput,
   SettlementSchema,
+  UpdateUserInput,
 } from './index';
 
 const sampleTransaction = {
@@ -93,5 +94,26 @@ describe('settlement contract', () => {
     });
     expect(row.status).toBe('settled');
     expect(row.settledAt).toBeInstanceOf(Date);
+  });
+});
+
+describe('UpdateUserInput (settings)', () => {
+  it('accepts a partial update of name and defaultCurrency', () => {
+    const r = UpdateUserInput.parse({ name: 'Mauricio', defaultCurrency: 'ars' });
+    expect(r.name).toBe('Mauricio');
+    expect(r.defaultCurrency).toBe('ARS'); // CurrencyCode upper-cases
+  });
+
+  it('accepts an empty object (no-op patch)', () => {
+    expect(UpdateUserInput.parse({})).toEqual({});
+  });
+
+  it('rejects an invalid currency length', () => {
+    expect(() => UpdateUserInput.parse({ defaultCurrency: 'PESOS' })).toThrow();
+  });
+
+  it('does not carry email/locale/timezone through', () => {
+    const r = UpdateUserInput.parse({ name: 'X', email: 'a@b.com', locale: 'es-AR' } as any);
+    expect(r).toEqual({ name: 'X' }); // unknown keys are stripped, not editable
   });
 });
