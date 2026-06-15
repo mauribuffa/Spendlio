@@ -17,17 +17,18 @@ import {
 import type { ReactNode } from 'react';
 import { Avatar } from '@spendlio/ui';
 
+// Primary nav — ordered to read like the canonical sidebar; the repo's extra
+// routes (Receipts, People, Recap) sit beside their natural parents.
 const NAV = [
   { href: '/', label: 'Overview', icon: LayoutDashboard },
   { href: '/transactions', label: 'Transactions', icon: ArrowLeftRight },
   { href: '/receipts', label: 'Receipts', icon: ReceiptText },
   { href: '/accounts', label: 'Accounts', icon: Landmark },
   { href: '/budgets', label: 'Budgets', icon: Wallet },
-  { href: '/split', label: 'Split', icon: Users },
+  { href: '/split', label: 'Split & settle', icon: Users },
   { href: '/people', label: 'People', icon: UserPlus },
-  { href: '/insights', label: 'Insights', icon: Sparkles },
+  { href: '/insights', label: 'Assistant', icon: Sparkles },
   { href: '/recap', label: 'Recap', icon: CalendarRange },
-  { href: '/settings', label: 'Settings', icon: Settings },
 ] as const;
 
 /** Is `href` the active route? Exact for "/", prefix for the rest. */
@@ -35,34 +36,10 @@ function isActive(pathname: string, href: string): boolean {
   return href === '/' ? pathname === '/' : pathname.startsWith(href);
 }
 
-/** The Spendlio mark: a rounded green tile with a concentric ring. */
-function Logo() {
-  return (
-    <span
-      aria-hidden="true"
-      style={{
-        width: 30,
-        height: 30,
-        borderRadius: 'var(--radius-md)',
-        background: 'var(--action-primary)',
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-      }}
-    >
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-        <circle cx="9" cy="9" r="6.5" stroke="var(--text-on-brand)" strokeWidth="2" />
-        <circle cx="9" cy="9" r="2" fill="var(--text-on-brand)" />
-      </svg>
-    </span>
-  );
-}
-
 /**
- * The web app frame: a fixed sidebar (logo + nav + an "Ask Spendlio AI" promo
- * and the signed-in profile pinned to the bottom) plus the page body on the
- * warm canvas. Composed from design tokens; pages own their content.
+ * The web app frame: a fixed 248px sidebar (logo + nav + an "Ask Spendlio AI"
+ * promo and the signed-in profile pinned to the foot) plus the scrollable page
+ * body on the warm canvas. The page owns its sticky topbar (PageHeader).
  */
 export function AppShell({
   user,
@@ -72,6 +49,7 @@ export function AppShell({
   children: ReactNode;
 }) {
   const pathname = usePathname();
+  const settingsActive = pathname.startsWith('/settings');
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
@@ -81,30 +59,26 @@ export function AppShell({
           flexShrink: 0,
           borderRight: '1px solid var(--border-subtle)',
           background: 'var(--surface-card)',
-          padding: 'var(--space-6) var(--space-4)',
+          padding: '20px 14px',
           position: 'sticky',
           top: 0,
           height: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          gap: 'var(--space-6)',
         }}
       >
         <Link
           href="/"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 'var(--space-2)',
-            padding: '0 var(--space-2)',
-          }}
+          style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '4px 8px 22px' }}
         >
-          <Logo />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-mark.svg" width={30} height={30} alt="" />
           <span
             style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 'var(--weight-bold)',
-              fontSize: 'var(--text-lg)',
+              fontSize: 20,
+              letterSpacing: '-0.02em',
               color: 'var(--green-900)',
             }}
           >
@@ -112,7 +86,7 @@ export function AppShell({
           </span>
         </Link>
 
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           {NAV.map(({ href, label, icon: Icon }) => {
             const active = isActive(pathname, href);
             return (
@@ -123,13 +97,14 @@ export function AppShell({
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 'var(--space-3)',
-                  padding: '10px var(--space-3)',
+                  gap: 11,
+                  padding: '10px 12px',
                   borderRadius: 'var(--radius-md)',
-                  fontSize: 'var(--text-sm)',
+                  fontSize: 14,
                   fontWeight: active ? 'var(--weight-semibold)' : 'var(--weight-medium)',
-                  color: active ? 'var(--green-900)' : 'var(--text-muted)',
-                  background: active ? 'var(--green-50)' : 'transparent',
+                  color: active ? 'var(--green-800)' : 'var(--text-muted)',
+                  background: active ? 'var(--surface-brand-sub)' : 'transparent',
+                  transition: 'var(--transition-colors)',
                 }}
               >
                 <Icon size={18} strokeWidth={2} aria-hidden="true" />
@@ -140,50 +115,46 @@ export function AppShell({
         </nav>
 
         {/* Bottom group: AI promo + profile, pinned to the foot of the sidebar. */}
-        <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <Link
             href="/insights"
             style={{
               display: 'block',
               background: 'var(--green-900)',
-              color: 'var(--text-on-brand)',
-              borderRadius: 'var(--radius-card)',
-              padding: 'var(--space-4)',
+              color: '#fff',
+              borderRadius: 'var(--radius-lg)',
+              padding: 14,
               textDecoration: 'none',
             }}
           >
-            <span
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--space-2)',
-                marginBottom: 'var(--space-2)',
-              }}
-            >
-              <Sparkles size={16} strokeWidth={2.2} aria-hidden="true" />
-              <span style={{ fontWeight: 'var(--weight-semibold)', fontSize: 'var(--text-sm)' }}>
-                Ask Spendlio AI
-              </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 'var(--weight-semibold)' }}>
+              <Sparkles size={15} strokeWidth={2.2} aria-hidden="true" /> Ask Spendlio AI
             </span>
-            <span style={{ fontSize: 'var(--text-xs)', opacity: 0.85, lineHeight: 1.4 }}>
+            <span style={{ display: 'block', fontSize: 12, color: 'var(--green-200)', marginTop: 4, lineHeight: 1.4 }}>
               &ldquo;How much did I spend on dining in May?&rdquo;
             </span>
           </Link>
 
-          <div
+          <Link
+            href="/settings"
+            aria-current={settingsActive ? 'page' : undefined}
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 'var(--space-3)',
-              padding: '0 var(--space-2)',
+              gap: 10,
+              padding: '6px 8px',
+              borderRadius: 'var(--radius-md)',
+              background: settingsActive ? 'var(--surface-sunken)' : 'transparent',
               minWidth: 0,
+              transition: 'var(--transition-colors)',
             }}
           >
             <Avatar name={user?.name ?? 'Demo User'} size="sm" />
-            <div style={{ minWidth: 0 }}>
-              <div
+            <span style={{ minWidth: 0, flex: 1 }}>
+              <span
                 style={{
-                  fontSize: 'var(--text-sm)',
+                  display: 'block',
+                  fontSize: 13,
                   fontWeight: 'var(--weight-semibold)',
                   color: 'var(--text-strong)',
                   whiteSpace: 'nowrap',
@@ -192,10 +163,11 @@ export function AppShell({
                 }}
               >
                 {user?.name ?? 'Demo User'}
-              </div>
-              <div
+              </span>
+              <span
                 style={{
-                  fontSize: 'var(--text-xs)',
+                  display: 'block',
+                  fontSize: 11.5,
                   color: 'var(--text-subtle)',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
@@ -203,14 +175,25 @@ export function AppShell({
                 }}
               >
                 {user?.email ?? 'dev mode'}
-              </div>
-            </div>
-          </div>
+              </span>
+            </span>
+            <Settings size={16} strokeWidth={2} aria-hidden="true" style={{ color: 'var(--text-subtle)', flex: 'none' }} />
+          </Link>
         </div>
       </aside>
 
-      <main style={{ flex: 1, minWidth: 0, padding: 'var(--space-8)' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>{children}</div>
+      <main
+        style={{
+          flex: 1,
+          minWidth: 0,
+          height: '100vh',
+          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '0 28px 28px',
+        }}
+      >
+        {children}
       </main>
     </div>
   );

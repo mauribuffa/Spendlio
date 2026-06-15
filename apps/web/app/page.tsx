@@ -1,20 +1,44 @@
-import { Card, Stat, MoneyAmount, TransactionRow, ProgressBar } from '@spendlio/ui';
+import Link from 'next/link';
+import { Wallet, ArrowUpRight, ArrowDownLeft, PiggyBank, Sparkles, ArrowRight } from 'lucide-react';
+import { Card, MoneyAmount, TransactionRow, ProgressBar, formatSignedMoney } from '@spendlio/ui';
+import { getCurrencyDecimals } from '@spendlio/contracts';
 import { listTransactions, getBudgetStatus, type Transaction, type BudgetStatus } from '../lib/resources';
 import { safe } from '../lib/safe';
 import { PageHeader } from './_components/PageHeader';
 import { Notice } from './_components/Notice';
+import { Donut } from './_components/charts';
 
-/** Sum of expense (negative) amounts as a positive cents number, by currency major. */
+/** --cat ramp slot per category — mirrors @spendlio/ui CategoryIcon. */
+const CAT_SLOT: Record<string, number> = {
+  groceries: 1, dining: 2, transport: 3, housing: 4, utilities: 6, shopping: 5,
+  health: 4, entertainment: 5, travel: 3, subscriptions: 7, income: 1, transfer: 8,
+};
+const catColor = (c: string) => `var(--cat-${CAT_SLOT[c] ?? 8})`;
+
+/** Whole-currency formatter for compact figures (no sign, no cents). */
+function whole(cents: number, currency: string): string {
+  const d = getCurrencyDecimals(currency);
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(
+    Math.abs(cents) / 10 ** d,
+  );
+}
+
 function totals(items: Transaction[]) {
   let income = 0;
   let expense = 0;
+  const byCategory = new Map<string, number>();
   for (const item of items) {
     if (item.amount >= 0) income += item.amount;
-    else expense += -item.amount;
+    else {
+      expense += -item.amount;
+      byCategory.set(item.category, (byCategory.get(item.category) ?? 0) + -item.amount);
+    }
   }
-  // Assumes a single display currency for the demo; FX-aware totals come later.
   const currency = items[0]?.currency ?? 'USD';
-  return { income, expense, net: income - expense, currency };
+  const categories = [...byCategory.entries()]
+    .map(([category, value]) => ({ category, value }))
+    .sort((a, b) => b.value - a.value);
+  return { income, expense, net: income - expense, currency, categories };
 }
 
 export default async function OverviewPage() {
@@ -24,11 +48,12 @@ export default async function OverviewPage() {
   ]);
 
   const t = totals(tx.data.items);
-  const recent = tx.data.items.slice(0, 5);
+  const recent = tx.data.items.slice(0, 6);
   const unreachable = tx.error || budgets.error;
+  const onDark = { color: 'var(--green-200)' };
 
   return (
-    <div>
+    <>
       <PageHeader eyebrow="This month" title="Overview" />
 
       {unreachable ? (
@@ -37,29 +62,129 @@ export default async function OverviewPage() {
         </Notice>
       ) : null}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
-        <Card>
-          <Stat label="Spent" value={<MoneyAmount amount={-t.expense} currency={t.currency} size="lg" color="off" />} />
-        </Card>
-        <Card>
-          <Stat label="Income" value={<MoneyAmount amount={t.income} currency={t.currency} size="lg" color="off" />} />
-        </Card>
-        <Card>
-          <Stat label="Net" value={<MoneyAmount amount={t.net} currency={t.currency} size="lg" />} />
-        </Card>
-      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 18, maxWidth: 1160 }}>
+        {/* Balance hero + recap */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1.7fr 1fr', gap: 18, alignItems: 'stretch' }}>
+          <Card variant="inverse" style={{ borderRadius: 'var(--radius-2xl)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.06em', color: 'var(--green-200)', textTransform: 'uppercase' }}>
+                  Net this month · {t.currency}
+                </div>
+                <div
+                  data-money
+                  style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 44, letterSpacing: '-0.02em', color: '#fff', marginTop: 8, lineHeight: 1 }}
+                >
+                  {formatSignedMoney(t.net, t.currency)}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, ...onDark, fontSize: 12 }}>
+                  Income minus spending across your transactions
+                </div>
+              </div>
+              <span style={{ width: 40, height: 40, borderRadius: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.12)', color: '#fff', flex: 'none' }}>
+                <Wallet size={20} strokeWidth={2} aria-hidden="true" />
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: 12, marginTop: 22 }}>
+              {[
+                { icon: ArrowUpRight, label: 'Spent', value: whole(t.expense, t.currency) },
+                { icon: ArrowDownLeft, label: 'Income', value: whole(t.income, t.currency) },
+                { icon: PiggyBank, label: 'Saved', value: whole(Math.max(0, t.net), t.currency) },
+              ].map(({ icon: Icon, label, value }) => (
+                <div key={label} style={{ flex: 1, background: 'rgba(255,255,255,0.08)', borderRadius: 'var(--radius-lg)', padding: '13px 15px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, ...onDark, fontSize: 12, fontWeight: 600 }}>
+                    <Icon size={14} strokeWidth={2} aria-hidden="true" /> {label}
+                  </div>
+                  <div data-money style={{ color: '#fff', fontWeight: 700, fontSize: 19, marginTop: 4, fontFamily: 'var(--font-display)' }}>
+                    {value}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 'var(--space-6)', alignItems: 'start' }}>
-        <Card padding="sm">
-          <h2 style={{ fontSize: 'var(--text-lg)', fontFamily: 'var(--font-display)', padding: 'var(--space-3) var(--space-3) 0' }}>
-            Recent activity
-          </h2>
+          <Link href="/recap" style={{ display: 'block' }}>
+            <Card variant="brand" interactive style={{ borderColor: 'var(--green-200)', borderRadius: 'var(--radius-2xl)', height: '100%' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ width: 38, height: 38, borderRadius: 999, background: 'var(--green-600)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+                    <Sparkles size={19} strokeWidth={2} aria-hidden="true" />
+                  </span>
+                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 17, color: 'var(--green-900)' }}>Your monthly recap</span>
+                </div>
+                <div style={{ fontSize: 13.5, color: 'var(--green-800)', lineHeight: 1.5, flex: 1 }}>
+                  See where your money went and how this month compares.
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--green-700)', fontSize: 13, fontWeight: 600 }}>
+                  View recap <ArrowRight size={15} strokeWidth={2} aria-hidden="true" />
+                </div>
+              </div>
+            </Card>
+          </Link>
+        </div>
+
+        {/* Categories donut + budgets */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.7fr', gap: 18, alignItems: 'start' }}>
+          <Card title="Categories" padding="lg">
+            {t.categories.length === 0 ? (
+              <p style={{ color: 'var(--text-subtle)', fontSize: 'var(--text-sm)' }}>No spending yet.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+                <Donut
+                  data={t.categories.slice(0, 6).map((c) => ({ value: c.value, color: catColor(c.category) }))}
+                  centerLabel="Spent"
+                  centerValue={whole(t.expense, t.currency)}
+                />
+                <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {t.categories.slice(0, 4).map((c) => (
+                    <div key={c.category} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13 }}>
+                      <span style={{ width: 9, height: 9, borderRadius: 3, background: catColor(c.category), flex: 'none' }} />
+                      <span style={{ flex: 1, color: 'var(--text-body)', fontWeight: 500, textTransform: 'capitalize' }}>{c.category}</span>
+                      <MoneyAmount amount={-c.value} currency={t.currency} color="off" size="sm" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </Card>
+
+          <Card title="Budgets" padding="lg">
+            {budgets.data.length === 0 ? (
+              <p style={{ color: 'var(--text-subtle)', fontSize: 'var(--text-sm)' }}>No budgets set.</p>
+            ) : (
+              <div style={{ display: 'grid', gap: 16 }}>
+                {budgets.data.map((b) => (
+                  <div key={b.category} style={{ display: 'grid', gap: 8 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, fontSize: 13 }}>
+                      <span style={{ fontWeight: 'var(--weight-semibold)', color: 'var(--text-body)', textTransform: 'capitalize' }}>{b.category}</span>
+                      <span style={{ color: 'var(--text-muted)', fontSize: 12.5 }}>
+                        {whole(b.spent, b.currency)} <span style={{ color: 'var(--text-subtle)' }}>/ {whole(b.limit, b.currency)}</span>
+                      </span>
+                    </div>
+                    <ProgressBar value={b.spent} max={b.limit} label={`${b.category} budget usage`} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
+
+        {/* Recent transactions */}
+        <Card
+          title="Recent transactions"
+          padding="none"
+          action={
+            <Link href="/transactions" style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-brand)' }}>
+              View all
+            </Link>
+          }
+        >
           {recent.length === 0 ? (
             <p style={{ padding: 'var(--space-6)', textAlign: 'center', color: 'var(--text-subtle)' }}>
               No transactions yet.
             </p>
           ) : (
-            <div style={{ padding: '0 var(--space-3)' }}>
+            <div style={{ padding: '6px 16px' }}>
               {recent.map((item) => (
                 <TransactionRow
                   key={item.id}
@@ -73,28 +198,7 @@ export default async function OverviewPage() {
             </div>
           )}
         </Card>
-
-        <Card>
-          <h2 style={{ fontSize: 'var(--text-lg)', fontFamily: 'var(--font-display)', marginBottom: 'var(--space-4)' }}>
-            Budgets
-          </h2>
-          {budgets.data.length === 0 ? (
-            <p style={{ color: 'var(--text-subtle)', fontSize: 'var(--text-sm)' }}>No budgets set.</p>
-          ) : (
-            <div style={{ display: 'grid', gap: 'var(--space-4)' }}>
-              {budgets.data.map((b) => (
-                <div key={b.category} style={{ display: 'grid', gap: 'var(--space-2)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-sm)' }}>
-                    <span style={{ textTransform: 'capitalize' }}>{b.category}</span>
-                    <MoneyAmount amount={-b.spent} currency={b.currency} size="sm" color="off" />
-                  </div>
-                  <ProgressBar value={b.spent} max={b.limit} label={`${b.category} budget usage`} />
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
       </div>
-    </div>
+    </>
   );
 }
