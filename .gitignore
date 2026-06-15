@@ -5,3 +5,6 @@ dist
 .env
 *.log
 coverage
+
+# local Claude Code agent state
+.claude

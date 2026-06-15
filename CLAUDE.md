@@ -1,6 +1,11 @@
 # CLAUDE.md — Spendlio
 
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 > Place this file at the **root of the Spendlio monorepo**. Claude Code loads it automatically as project context. Keep it current as the project evolves.
+
+## Current state (read this first)
+The **Repo structure** section below describes the *target* layout. The repo is mid-build, so most of it does not exist yet. As of the last update, only `packages/contracts` and `packages/config` exist — there is **no `apps/` directory** and no `db`/`core`/`queue`/`storage`/`ui` packages. **`PROGRESS.md` is the single source of truth for what's built**; check it before assuming a path or package exists. Work proceeds step-by-step through `docs/build/` (in order); run each step's acceptance check, then tick `PROGRESS.md`.
 
 ## What Spendlio is
 A personal-finance + expense-splitting product: track spending/income, budgets, split bills with people, settle debts, scan receipts (OCR), AI categorization, an AI assistant over your data, recurring transactions, and monthly recaps. Two clients (web now, mobile later), one API, one database, background workers.
@@ -60,7 +65,14 @@ pnpm typecheck | lint | test
 pnpm db:generate             # create a Drizzle migration from schema
 pnpm db:migrate              # apply migrations
 pnpm db:seed                 # default categories + demo user
+
+# Per-package (faster than full turbo run):
+pnpm --filter @spendlio/contracts test       # one package's tests
+pnpm --filter @spendlio/contracts test -- src/contracts.test.ts   # one file
+pnpm --filter @spendlio/contracts test -- -t "rejects float"      # one test by name (vitest)
 ```
+
+Tests use **Vitest**. Packages are consumed straight from TypeScript source (`main`/`types` → `src/index.ts`), so there is no build step for libraries — `typecheck`/`test` run against source directly.
 
 ## How to work
 1. Read `docs/build/` and follow the steps **in order**; run each step's acceptance check before moving on.
