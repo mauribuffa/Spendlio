@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { CreateSettlementInput, CreateGroupInput } from '@spendlio/contracts';
+import { CreateSettlementInput, CreateGroupInput, toMinorUnits } from '@spendlio/contracts';
 import { createSettlement, createGroup, remindPerson } from '../../lib/resources';
 import { ApiError } from '../../lib/api';
 
@@ -40,7 +40,7 @@ export async function settleUpAction(
   if (fromPersonId === toPersonId) {
     return { ok: false, error: 'A payment must be between two different people.' };
   }
-  const amount = Math.round(amountMajor * 100); // assumes 2-dp entry currency
+  const amount = toMinorUnits(amountMajor, currency.toUpperCase()); // per-currency minor units
 
   const input = CreateSettlementInput.safeParse({
     fromPersonId,

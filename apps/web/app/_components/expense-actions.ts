@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { CreateTransactionInput, CreateSplitInput } from '@spendlio/contracts';
+import { CreateTransactionInput, CreateSplitInput, toMinorUnits } from '@spendlio/contracts';
 import { createTransaction, createSplit, listPeople } from '../../lib/resources';
 import { ApiError } from '../../lib/api';
 import type { Person } from '../../lib/resources';
@@ -54,7 +54,7 @@ export async function createExpenseAction(payload: ExpensePayload): Promise<Expe
     return { ok: false, fieldErrors: parsed.error.flatten().fieldErrors as Record<string, string[]> };
   }
   const { amountMajor, description, category, currency, split } = parsed.data;
-  const magnitude = Math.round(amountMajor * 100); // 2-dp entry currency
+  const magnitude = toMinorUnits(amountMajor, currency.toUpperCase()); // per-currency minor units
 
   const txnInput = CreateTransactionInput.safeParse({
     title: description,
