@@ -2,8 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { CreateSettlementInput } from '@spendlio/contracts';
-import { createSettlement } from '../../lib/resources';
+import { CreateSettlementInput, CreateGroupInput } from '@spendlio/contracts';
+import { createSettlement, createGroup, remindPerson } from '../../lib/resources';
 import { ApiError } from '../../lib/api';
 
 export interface ActionResult {
@@ -61,5 +61,50 @@ export async function settleUpAction(
 
   revalidatePath('/split');
   revalidatePath('/');
+  return { ok: true };
+}
+
+// Create a group from a name + a set of the user's people (checkbox values).
+const GroupFormSchema = z.object({
+  name: z.string().min(1, 'Name the group.'),
+  memberIds: z.array(z.string().uuid()).default([]),
+});
+
+export async function createGroupAction(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const parsed = GroupFormSchema.safeParse({
+    name: formData.get('name'),
+    memberIds: formData.getAll('memberIds'),
+  });
+  if (!parsed.success) {
+    return { ok: false, fieldErrors: parsed.error.flatten().fieldErrors as Record<string, string[]> };
+  }
+
+  const input = CreateGroupInput.safeParse(parsed.data);
+  if (!input.success) {
+    return { ok: false, fieldErrors: input.error.flatten().fieldErrors as Record<string, string[]> };
+  }
+
+  try {
+    await createGroup(input.data);
+  } catch (err) {
+    if (err instanceof ApiError) return { ok: false, error: err.message };
+    return { ok: false, error: 'Could not create the group.' };
+  }
+
+  revalidatePath('/split');
+  return { ok: true };
+}
+
+// Nudge one person to settle up. Bound per-row, so it takes the id directly.
+export async function remindPersonAction(personId: string): Promise<ActionResult> {
+  try {
+    await remindPerson(personId);
+  } catch (err) {
+    if (err instanceof ApiError) return { ok: false, error: err.message };
+    return { ok: false, error: 'Could not send the reminder.' };
+  }
   return { ok: true };
 }
