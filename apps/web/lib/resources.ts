@@ -28,6 +28,7 @@ import {
   type MonthlySummary,
   UserSchema,
   type User,
+  type UpdateUserInput,
   ReceiptSchema,
   type Receipt,
   type CreateReceiptInput,
@@ -133,6 +134,10 @@ export function getRecap(month: string): Promise<MonthlySummary> {
 // ---- Current user (settings) ----
 export function getMe(): Promise<User> {
   return api.get(`/me`, UserSchema);
+}
+
+export function updateMe(input: UpdateUserInput): Promise<User> {
+  return api.patch(`/me`, input, UserSchema);
 }
 
 // ---- Receipts (OCR) ----
