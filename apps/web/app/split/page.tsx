@@ -3,6 +3,7 @@ import { listPeople, getBalances, type Person, type Balance } from '../../lib/re
 import { safe } from '../../lib/safe';
 import { PageHeader } from '../_components/PageHeader';
 import { Notice } from '../_components/Notice';
+import { SettleUpForm } from './SettleUpForm';
 
 export default async function SplitPage() {
   const [people, balances] = await Promise.all([
@@ -55,6 +56,16 @@ export default async function SplitPage() {
             })}
           </div>
         )}
+      </Card>
+
+      <Card style={{ marginBottom: 'var(--space-6)' }}>
+        <h2 style={{ fontSize: 'var(--text-lg)', fontFamily: 'var(--font-display)', marginBottom: 'var(--space-4)' }}>
+          Settle up
+        </h2>
+        <p style={{ color: 'var(--color-ink-subtle)', fontSize: 'var(--text-sm)', marginBottom: 'var(--space-4)' }}>
+          Record a payment between two people to clear what they owe.
+        </p>
+        <SettleUpForm people={people.data.map((p) => ({ id: p.id, name: p.name }))} />
       </Card>
 
       <Card>
