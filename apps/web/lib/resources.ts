@@ -31,6 +31,9 @@ import {
   ReceiptSchema,
   type Receipt,
   type CreateReceiptInput,
+  SettlementSchema,
+  type Settlement,
+  type CreateSettlementInput,
 } from '@spendlio/contracts';
 import { api } from './api';
 
@@ -112,6 +115,16 @@ export function getBalances(): Promise<BalanceT[]> {
   return api.get(`/balances`, z.array(Balance));
 }
 
+const SettlementPage = Page(SettlementSchema);
+
+export function listSettlements(): Promise<z.infer<typeof SettlementPage>> {
+  return api.get(`/settlements`, SettlementPage);
+}
+
+export function createSettlement(input: CreateSettlementInput): Promise<Settlement> {
+  return api.post(`/settlements`, input, SettlementSchema);
+}
+
 // ---- Recap (insights) ----
 export function getRecap(month: string): Promise<MonthlySummary> {
   return api.get(`/recaps/${month}`, MonthlySummarySchema);
@@ -166,4 +179,5 @@ export type {
   MonthlySummary,
   User,
   Receipt,
+  Settlement,
 };
