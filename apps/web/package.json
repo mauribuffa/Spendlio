@@ -13,11 +13,12 @@
     "@spendlio/contracts": "workspace:*",
     "@spendlio/ui": "workspace:*",
     "ai": "^6.0.205",
+    "heic2any": "^0.0.4",
+    "lucide-react": "^1.18.0",
     "next": "^16.2.9",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "zod": "^3.25.76",
-    "lucide-react": "^1.18.0"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^25.9.3",
