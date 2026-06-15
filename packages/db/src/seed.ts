@@ -1,3 +1,4 @@
+import './env'; // load repo-root .env before ./client creates the pg Pool
 import { db, pool } from './client';
 import { users, categories } from './schema';
 

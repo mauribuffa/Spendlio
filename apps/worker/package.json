@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/main.ts",
-    "start": "tsx src/main.ts",
+    "dev": "node --watch --env-file-if-exists=../../.env --import tsx src/main.ts",
+    "start": "node --env-file-if-exists=../../.env --import tsx src/main.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

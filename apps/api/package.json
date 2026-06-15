@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "node --watch -r ts-node/register src/main.http.ts",
-    "start": "node -r ts-node/register src/main.http.ts",
+    "dev": "node --watch --env-file-if-exists=../../.env -r ts-node/register src/main.http.ts",
+    "start": "node --env-file-if-exists=../../.env -r ts-node/register src/main.http.ts",
     "typecheck": "node --max-old-space-size=6144 ./node_modules/typescript/bin/tsc --noEmit"
   },
   "dependencies": {
