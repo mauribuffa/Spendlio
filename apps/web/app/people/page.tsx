@@ -53,7 +53,7 @@ export default async function PeoplePage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 'var(--weight-semibold)' }}>{p.name}</div>
                     {p.email ? (
-                      <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-ink-subtle)' }}>{p.email}</div>
+                      <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-subtle)' }}>{p.email}</div>
                     ) : null}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 'var(--space-2)' }}>

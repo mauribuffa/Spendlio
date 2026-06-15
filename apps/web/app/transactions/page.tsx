@@ -13,21 +13,23 @@ export default async function TransactionsPage() {
   const count = tx.data.items.length;
 
   return (
-    <div>
+    <>
       <PageHeader
         eyebrow="Activity"
         title="Transactions"
         subtitle={`${count} ${count === 1 ? 'transaction' : 'transactions'} this month`}
       />
 
-      {tx.error ? (
-        <Notice tone="warn">
-          The API is not reachable yet, so this list is empty. Start the API (apps/api) and seed the
-          database to see live transactions.
-        </Notice>
-      ) : null}
+      <div style={{ maxWidth: 1160 }}>
+        {tx.error ? (
+          <Notice tone="warn">
+            The API is not reachable yet, so this list is empty. Start the API (apps/api) and seed
+            the database to see live transactions.
+          </Notice>
+        ) : null}
 
-      <TransactionsView transactions={tx.data.items} accounts={accts.data} />
-    </div>
+        <TransactionsView transactions={tx.data.items} accounts={accts.data} />
+      </div>
+    </>
   );
 }

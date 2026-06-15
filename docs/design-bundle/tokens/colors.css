@@ -1,0 +1,125 @@
+/* ============================================================
+   SPENDLIO — COLOR TOKENS
+   Calm, premium fintech. Deep refined green primary on a warm
+   off-white canvas, restrained warm-sand accent. Light-first.
+   ============================================================ */
+
+:root {
+  /* ---- Brand green (primary) — pine / emerald, desaturated & premium ---- */
+  --green-50:  #ECF6F0;
+  --green-100: #D2EBDE;
+  --green-200: #A6D8BF;
+  --green-300: #71BE9C;
+  --green-400: #45A37D;
+  --green-500: #258763;   /* primary accent */
+  --green-600: #1B6E4F;   /* primary action */
+  --green-700: #155840;
+  --green-800: #114633;
+  --green-900: #0E3A2B;   /* deep brand ink */
+  --green-950: #082019;
+
+  /* ---- Warm sand (secondary accent) — gold/clay, used sparingly ---- */
+  --sand-50:  #FBF6EC;
+  --sand-100: #F5EAD3;
+  --sand-200: #ECD6A9;
+  --sand-300: #E0BD78;
+  --sand-400: #D2A24B;
+  --sand-500: #BE8A30;   /* premium gold accent */
+  --sand-600: #9C6F25;
+  --sand-700: #79541E;
+  --sand-800: #5C4019;
+  --sand-900: #423012;
+
+  /* ---- Warm neutrals — paper-tinted greys (the canvas + ink) ---- */
+  --neutral-0:   #FFFFFF;
+  --neutral-50:  #FAFAF7;   /* app canvas */
+  --neutral-100: #F4F3ED;
+  --neutral-150: #ECEAE1;
+  --neutral-200: #E3E0D6;
+  --neutral-300: #D2CEC1;
+  --neutral-400: #B2AC9C;
+  --neutral-500: #8B8576;
+  --neutral-600: #6A6557;
+  --neutral-700: #4D493E;
+  --neutral-800: #322F28;
+  --neutral-900: #1E1C17;
+  --neutral-950: #131210;
+
+  /* ---- Semantic hues ---- */
+  /* Positive / income / "you're owed" — reuse brand green */
+  --positive-50:  #ECF6F0;
+  --positive-500: #1B7A55;
+  --positive-700: #115840;
+  /* Negative / expense / "you owe" — warm rose-red (not alarming) */
+  --negative-50:  #FBEDEB;
+  --negative-100: #F6D8D3;
+  --negative-500: #C24A3E;
+  --negative-600: #A93A30;
+  --negative-700: #8A2D25;
+  /* Warning — amber, kin to the sand accent */
+  --warning-50:  #FCF3E2;
+  --warning-500: #C8881A;
+  --warning-700: #8A5C12;
+  /* Info — calm slate blue */
+  --info-50:  #EAF0F7;
+  --info-500: #3A6BAB;
+  --info-700: #284C7C;
+
+  /* ---- Data-viz categorical (budgets, categories, charts) ---- */
+  --cat-1: #1B6E4F;  /* green   */
+  --cat-2: #BE8A30;  /* gold    */
+  --cat-3: #3A6BAB;  /* blue    */
+  --cat-4: #C24A3E;  /* rose    */
+  --cat-5: #7C5CBF;  /* violet  */
+  --cat-6: #2E9D9A;  /* teal    */
+  --cat-7: #D2864B;  /* clay    */
+  --cat-8: #8B8576;  /* stone   */
+
+  /* ============================================================
+     SEMANTIC ALIASES  (use these in components, not raw scales)
+     ============================================================ */
+
+  /* Surfaces */
+  --surface-canvas:    var(--neutral-50);
+  --surface-card:      var(--neutral-0);
+  --surface-raised:    var(--neutral-0);
+  --surface-sunken:    var(--neutral-100);
+  --surface-inset:     var(--neutral-150);
+  --surface-inverse:   var(--green-900);
+  --surface-brand:     var(--green-600);
+  --surface-brand-sub: var(--green-50);
+  --surface-overlay:   rgba(19, 18, 16, 0.45);
+
+  /* Text */
+  --text-strong:    var(--neutral-900);
+  --text-body:      var(--neutral-800);
+  --text-muted:     var(--neutral-600);
+  --text-subtle:    var(--neutral-500);
+  --text-disabled:  var(--neutral-400);
+  --text-on-brand:  #FFFFFF;
+  --text-on-dark:   var(--neutral-50);
+  --text-brand:     var(--green-700);
+  --text-link:      var(--green-700);
+
+  /* Borders & dividers */
+  --border-subtle:  var(--neutral-200);
+  --border-default: var(--neutral-300);
+  --border-strong:  var(--neutral-400);
+  --border-brand:   var(--green-600);
+  --border-focus:   var(--green-500);
+
+  /* Interactive (primary action) */
+  --action-primary:        var(--green-600);
+  --action-primary-hover:  var(--green-700);
+  --action-primary-press:  var(--green-800);
+  --action-accent:         var(--sand-500);
+  --action-accent-hover:   var(--sand-600);
+
+  /* Financial semantics */
+  --money-positive: var(--positive-500);
+  --money-negative: var(--negative-500);
+  --money-neutral:  var(--text-body);
+
+  /* Focus ring */
+  --focus-ring: 0 0 0 3px color-mix(in oklab, var(--green-500) 38%, transparent);
+}

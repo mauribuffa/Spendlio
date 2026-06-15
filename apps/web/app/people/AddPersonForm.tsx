@@ -24,7 +24,7 @@ export function AddPersonForm() {
     display: 'block',
     fontSize: 'var(--text-sm)',
     fontWeight: 'var(--weight-medium)',
-    color: 'var(--color-ink-muted)',
+    color: 'var(--text-muted)',
     marginBottom: 'var(--space-1)',
   } as const;
 

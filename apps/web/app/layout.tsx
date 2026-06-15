@@ -10,7 +10,7 @@ import { safe } from '../lib/safe';
 
 // The three families the design system references. next/font self-hosts them
 // and exposes a CSS variable per family; globals.css aliases those variables to
-// the package's --font-display / --font-body / --font-mono.
+// the package's --font-display / --font-sans / --font-mono.
 const display = Space_Grotesk({
   subsets: ['latin'],
   variable: '--font-space-grotesk',

@@ -14,50 +14,63 @@ export default async function InsightsPage() {
   const { data, error } = await safe<MonthlySummary | null>(() => getRecap(month), null);
 
   return (
-    <div>
-      <PageHeader eyebrow="Insights" title="Insights & assistant" />
+    <>
+      <PageHeader
+        eyebrow="Insights"
+        title="Assistant"
+        subtitle="Ask about your spending — answers come from your own data."
+        hideActions
+      />
 
-      {error ? (
-        <Notice tone="warn">
-          The API is not reachable yet, so the recap is empty. The assistant also needs the API
-          running to answer from your data.
-        </Notice>
-      ) : null}
-
-      {data ? (
-        <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
-            <Card>
-              <Stat label="Income" value={<MoneyAmount amount={data.totalIncome} currency={data.currency} size="lg" color="off" />} />
-            </Card>
-            <Card>
-              <Stat label="Expense" value={<MoneyAmount amount={-data.totalExpense} currency={data.currency} size="lg" color="off" />} />
-            </Card>
-            <Card>
-              <Stat label="Net" value={<MoneyAmount amount={data.net} currency={data.currency} size="lg" />} />
-            </Card>
+      <div style={{ maxWidth: 820, margin: '0 auto' }}>
+        {error ? (
+          <div style={{ marginBottom: 'var(--space-5)' }}>
+            <Notice tone="warn">
+              The API is not reachable yet, so the recap is empty. The assistant also needs the API
+              running to answer from your data.
+            </Notice>
           </div>
+        ) : null}
 
-          {data.byCategory.length > 0 ? (
-            <Card style={{ marginBottom: 'var(--space-6)' }}>
-              <h2 style={{ fontSize: 'var(--text-lg)', fontFamily: 'var(--font-display)', marginBottom: 'var(--space-4)' }}>
-                Spending by category
-              </h2>
-              <div style={{ display: 'grid', gap: 'var(--space-3)' }}>
-                {data.byCategory.map((c) => (
-                  <div key={c.category} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-                    <CategoryIcon category={c.category} size="sm" />
-                    <span style={{ flex: 1, textTransform: 'capitalize', fontSize: 'var(--text-sm)' }}>{c.category}</span>
-                    <MoneyAmount amount={-c.amount} currency={data.currency} size="sm" color="off" />
-                  </div>
-                ))}
-              </div>
-            </Card>
-          ) : null}
-        </>
-      ) : null}
+        {data ? (
+          <>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: 'var(--space-4)',
+                marginBottom: 'var(--space-5)',
+              }}
+            >
+              <Card>
+                <Stat label="Income" value={<MoneyAmount amount={data.totalIncome} currency={data.currency} size="lg" color="off" />} />
+              </Card>
+              <Card>
+                <Stat label="Expense" value={<MoneyAmount amount={-data.totalExpense} currency={data.currency} size="lg" color="off" />} />
+              </Card>
+              <Card>
+                <Stat label="Net" value={<MoneyAmount amount={data.net} currency={data.currency} size="lg" />} />
+              </Card>
+            </div>
 
-      <Assistant />
-    </div>
+            {data.byCategory.length > 0 ? (
+              <Card title="Spending by category" style={{ marginBottom: 'var(--space-5)' }}>
+                <div style={{ display: 'grid', gap: 'var(--space-3)' }}>
+                  {data.byCategory.map((c) => (
+                    <div key={c.category} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                      <CategoryIcon category={c.category} size="sm" />
+                      <span style={{ flex: 1, textTransform: 'capitalize', fontSize: 'var(--text-sm)' }}>{c.category}</span>
+                      <MoneyAmount amount={-c.amount} currency={data.currency} size="sm" color="off" />
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            ) : null}
+          </>
+        ) : null}
+
+        <Assistant />
+      </div>
+    </>
   );
 }

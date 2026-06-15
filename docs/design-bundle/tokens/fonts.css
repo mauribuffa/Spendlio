@@ -1,0 +1,8 @@
+/* Spendlio webfonts.
+   Loaded from Google Fonts CDN. Self-host the .woff2 files for production
+   and replace this @import with local @font-face rules if desired.
+   — Display:  Space Grotesk   (geometric, tech-forward headlines + figures)
+   — UI/Body:  Hanken Grotesk  (clean humanist-geometric workhorse)
+   — Mono:     Space Mono      (account numbers, code, tabular detail) */
+
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');

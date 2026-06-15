@@ -1,9 +1,74 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Card, SegmentedControl, MoneyAmount, EmptyState } from '@spendlio/ui';
-import { Landmark } from 'lucide-react';
+import { Card, SegmentedControl, MoneyAmount, EmptyState, Button } from '@spendlio/ui';
+import { CreditCard, PiggyBank, Wallet, Landmark, Plus, Info } from 'lucide-react';
+import type { ComponentType } from 'react';
 import type { AccountBalance } from '../../lib/resources';
+
+/** Primary action rendered in the page topbar. Presentation-only. */
+export function AddAccountButton() {
+  return (
+    <Button variant="primary" leadingIcon={<Plus size={17} strokeWidth={2} aria-hidden="true" />}>
+      Add account
+    </Button>
+  );
+}
+
+const TYPE_ICON: Record<AccountBalance['type'], ComponentType<{ size?: number; strokeWidth?: number }>> = {
+  card: CreditCard,
+  savings: PiggyBank,
+  cash: Wallet,
+  checking: Landmark,
+};
+
+function AccountCard({ b }: { b: AccountBalance }) {
+  const Icon = TYPE_ICON[b.type] ?? Wallet;
+  return (
+    <Card>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
+        <span
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 12,
+            flex: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'var(--surface-sunken)',
+            color: 'var(--text-muted)',
+          }}
+        >
+          <Icon size={22} strokeWidth={2} />
+        </span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 'var(--text-base)',
+              fontWeight: 'var(--weight-bold)',
+              color: 'var(--text-strong)',
+            }}
+          >
+            {b.name}
+          </div>
+          <div
+            style={{
+              fontSize: 'var(--text-sm)',
+              color: 'var(--text-muted)',
+              textTransform: 'capitalize',
+            }}
+          >
+            {b.type}
+            {b.last4 ? ` ·· ${b.last4}` : ''} · {b.currency}
+          </div>
+        </div>
+        <MoneyAmount amount={b.balance} currency={b.currency} size="lg" color="off" />
+      </div>
+    </Card>
+  );
+}
 
 export function AccountsTabs({ balances }: { balances: AccountBalance[] }) {
   // Distinct account currencies, in first-seen order, plus an "All" rollup tab.
@@ -37,8 +102,21 @@ export function AccountsTabs({ balances }: { balances: AccountBalance[] }) {
   const isAll = tab === 'all';
   const visible = isAll ? balances : balances.filter((b) => b.currency === tab);
 
+  // Total in base currency: sum of per-account base-converted balances, skipping
+  // any account whose rate is unavailable (baseBalance === null).
+  const totalBase = balances.reduce((sum, b) => sum + (b.baseBalance ?? 0), 0);
+  const rateAsOf = balances.find((b) => b.rateAsOf != null)?.rateAsOf ?? null;
+
+  // Per-currency exact subtotals (native minor units).
+  const subtotals = currencies.map((c) => ({
+    currency: c,
+    total: balances.filter((b) => b.currency === c).reduce((sum, b) => sum + b.balance, 0),
+  }));
+
+  const tabTotal = visible.reduce((sum, b) => sum + b.balance, 0);
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       <SegmentedControl
         options={options}
         value={tab}
@@ -46,67 +124,104 @@ export function AccountsTabs({ balances }: { balances: AccountBalance[] }) {
         ariaLabel="Filter accounts by currency"
       />
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-        {visible.map((b) => {
-          // In an "All" view we show the base-converted rollup value (approximate);
-          // in a per-currency tab we show the native balance.
-          const showBase = isAll;
-          const amount = showBase ? b.baseBalance : b.balance;
-          const currency = showBase ? b.baseCurrency : b.currency;
-
-          return (
-            <Card key={b.accountId}>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 'var(--space-4)',
-                }}
-              >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
-                  <span style={{ fontWeight: 'var(--weight-semibold)', color: 'var(--color-ink)' }}>
-                    {b.name}
-                  </span>
-                  <span
+      {isAll ? (
+        <Card variant="inverse" style={{ borderRadius: 'var(--radius-2xl)' }}>
+          <div
+            style={{
+              fontSize: 'var(--text-xs)',
+              fontWeight: 'var(--weight-semibold)',
+              letterSpacing: 'var(--tracking-caps)',
+              color: 'var(--green-200)',
+              textTransform: 'uppercase',
+            }}
+          >
+            Total balance · {baseCurrency}
+          </div>
+          <div style={{ marginTop: 6, lineHeight: 1 }}>
+            <MoneyAmount
+              amount={totalBase}
+              currency={baseCurrency}
+              size="xl"
+              color="off"
+              style={{ color: '#fff' }}
+            />
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              marginTop: 10,
+              color: 'var(--green-200)',
+              fontSize: 'var(--text-xs)',
+            }}
+          >
+            <Info size={13} strokeWidth={2} aria-hidden="true" />
+            {rateAsOf ? `Approx · converted as of ${rateAsOf}` : 'Approx · converted at latest rates'}
+          </div>
+          {subtotals.length > 1 ? (
+            <div style={{ display: 'flex', gap: 12, marginTop: 18 }}>
+              {subtotals.map((s) => (
+                <div
+                  key={s.currency}
+                  style={{
+                    flex: 1,
+                    background: 'rgba(255,255,255,0.08)',
+                    borderRadius: 'var(--radius-lg)',
+                    padding: '12px 15px',
+                  }}
+                >
+                  <div
                     style={{
-                      fontSize: 'var(--text-sm)',
-                      color: 'var(--color-ink-muted)',
-                      display: 'flex',
-                      gap: 'var(--space-2)',
-                      alignItems: 'center',
+                      color: 'var(--green-200)',
+                      fontSize: 'var(--text-xs)',
+                      fontWeight: 'var(--weight-semibold)',
                     }}
                   >
-                    <span style={{ textTransform: 'capitalize' }}>{b.type}</span>
-                    {b.last4 ? (
-                      <span style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
-                        ···· {b.last4}
-                      </span>
-                    ) : null}
-                  </span>
+                    {s.currency} · exact
+                  </div>
+                  <div style={{ marginTop: 4 }}>
+                    <MoneyAmount
+                      amount={s.total}
+                      currency={s.currency}
+                      size="md"
+                      color="off"
+                      style={{ color: '#fff' }}
+                    />
+                  </div>
                 </div>
+              ))}
+            </div>
+          ) : null}
+        </Card>
+      ) : (
+        <Card variant="brand" style={{ borderColor: 'var(--green-200)', borderRadius: 'var(--radius-2xl)' }}>
+          <div
+            style={{
+              fontSize: 'var(--text-sm)',
+              color: 'var(--green-800)',
+              fontWeight: 'var(--weight-semibold)',
+            }}
+          >
+            {tab} balance · exact
+          </div>
+          <div style={{ marginTop: 4 }}>
+            <MoneyAmount
+              amount={tabTotal}
+              currency={tab}
+              size="xl"
+              color="off"
+              style={{ color: 'var(--green-900)' }}
+            />
+          </div>
+        </Card>
+      )}
 
-                {amount === null ? (
-                  <span
-                    title="Conversion rate unavailable"
-                    style={{ color: 'var(--color-ink-subtle)', fontFamily: 'var(--font-display)' }}
-                  >
-                    —
-                  </span>
-                ) : (
-                  <MoneyAmount amount={amount} currency={currency} size="lg" color="auto" />
-                )}
-              </div>
-            </Card>
-          );
-        })}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        {visible.map((b) => (
+          <AccountCard key={b.accountId} b={b} />
+        ))}
       </div>
-
-      {isAll ? (
-        <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-ink-subtle)' }}>
-          Converted to {baseCurrency} using the latest available rates — values are approximate.
-        </p>
-      ) : null}
     </div>
   );
 }

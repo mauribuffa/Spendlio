@@ -25,7 +25,7 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
         <Notice tone="warn">
           Could not load this receipt — start the API (apps/api) and try again.
         </Notice>
-        <Link href="/receipts" style={{ color: 'var(--color-primary-ink)', fontSize: 'var(--text-sm)' }}>
+        <Link href="/receipts" style={{ color: 'var(--green-900)', fontSize: 'var(--text-sm)' }}>
           ← Back to receipts
         </Link>
       </div>
@@ -44,7 +44,7 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
 
       <Link
         href="/receipts"
-        style={{ display: 'inline-block', color: 'var(--color-primary-ink)', fontSize: 'var(--text-sm)', marginBottom: 'var(--space-4)' }}
+        style={{ display: 'inline-block', color: 'var(--green-900)', fontSize: 'var(--text-sm)', marginBottom: 'var(--space-4)' }}
       >
         ← Back to receipts
       </Link>
@@ -52,10 +52,10 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
       <Card padding="lg" style={{ marginBottom: 'var(--space-5)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 'var(--space-4)' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
-            <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-ink-muted)' }}>
+            <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
               {receipt.merchant ?? 'Merchant pending'}
             </span>
-            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-ink-subtle)' }}>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-subtle)' }}>
               {receipt.purchasedAt
                 ? new Date(receipt.purchasedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                 : 'Date pending'}
@@ -64,7 +64,7 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
           {receipt.total != null && receipt.currency ? (
             <MoneyAmount amount={-Math.abs(receipt.total)} currency={receipt.currency} size="xl" color="off" />
           ) : (
-            <span style={{ color: 'var(--color-ink-subtle)' }}>
+            <span style={{ color: 'var(--text-subtle)' }}>
               {receipt.status === 'processing' ? 'Reading total…' : 'No total found'}
             </span>
           )}
@@ -85,7 +85,7 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
                   padding: 'var(--space-3) var(--space-4)',
                 }}
               >
-                <span style={{ color: 'var(--color-ink)' }}>
+                <span style={{ color: 'var(--text-strong)' }}>
                   {li.quantity > 1 ? `${li.quantity}× ` : ''}{li.description}
                 </span>
                 {receipt.currency ? (

@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState, useEffect, useRef, useState } from 'react';
-import { Button, Input, Card, SegmentedControl } from '@spendlio/ui';
+import { Button, Input, Card, SegmentedControl, Select } from '@spendlio/ui';
 import { createTransactionAction, type ActionResult } from './actions';
 
 const CATEGORIES = [
@@ -9,21 +9,34 @@ const CATEGORIES = [
   'health', 'entertainment', 'travel', 'subscriptions', 'income', 'transfer',
 ] as const;
 
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const CATEGORY_OPTIONS = CATEGORIES.map((c) => ({ value: c, label: cap(c) }));
+
 const initial: ActionResult = { ok: false };
+
+export interface AddTransactionFormProps {
+  /** Render without the outer Card + heading (e.g. inside a Modal). */
+  bare?: boolean;
+  /** Called once a create succeeds (e.g. to close a modal). */
+  onSuccess?: () => void;
+}
 
 /**
  * Inline "add expense" form. Submits through the createTransactionAction server
  * action (Zod-validated against contracts), then the list revalidates.
  */
-export function AddTransactionForm() {
+export function AddTransactionForm({ bare = false, onSuccess }: AddTransactionFormProps = {}) {
   const [state, formAction, pending] = useActionState(createTransactionAction, initial);
   const [direction, setDirection] = useState<'expense' | 'income'>('expense');
   const formRef = useRef<HTMLFormElement>(null);
 
-  // Clear the form once a create succeeds.
+  // Clear the form once a create succeeds, and notify the host (modal).
   useEffect(() => {
-    if (state.ok) formRef.current?.reset();
-  }, [state.ok]);
+    if (state.ok) {
+      formRef.current?.reset();
+      onSuccess?.();
+    }
+  }, [state.ok, onSuccess]);
 
   const fieldError = (name: string) => state.fieldErrors?.[name]?.[0];
 
@@ -31,15 +44,14 @@ export function AddTransactionForm() {
     display: 'block',
     fontSize: 'var(--text-sm)',
     fontWeight: 'var(--weight-medium)',
-    color: 'var(--color-ink-muted)',
+    color: 'var(--text-muted)',
     marginBottom: 'var(--space-1)',
   } as const;
 
-  return (
-    <Card padding="lg" style={{ marginBottom: 'var(--space-6)' }}>
+  const form = (
       <form ref={formRef} action={formAction} style={{ display: 'grid', gap: 'var(--space-4)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-4)' }}>
-          <h2 style={{ fontSize: 'var(--text-lg)', fontFamily: 'var(--font-display)' }}>Add a transaction</h2>
+          {bare ? <span /> : <h2 style={{ fontSize: 'var(--text-lg)', fontFamily: 'var(--font-display)' }}>Add a transaction</h2>}
           <SegmentedControl
             ariaLabel="Direction"
             options={[
@@ -77,17 +89,7 @@ export function AddTransactionForm() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 'var(--space-4)' }}>
           <div>
             <label htmlFor="category" style={labelStyle}>Category</label>
-            <select
-              id="category"
-              name="category"
-              defaultValue="dining"
-              className="spl-input"
-              style={selectStyle}
-            >
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
+            <Select id="category" name="category" defaultValue="dining" options={CATEGORY_OPTIONS} />
           </div>
           <div>
             <label htmlFor="currency" style={labelStyle}>Currency</label>
@@ -107,27 +109,21 @@ export function AddTransactionForm() {
 
         {state.error ? <FieldError>{state.error}</FieldError> : null}
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button type="submit" disabled={pending}>
+        <div style={{ display: 'flex', justifyContent: bare ? 'stretch' : 'flex-end' }}>
+          <Button type="submit" disabled={pending} fullWidth={bare}>
             {pending ? 'Saving…' : 'Add transaction'}
           </Button>
         </div>
       </form>
+  );
+
+  if (bare) return form;
+  return (
+    <Card padding="lg" style={{ marginBottom: 'var(--space-6)' }}>
+      {form}
     </Card>
   );
 }
-
-const selectStyle = {
-  width: '100%',
-  padding: '10px 14px',
-  fontFamily: 'var(--font-body)',
-  fontSize: 'var(--text-base)',
-  color: 'var(--color-ink)',
-  background: 'var(--color-surface)',
-  border: '1px solid var(--color-border)',
-  borderRadius: 'var(--radius-md)',
-  appearance: 'none' as const,
-};
 
 function FieldError({ children }: { children: React.ReactNode }) {
   return (

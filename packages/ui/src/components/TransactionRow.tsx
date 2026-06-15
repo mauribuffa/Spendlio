@@ -41,7 +41,7 @@ export function TransactionRow({
         alignItems: 'center',
         gap: 'var(--space-3)',
         padding: 'var(--space-3) var(--space-1)',
-        fontFamily: 'var(--font-body)',
+        fontFamily: 'var(--font-sans)',
         ...style,
       }}
       {...rest}
@@ -51,7 +51,7 @@ export function TransactionRow({
       <div style={{ minWidth: 0, flex: 1 }}>
         <div
           style={{
-            color: 'var(--color-ink)',
+            color: 'var(--text-strong)',
             fontSize: 'var(--text-base)',
             fontWeight: 'var(--weight-medium)',
             overflow: 'hidden',
@@ -64,7 +64,7 @@ export function TransactionRow({
         {merchant ? (
           <div
             style={{
-              color: 'var(--color-ink-subtle)',
+              color: 'var(--text-subtle)',
               fontSize: 'var(--text-sm)',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -79,7 +79,7 @@ export function TransactionRow({
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
         <MoneyAmount amount={amount} currency={currency} locale={locale} size="md" />
         {meta ? (
-          <span style={{ color: 'var(--color-ink-subtle)', fontSize: 'var(--text-xs)' }}>{meta}</span>
+          <span style={{ color: 'var(--text-subtle)', fontSize: 'var(--text-xs)' }}>{meta}</span>
         ) : null}
       </div>
     </div>

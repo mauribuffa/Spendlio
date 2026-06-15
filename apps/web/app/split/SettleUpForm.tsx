@@ -22,8 +22,8 @@ export function SettleUpForm({ people }: { people: Person[] }) {
 
   if (people.length < 2) {
     return (
-      <p style={{ color: 'var(--color-ink-subtle)', fontSize: 'var(--text-sm)' }}>
-        Add at least two people to record a payment between them.
+      <p style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)', margin: 0 }}>
+        Add at least two people before you can settle up between them.
       </p>
     );
   }
@@ -39,7 +39,7 @@ export function SettleUpForm({ people }: { people: Person[] }) {
 
       <div style={{ display: 'grid', gap: 'var(--space-4)', gridTemplateColumns: '2fr 1fr', alignItems: 'end' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          <label style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--weight-semibold)', color: 'var(--color-ink)' }}>
+          <label style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-strong)' }}>
             Amount
           </label>
           <AmountInput name="amountMajor" size="compact" currency="$" defaultValue="" required />
@@ -58,14 +58,14 @@ export function SettleUpForm({ people }: { people: Person[] }) {
           ))
         : null}
       {state.ok ? (
-        <p style={{ color: 'var(--positive-500)', fontSize: 'var(--text-sm)' }}>Payment recorded.</p>
+        <p style={{ color: 'var(--positive-500)', fontSize: 'var(--text-sm)' }}>
+          Payment recorded — you’re square.
+        </p>
       ) : null}
 
-      <div>
-        <Button type="submit" disabled={pending}>
-          {pending ? 'Recording…' : 'Settle up'}
-        </Button>
-      </div>
+      <Button type="submit" disabled={pending} style={{ width: '100%' }}>
+        {pending ? 'Recording…' : 'Settle up'}
+      </Button>
     </form>
   );
 }
