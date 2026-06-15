@@ -1,13 +1,15 @@
 import type { ReactNode } from 'react';
 
-/** Page title with an optional eyebrow and a right-aligned action slot. */
+/** Page title with an optional eyebrow, a subtitle line, and a right-aligned action slot. */
 export function PageHeader({
   eyebrow,
   title,
+  subtitle,
   action,
 }: {
   eyebrow?: string;
   title: string;
+  subtitle?: ReactNode;
   action?: ReactNode;
 }) {
   return (
@@ -35,6 +37,9 @@ export function PageHeader({
           </span>
         ) : null}
         <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--weight-bold)' }}>{title}</h1>
+        {subtitle ? (
+          <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-ink-muted)' }}>{subtitle}</span>
+        ) : null}
       </div>
       {action}
     </header>

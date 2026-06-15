@@ -5,6 +5,8 @@ import { Space_Grotesk, Hanken_Grotesk, Space_Mono } from 'next/font/google';
 import '@spendlio/ui/styles.css';
 import './globals.css';
 import { AppShell } from './_components/AppShell';
+import { getMe } from '../lib/resources';
+import { safe } from '../lib/safe';
 
 // The three families the design system references. next/font self-hosts them
 // and exposes a CSS variable per family; globals.css aliases those variables to
@@ -31,11 +33,16 @@ export const metadata: Metadata = {
   description: 'Track spending, split bills, settle up.',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Read the signed-in user server-side for the sidebar profile chip. Degrades
+  // to a "Demo User" fallback in the shell when the API is unreachable.
+  const { data: me } = await safe(() => getMe(), null);
+  const user = me ? { name: me.name, email: me.email } : null;
+
   return (
     <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
       <body>
-        <AppShell>{children}</AppShell>
+        <AppShell user={user}>{children}</AppShell>
       </body>
     </html>
   );
