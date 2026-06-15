@@ -275,3 +275,14 @@
 .spl-switch input:checked + .spl-switch__track .spl-switch__thumb { transform: translateX(18px); }
 .spl-switch input:focus-visible + .spl-switch__track { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; }
 .spl-switch--disabled { opacity: 0.5; pointer-events: none; }
+
+/* ---- Checkbox ---- */
+.spl-check { display: inline-flex; align-items: flex-start; gap: 10px; cursor: pointer; font-family: var(--font-body); font-size: var(--text-sm); color: var(--color-ink); user-select: none; line-height: 1.4; }
+.spl-check input { position: absolute; opacity: 0; width: 0; height: 0; }
+.spl-check__box { width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid var(--neutral-400); background: var(--color-surface); flex: none; display: inline-flex; align-items: center; justify-content: center; transition: background var(--motion-fast) var(--ease-out); margin-top: 1px; color: #fff; }
+.spl-check__box svg { opacity: 0; transform: scale(0.6); transition: opacity var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out); }
+.spl-check input:checked + .spl-check__box { background: var(--color-primary); border-color: var(--color-primary); }
+.spl-check input:checked + .spl-check__box svg { opacity: 1; transform: scale(1); }
+.spl-check input:focus-visible + .spl-check__box { outline: 2px solid var(--color-focus-ring); outline-offset: 2px; }
+.spl-check--round .spl-check__box { border-radius: 50%; }
+.spl-check--disabled { opacity: 0.5; pointer-events: none; }
