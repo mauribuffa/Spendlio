@@ -18,6 +18,9 @@ export class AccountsController {
     return this.svc.create(u.id, dto);
   }
 
+  @Get('balances')
+  balances(@CurrentUser() u: { id: string }) { return this.svc.balances(u.id); }
+
   @Get(':id')
   get(@CurrentUser() u: { id: string }, @Param('id') id: string) { return this.svc.get(u.id, id); }
 
