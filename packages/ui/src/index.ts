@@ -65,5 +65,8 @@ export type { AmountInputProps, AmountInputSize } from './components/AmountInput
 export { EmptyState } from './components/EmptyState';
 export type { EmptyStateProps } from './components/EmptyState';
 
+export { Modal } from './components/Modal';
+export type { ModalProps } from './components/Modal';
+
 export { Skeleton, SkeletonRow } from './components/Skeleton';
 export type { SkeletonProps } from './components/Skeleton';

@@ -1,51 +1,12 @@
 import type { ReactNode } from 'react';
-import Link from 'next/link';
-import { Plus, ScanLine } from 'lucide-react';
-
-/** A pill link styled like the design system's primary/secondary Button. */
-function ToolbarLink({
-  href,
-  variant,
-  icon,
-  children,
-}: {
-  href: string;
-  variant: 'primary' | 'secondary';
-  icon: ReactNode;
-  children: ReactNode;
-}) {
-  const base = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 7,
-    height: 40,
-    padding: '0 18px',
-    fontFamily: 'var(--font-sans)',
-    fontWeight: 'var(--weight-semibold)',
-    fontSize: 14,
-    lineHeight: 1,
-    whiteSpace: 'nowrap' as const,
-    borderRadius: 'var(--radius-pill)',
-    transition: 'var(--transition-control)',
-  };
-  const variantStyle =
-    variant === 'primary'
-      ? { background: 'var(--action-primary)', color: 'var(--text-on-brand)', border: '1px solid transparent', boxShadow: 'var(--shadow-brand)' }
-      : { background: 'var(--surface-card)', color: 'var(--text-strong)', border: '1px solid var(--border-default)', boxShadow: 'var(--shadow-xs)' };
-  return (
-    <Link href={href} className="spl-button" data-variant={variant} style={{ ...base, ...variantStyle }}>
-      {icon}
-      <span>{children}</span>
-    </Link>
-  );
-}
+import { TopbarActions } from './TopbarActions';
 
 /**
  * The sticky, backdrop-blurred page topbar. Title (with optional eyebrow +
  * subtitle) on the left; on the right, either a custom `action` slot or the
- * default global actions (Scan a receipt · Add expense). Full-bleed across the
- * scroll container via negative margins so the blur spans edge to edge.
+ * default global actions (Scan a receipt · Add expense) which open modals.
+ * Full-bleed across the scroll container via negative margins so the blur
+ * spans edge to edge.
  */
 export function PageHeader({
   eyebrow,
@@ -60,18 +21,7 @@ export function PageHeader({
   action?: ReactNode;
   hideActions?: boolean;
 }) {
-  const right =
-    action ??
-    (hideActions ? null : (
-      <>
-        <ToolbarLink href="/receipts" variant="secondary" icon={<ScanLine size={17} strokeWidth={2} aria-hidden="true" />}>
-          Scan
-        </ToolbarLink>
-        <ToolbarLink href="/transactions" variant="primary" icon={<Plus size={17} strokeWidth={2} aria-hidden="true" />}>
-          Add expense
-        </ToolbarLink>
-      </>
-    ));
+  const right = action ?? (hideActions ? null : <TopbarActions />);
 
   return (
     <header
