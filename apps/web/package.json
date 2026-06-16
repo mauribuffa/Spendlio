@@ -14,8 +14,10 @@
     "@spendlio/ui": "workspace:*",
     "ai": "^6.0.205",
     "heic2any": "^0.0.4",
+    "jose": "^5.10.0",
     "lucide-react": "^1.18.0",
     "next": "^16.2.9",
+    "next-auth": "5.0.0-beta.31",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "zod": "^3.25.76"
