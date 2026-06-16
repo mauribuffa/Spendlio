@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
-import { Card, Badge, Input, MoneyAmount, CategoryIcon, Tag } from '@spendlio/ui';
+import { Card, Badge, Input, MoneyAmount, CategoryIcon, Tag, TransactionRow } from '@spendlio/ui';
 import type { BadgeTone } from '@spendlio/ui';
 import type { TransactionStatus } from '@spendlio/contracts';
 import type { Transaction, Account } from '@/lib/resources';
@@ -123,7 +123,8 @@ export function TransactionsView({
         </div>
       </div>
 
-      <Card padding="none">
+      {/* Desktop: full table. Mobile renders the card list below instead. */}
+      <Card padding="none" className="spl-only-desktop">
         <table
           style={{
             width: '100%',
@@ -222,6 +223,37 @@ export function TransactionsView({
             )}
           </tbody>
         </table>
+      </Card>
+
+      {/* Mobile: stacked card list (the table would overflow at phone widths). */}
+      <Card padding="none" className="spl-only-mobile">
+        {visible.length === 0 ? (
+          <p
+            style={{
+              padding: 'var(--space-6)',
+              textAlign: 'center',
+              color: 'var(--text-subtle)',
+              fontSize: 'var(--text-sm)',
+            }}
+          >
+            No transactions match. Try a different filter, or add one.
+          </p>
+        ) : (
+          <div style={{ padding: '4px var(--space-3)' }}>
+            {visible.map((t, i) => (
+              <TransactionRow
+                key={t.id}
+                category={t.category}
+                title={t.title}
+                merchant={t.merchant ?? undefined}
+                amount={t.amount}
+                currency={t.currency}
+                meta={new Date(t.occurredAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                style={i ? { borderTop: '1px solid var(--border-subtle)' } : undefined}
+              />
+            ))}
+          </div>
+        )}
       </Card>
     </div>
   );

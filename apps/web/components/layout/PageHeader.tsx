@@ -25,16 +25,11 @@ export function PageHeader({
 
   return (
     <header
+      className="spl-pageheader"
       style={{
         position: 'sticky',
         top: 0,
         zIndex: 20,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 'var(--space-5)',
-        margin: '0 -28px var(--space-6)',
-        padding: '20px 28px',
         background: 'rgba(250, 250, 247, 0.8)',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',

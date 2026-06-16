@@ -88,14 +88,11 @@ export function Modal({ open, onClose, title, ariaLabel, children, width = 480, 
   // backdrop-blurred topbar) can't become the fixed-position containing block.
   return createPortal(
     <div
+      className="spl-modal__overlay"
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: 100,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 24,
       }}
     >
       <div
@@ -115,9 +112,7 @@ export function Modal({ open, onClose, title, ariaLabel, children, width = 480, 
           position: 'relative',
           width,
           maxWidth: '100%',
-          maxHeight: '90vh',
           background: 'var(--surface-card)',
-          borderRadius: 'var(--radius-sheet)',
           boxShadow: 'var(--shadow-xl)',
           display: 'flex',
           flexDirection: 'column',
