@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Plus, Trash2, Calculator } from 'lucide-react';
 import { Button, IconButton, Input, Select, AmountInput } from '@spendlio/ui';
 import { getCurrencyDecimals } from '@spendlio/contracts';
-import { confirmReceiptAction } from './actions';
+import { confirmReceiptAction } from '@/features/receipts/lib/actions';
 
 interface ItemRow {
   description: string;

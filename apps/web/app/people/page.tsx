@@ -1,10 +1,10 @@
 import { UserPlus } from 'lucide-react';
 import { Card, Avatar, Badge, MoneyAmount, EmptyState } from '@spendlio/ui';
-import { listPeople, getBalances, type Person, type Balance } from '../../lib/resources';
-import { safe } from '../../lib/safe';
-import { PageHeader } from '../_components/PageHeader';
-import { Notice } from '../_components/Notice';
-import { AddPersonForm } from './AddPersonForm';
+import { listPeople, getBalances, type Person, type Balance } from '@/lib/resources';
+import { safe } from '@/lib/safe';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { Notice } from '@/components/feedback/Notice';
+import { AddPersonForm } from '@/features/people/components/AddPersonForm';
 
 export default async function PeoplePage() {
   const [people, balances] = await Promise.all([

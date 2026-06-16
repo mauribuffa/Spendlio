@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef } from 'react';
 import { Button, Input, Card } from '@spendlio/ui';
-import { createPersonAction, type ActionResult } from './actions';
+import { createPersonAction, type ActionResult } from '@/features/people/lib/actions';
 
 const initial: ActionResult = { ok: false };
 

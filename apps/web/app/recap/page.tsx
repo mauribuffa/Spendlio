@@ -1,11 +1,11 @@
 import { Card, Stat, MoneyAmount, CategoryIcon, ProgressBar, EmptyState } from '@spendlio/ui';
 import { CalendarRange } from 'lucide-react';
-import { getRecap, type MonthlySummary } from '../../lib/resources';
-import { safe } from '../../lib/safe';
-import { PageHeader } from '../_components/PageHeader';
-import { Notice } from '../_components/Notice';
-import { MonthPicker } from './MonthPicker';
-import { recentMonths, percentOfTotal } from './recap-utils';
+import { getRecap, type MonthlySummary } from '@/lib/resources';
+import { safe } from '@/lib/safe';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { Notice } from '@/components/feedback/Notice';
+import { MonthPicker } from '@/features/recap/components/MonthPicker';
+import { recentMonths, percentOfTotal } from '@/features/recap/lib/recap-utils';
 
 /** Current calendar month as YYYY-MM (UTC, matching the rest of the app). */
 function currentMonth(): string {

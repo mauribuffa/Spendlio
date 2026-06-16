@@ -5,7 +5,7 @@ import { useActionState } from 'react';
 import { Card, Avatar, Button, Input, Select } from '@spendlio/ui';
 import { Mail, Languages, Clock, Check } from 'lucide-react';
 import { CURRENCY_DECIMALS, type User } from '@spendlio/contracts';
-import { updateMeAction, type ActionResult } from './actions';
+import { updateMeAction, type ActionResult } from '@/features/settings/lib/actions';
 
 const CURRENCIES = Object.keys(CURRENCY_DECIMALS).sort();
 

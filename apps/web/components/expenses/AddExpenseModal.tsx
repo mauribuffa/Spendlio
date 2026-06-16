@@ -14,7 +14,7 @@ import {
   Button,
 } from '@spendlio/ui';
 import { type CategoryKey, toMinorUnits, getCurrencyDecimals, formatMoney } from '@spendlio/contracts';
-import type { Person } from '../../lib/resources';
+import type { Person } from '@/lib/resources';
 import { loadPeople, loadDefaultCurrency, createExpenseAction } from './expense-actions';
 
 type SplitMode = 'even' | 'exact' | 'percent';

@@ -4,9 +4,9 @@ import { Space_Grotesk, Hanken_Grotesk, Space_Mono } from 'next/font/google';
 // Imported once here so every page inherits them.
 import '@spendlio/ui/styles.css';
 import './globals.css';
-import { AppShell } from './_components/AppShell';
-import { getMe } from '../lib/resources';
-import { safe } from '../lib/safe';
+import { AppShell } from '@/components/layout/AppShell';
+import { getMe } from '@/lib/resources';
+import { safe } from '@/lib/safe';
 
 // The three families the design system references. next/font self-hosts them
 // and exposes a CSS variable per family; globals.css aliases those variables to

@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef } from 'react';
 import { Select, AmountInput, Button } from '@spendlio/ui';
-import { settleUpAction, type ActionResult } from './actions';
+import { settleUpAction, type ActionResult } from '@/features/split/lib/actions';
 
 interface Person {
   id: string;

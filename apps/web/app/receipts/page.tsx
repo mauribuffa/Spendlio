@@ -1,13 +1,13 @@
 import Link from 'next/link';
 import { ReceiptText } from 'lucide-react';
 import { Card, EmptyState, MoneyAmount } from '@spendlio/ui';
-import { listReceipts, type Receipt } from '../../lib/resources';
-import { safe } from '../../lib/safe';
-import { PageHeader } from '../_components/PageHeader';
-import { Notice } from '../_components/Notice';
-import { UploadReceipt } from './UploadReceipt';
-import { StatusBadge } from './StatusBadge';
-import { PollWhileProcessing } from './PollWhileProcessing';
+import { listReceipts, type Receipt } from '@/lib/resources';
+import { safe } from '@/lib/safe';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { Notice } from '@/components/feedback/Notice';
+import { UploadReceipt } from '@/features/receipts/components/UploadReceipt';
+import { StatusBadge } from '@/features/receipts/components/StatusBadge';
+import { PollWhileProcessing } from '@/features/receipts/components/PollWhileProcessing';
 
 export const revalidate = 0;
 

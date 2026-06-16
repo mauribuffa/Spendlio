@@ -1,7 +1,7 @@
-import { PageHeader } from '../_components/PageHeader';
-import { getMe, type User } from '../../lib/resources';
-import { safe } from '../../lib/safe';
-import { Assistant } from './Assistant';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { getMe, type User } from '@/lib/resources';
+import { safe } from '@/lib/safe';
+import { Assistant } from '@/features/assistant/components/Assistant';
 
 export default async function AssistantPage() {
   const { data: me } = await safe<User | null>(() => getMe(), null);

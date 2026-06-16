@@ -15,13 +15,13 @@ import {
   type Person,
   type Group,
   type Balance,
-} from '../../lib/resources';
-import { safe } from '../../lib/safe';
-import { PageHeader } from '../_components/PageHeader';
-import { Notice } from '../_components/Notice';
-import { SettleUpForm } from './SettleUpForm';
-import { AddGroupForm } from './AddGroupForm';
-import { RemindButton } from './RemindButton';
+} from '@/lib/resources';
+import { safe } from '@/lib/safe';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { Notice } from '@/components/feedback/Notice';
+import { SettleUpForm } from '@/features/split/components/SettleUpForm';
+import { AddGroupForm } from '@/features/split/components/AddGroupForm';
+import { RemindButton } from '@/features/split/components/RemindButton';
 
 export default async function SplitPage() {
   const [people, groups, balances] = await Promise.all([

@@ -2,9 +2,9 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { UpdateUserInput } from '@spendlio/contracts';
-import { updateMe } from '../../lib/resources';
-import { ApiError } from '../../lib/api';
+import { CreatePersonInput } from '@spendlio/contracts';
+import { createPerson } from '@/lib/resources';
+import { ApiError } from '@/lib/api';
 
 export interface ActionResult {
   ok: boolean;
@@ -13,28 +13,33 @@ export interface ActionResult {
   fieldErrors?: Record<string, string[]>;
 }
 
-// The form sends strings; validate shape here, then against the contract DTO.
+// The form sends strings; blank optional fields become undefined so the
+// optional/nullable contract fields pass, then we validate with the same
+// Zod schema the API enforces at its edge.
 const FormSchema = z.object({
   name: z.string().min(1, 'Add a name.'),
-  defaultCurrency: z.string().length(3, 'Pick a currency.'),
+  email: z.string().email('Enter a valid email.').optional(),
+  avatarUrl: z.string().url('Enter a valid URL.').optional(),
 });
 
-export async function updateMeAction(
+export async function createPersonAction(
   _prev: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
   const parsed = FormSchema.safeParse({
     name: formData.get('name'),
-    defaultCurrency: formData.get('defaultCurrency'),
+    email: formData.get('email') || undefined,
+    avatarUrl: formData.get('avatarUrl') || undefined,
   });
 
   if (!parsed.success) {
     return { ok: false, fieldErrors: parsed.error.flatten().fieldErrors as Record<string, string[]> };
   }
 
-  const input = UpdateUserInput.safeParse({
+  const input = CreatePersonInput.safeParse({
     name: parsed.data.name,
-    defaultCurrency: parsed.data.defaultCurrency.toUpperCase(),
+    email: parsed.data.email,
+    avatarUrl: parsed.data.avatarUrl,
   });
 
   if (!input.success) {
@@ -42,13 +47,13 @@ export async function updateMeAction(
   }
 
   try {
-    await updateMe(input.data);
+    await createPerson(input.data);
   } catch (err) {
     if (err instanceof ApiError) return { ok: false, error: err.message };
-    return { ok: false, error: 'Could not save your settings.' };
+    return { ok: false, error: 'Could not add this person.' };
   }
 
-  revalidatePath('/settings'); // re-render the profile card
-  revalidatePath('/');         // base-currency change re-rolls overview totals
+  revalidatePath('/people');
+  revalidatePath('/split');
   return { ok: true };
 }

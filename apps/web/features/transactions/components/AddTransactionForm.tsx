@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from 'react';
 import { Button, Input, Card, SegmentedControl, Select } from '@spendlio/ui';
-import { createTransactionAction, type ActionResult } from './actions';
+import { createTransactionAction, type ActionResult } from '@/features/transactions/lib/actions';
 
 const CATEGORIES = [
   'groceries', 'dining', 'transport', 'housing', 'utilities', 'shopping',

@@ -3,9 +3,9 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { CreateTransactionInput, CreateSplitInput, toMinorUnits } from '@spendlio/contracts';
-import { createTransaction, createSplit, listPeople, getMe } from '../../lib/resources';
-import { ApiError } from '../../lib/api';
-import type { Person } from '../../lib/resources';
+import { createTransaction, createSplit, listPeople, getMe } from '@/lib/resources';
+import { ApiError } from '@/lib/api';
+import type { Person } from '@/lib/resources';
 
 export interface ExpenseActionResult {
   ok: boolean;

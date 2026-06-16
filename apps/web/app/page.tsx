@@ -1,11 +1,11 @@
 import Link from 'next/link';
 import { Wallet, ArrowUpRight, ArrowDownLeft, PiggyBank, Sparkles, ArrowRight } from 'lucide-react';
 import { Card, MoneyAmount, TransactionRow, ProgressBar, formatSignedMoney, formatWhole, categoryColor } from '@spendlio/ui';
-import { listTransactions, getBudgetStatus, type Transaction, type BudgetStatus } from '../lib/resources';
-import { safe } from '../lib/safe';
-import { PageHeader } from './_components/PageHeader';
-import { Notice } from './_components/Notice';
-import { Donut } from './_components/charts';
+import { listTransactions, getBudgetStatus, type Transaction, type BudgetStatus } from '@/lib/resources';
+import { safe } from '@/lib/safe';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { Notice } from '@/components/feedback/Notice';
+import { Donut } from '@/components/domain/charts';
 
 function totals(items: Transaction[]) {
   let income = 0;

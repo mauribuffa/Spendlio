@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { Card, SegmentedControl, MoneyAmount, EmptyState, Button } from '@spendlio/ui';
 import { CreditCard, PiggyBank, Wallet, Landmark, Plus, Info } from 'lucide-react';
 import type { ComponentType } from 'react';
-import type { AccountBalance } from '../../lib/resources';
+import type { AccountBalance } from '@/lib/resources';
 
 /** Primary action rendered in the page topbar. Presentation-only. */
 export function AddAccountButton() {

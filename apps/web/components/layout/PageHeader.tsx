@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { TopbarActions } from './TopbarActions';
+import { TopbarActions } from '@/components/expenses/TopbarActions';
 
 /**
  * The sticky, backdrop-blurred page topbar. Title (with optional eyebrow +

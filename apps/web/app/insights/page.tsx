@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react';
 import { TrendingDown, TrendingUp, AlertTriangle, Repeat, PiggyBank } from 'lucide-react';
 import { Card, MoneyAmount, formatWhole, categoryColor, capitalize } from '@spendlio/ui';
-import { listTransactions, getBudgetStatus, type Transaction, type BudgetStatus } from '../../lib/resources';
-import { safe } from '../../lib/safe';
-import { PageHeader } from '../_components/PageHeader';
-import { Notice } from '../_components/Notice';
-import { Donut } from '../_components/charts';
+import { listTransactions, getBudgetStatus, type Transaction, type BudgetStatus } from '@/lib/resources';
+import { safe } from '@/lib/safe';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { Notice } from '@/components/feedback/Notice';
+import { Donut } from '@/components/domain/charts';
 
 interface Insight {
   icon: ReactNode;

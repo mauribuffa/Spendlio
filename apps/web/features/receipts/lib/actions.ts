@@ -2,8 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { CreateReceiptInput, ConfirmReceiptInput, toMinorUnits } from '@spendlio/contracts';
-import { presignReceipt, registerReceipt, confirmReceipt, type PresignedUpload } from '../../lib/resources';
-import { ApiError } from '../../lib/api';
+import { presignReceipt, registerReceipt, confirmReceipt, type PresignedUpload } from '@/lib/resources';
+import { ApiError } from '@/lib/api';
 
 export interface PresignResult {
   ok: boolean;

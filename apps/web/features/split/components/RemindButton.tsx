@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { Button } from '@spendlio/ui';
-import { remindPersonAction } from './actions';
+import { remindPersonAction } from '@/features/split/lib/actions';
 
 /** Nudge one person to settle up. Optimistic-ish: shows "Reminded" on success. */
 export function RemindButton({ personId }: { personId: string }) {

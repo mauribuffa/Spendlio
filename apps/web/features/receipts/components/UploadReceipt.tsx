@@ -3,9 +3,9 @@
 import { useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@spendlio/ui';
-import { uploadToPresignedUrl } from '../../lib/uploadToPresignedUrl';
-import { sha256Hex } from '../../lib/sha256';
-import { presignAction, registerReceiptAction } from './actions';
+import { uploadToPresignedUrl } from '@/features/receipts/lib/uploadToPresignedUrl';
+import { sha256Hex } from '@/features/receipts/lib/sha256';
+import { presignAction, registerReceiptAction } from '@/features/receipts/lib/actions';
 
 /** Apple HEIC/HEIF — the default iPhone camera format. */
 function isHeic(file: File): boolean {

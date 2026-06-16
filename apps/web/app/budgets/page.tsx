@@ -1,10 +1,10 @@
 import { Plus } from 'lucide-react';
 import { Card, MoneyAmount, ProgressBar, Badge, CategoryIcon, EmptyState, formatWhole, categoryColor } from '@spendlio/ui';
-import { getBudgetStatus, type BudgetStatus } from '../../lib/resources';
-import { safe } from '../../lib/safe';
-import { PageHeader } from '../_components/PageHeader';
-import { Notice } from '../_components/Notice';
-import { Donut } from '../_components/charts';
+import { getBudgetStatus, type BudgetStatus } from '@/lib/resources';
+import { safe } from '@/lib/safe';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { Notice } from '@/components/feedback/Notice';
+import { Donut } from '@/components/domain/charts';
 
 export default async function BudgetsPage() {
   const { data, error } = await safe(() => getBudgetStatus(), [] as BudgetStatus[]);

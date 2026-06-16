@@ -3,8 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { CreateTransactionInput, toMinorUnits } from '@spendlio/contracts';
-import { createTransaction, deleteTransaction } from '../../lib/resources';
-import { ApiError } from '../../lib/api';
+import { createTransaction, deleteTransaction } from '@/lib/resources';
+import { ApiError } from '@/lib/api';
 
 export interface ActionResult {
   ok: boolean;

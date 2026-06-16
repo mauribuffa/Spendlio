@@ -5,7 +5,7 @@ import { Search } from 'lucide-react';
 import { Card, Badge, Input, MoneyAmount, CategoryIcon, Tag } from '@spendlio/ui';
 import type { BadgeTone } from '@spendlio/ui';
 import type { TransactionStatus } from '@spendlio/contracts';
-import type { Transaction, Account } from '../../lib/resources';
+import type { Transaction, Account } from '@/lib/resources';
 
 /** Status pill mapping — mirrors the canonical Transactions table. */
 const STATUS_BADGE: Record<TransactionStatus, { tone: BadgeTone; label: string }> = {

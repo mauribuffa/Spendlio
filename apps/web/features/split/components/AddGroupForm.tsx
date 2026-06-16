@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef } from 'react';
 import { Input, Checkbox, Button } from '@spendlio/ui';
-import { createGroupAction, type ActionResult } from './actions';
+import { createGroupAction, type ActionResult } from '@/features/split/lib/actions';
 
 interface Person {
   id: string;
