@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { CreateTransactionInput, CreateSplitInput, toMinorUnits } from '@spendlio/contracts';
-import { createTransaction, createSplit, listPeople } from '../../lib/resources';
+import { createTransaction, createSplit, listPeople, getMe } from '../../lib/resources';
 import { ApiError } from '../../lib/api';
 import type { Person } from '../../lib/resources';
 
@@ -19,6 +19,15 @@ export async function loadPeople(): Promise<Person[]> {
     return await listPeople();
   } catch {
     return [];
+  }
+}
+
+/** The signed-in user's default currency (server-fetched for the modal); USD fallback. */
+export async function loadDefaultCurrency(): Promise<string> {
+  try {
+    return (await getMe()).defaultCurrency ?? 'USD';
+  } catch {
+    return 'USD';
   }
 }
 

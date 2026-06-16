@@ -45,7 +45,7 @@ function AiBadge() {
 }
 
 /** A single chat row. AI bubbles align left on the card surface; user bubbles align right on the brand action color. */
-function Bubble({ role, children }: { role: 'ai' | 'me'; children: React.ReactNode }) {
+function Bubble({ role, children, userName }: { role: 'ai' | 'me'; children: React.ReactNode; userName: string }) {
   const ai = role === 'ai';
   return (
     <div
@@ -75,7 +75,7 @@ function Bubble({ role, children }: { role: 'ai' | 'me'; children: React.ReactNo
       >
         {children}
       </div>
-      {!ai ? <Avatar name="Alex Rivera" size="sm" /> : null}
+      {!ai ? <Avatar name={userName} size="sm" /> : null}
     </div>
   );
 }
@@ -86,7 +86,7 @@ function Bubble({ role, children }: { role: 'ai' | 'me'; children: React.ReactNo
  * assistant from @spendlio/ai), injecting the dev user header server-side. The
  * answer is grounded in the user's own transactions via server-side tools.
  */
-export function Assistant() {
+export function Assistant({ userName = 'You' }: { userName?: string }) {
   const { messages, sendMessage, status, error } = useChat({
     transport: new DefaultChatTransport({ api: '/api/assistant' }),
   });
@@ -145,16 +145,16 @@ export function Assistant() {
 
       {/* Message list */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
-        {empty ? <Bubble role="ai">{GREETING}</Bubble> : null}
+        {empty ? <Bubble role="ai" userName={userName}>{GREETING}</Bubble> : null}
 
         {messages.map((m) => (
-          <Bubble key={m.id} role={m.role === 'user' ? 'me' : 'ai'}>
+          <Bubble key={m.id} role={m.role === 'user' ? 'me' : 'ai'} userName={userName}>
             {textOf(m)}
           </Bubble>
         ))}
 
         {status === 'streaming' ? (
-          <Bubble role="ai">
+          <Bubble role="ai" userName={userName}>
             <span style={{ color: 'var(--text-subtle)' }}>Thinking…</span>
           </Bubble>
         ) : null}

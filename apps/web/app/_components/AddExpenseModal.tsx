@@ -13,9 +13,9 @@ import {
   CategoryIcon,
   Button,
 } from '@spendlio/ui';
-import type { CategoryKey } from '@spendlio/contracts';
+import { type CategoryKey, toMinorUnits, getCurrencyDecimals, formatMoney } from '@spendlio/contracts';
 import type { Person } from '../../lib/resources';
-import { loadPeople, createExpenseAction } from './expense-actions';
+import { loadPeople, loadDefaultCurrency, createExpenseAction } from './expense-actions';
 
 type SplitMode = 'even' | 'exact' | 'percent';
 
@@ -40,15 +40,22 @@ export function AddExpenseModal({
   const [splitOn, setSplitOn] = useState(false);
   const [mode, setMode] = useState<SplitMode>('even');
   const [people, setPeople] = useState<Person[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [currency, setCurrency] = useState('USD');
   const [picked, setPicked] = useState<Record<string, boolean>>({});
   const [exact, setExact] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  // Load people the first time the modal opens.
+  // Load people + the user's default currency the first time the modal opens.
+  // Guarded by a `loaded` flag (not people.length, which never settles for a
+  // user with no people and would re-fetch on every open).
   useEffect(() => {
-    if (open && people.length === 0) void loadPeople().then(setPeople);
-  }, [open, people.length]);
+    if (!open || loaded) return;
+    setLoaded(true);
+    void loadPeople().then(setPeople);
+    void loadDefaultCurrency().then(setCurrency);
+  }, [open, loaded]);
 
   // Reset transient state on close.
   useEffect(() => {
@@ -57,16 +64,16 @@ export function AddExpenseModal({
     }
   }, [open]);
 
-  const amountCents = Math.round((parseFloat(amount) || 0) * 100);
+  const amountCents = toMinorUnits(parseFloat(amount) || 0, currency);
   const selected = useMemo(() => people.filter((p) => picked[p.id]), [people, picked]);
   // Each person's even share, with you counted in the divisor (you + selected).
   const evenEach = selected.length > 0 ? Math.round(amountCents / (selected.length + 1)) : 0;
 
-  const fmt = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+  const fmt = (cents: number) => formatMoney({ amount: cents, currency });
 
   function shareCentsFor(personId: string): number {
     if (mode === 'even') return evenEach;
-    if (mode === 'exact') return Math.round((parseFloat(exact[personId] ?? '') || 0) * 100);
+    if (mode === 'exact') return toMinorUnits(parseFloat(exact[personId] ?? '') || 0, currency);
     // percent
     return Math.round((amountCents * (parseFloat(exact[personId] ?? '') || 0)) / 100);
   }
@@ -82,7 +89,7 @@ export function AddExpenseModal({
         amountMajor: parseFloat(amount) || 0,
         description,
         category,
-        currency: 'USD',
+        currency,
         split,
       });
       if (!res.ok || res.error) {
@@ -242,7 +249,11 @@ export function AddExpenseModal({
                                 type="number"
                                 inputMode="decimal"
                                 value={exact[p.id] ?? ''}
-                                placeholder={mode === 'percent' ? String(placeholderPct) : (evenEach / 100).toFixed(2)}
+                                placeholder={
+                                  mode === 'percent'
+                                    ? String(placeholderPct)
+                                    : (evenEach / 10 ** getCurrencyDecimals(currency)).toFixed(getCurrencyDecimals(currency))
+                                }
                                 onChange={(e) => setExact((s) => ({ ...s, [p.id]: e.target.value }))}
                                 style={{
                                   width: 64,
