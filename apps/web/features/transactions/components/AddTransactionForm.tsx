@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from 'react';
 import { Button, Input, Card, SegmentedControl, Select, cn } from '@spendlio/ui';
 import { FormField } from '@/components/form/FormField';
 import { FieldError } from '@/components/form/FieldError';
+import { useToast } from '@/components/feedback/ToastProvider';
 import { createTransactionAction, type ActionResult } from '@/features/transactions/lib/actions';
 
 const CATEGORIES = [
@@ -31,14 +32,16 @@ export function AddTransactionForm({ bare = false, onSuccess }: AddTransactionFo
   const [state, formAction, pending] = useActionState(createTransactionAction, initial);
   const [direction, setDirection] = useState<'expense' | 'income'>('expense');
   const formRef = useRef<HTMLFormElement>(null);
+  const { success } = useToast();
 
   // Clear the form once a create succeeds, and notify the host (modal).
   useEffect(() => {
     if (state.ok) {
       formRef.current?.reset();
+      success('Transaction added.');
       onSuccess?.();
     }
-  }, [state.ok, onSuccess]);
+  }, [state.ok, onSuccess, success]);
 
   const fieldError = (name: string) => state.fieldErrors?.[name]?.[0];
 

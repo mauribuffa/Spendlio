@@ -5,6 +5,7 @@ import { Space_Grotesk, Hanken_Grotesk, Space_Mono } from 'next/font/google';
 import '@spendlio/ui/styles.css';
 import './globals.css';
 import { AppShell } from '@/components/layout/AppShell';
+import { ToastProvider } from '@/components/feedback/ToastProvider';
 import { getMe } from '@/lib/resources';
 import { safe } from '@/lib/safe';
 
@@ -42,7 +43,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
       <body>
-        <AppShell user={user}>{children}</AppShell>
+        <ToastProvider>
+          <AppShell user={user}>{children}</AppShell>
+        </ToastProvider>
       </body>
     </html>
   );
