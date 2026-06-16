@@ -46,7 +46,13 @@ describe('enqueue (Redis)', () => {
 
   beforeAll(async () => {
     try {
-      await getQueue('categorize').waitUntilReady();
+      // Race readiness against a short timeout — ioredis keeps retrying a down
+      // broker rather than rejecting, which would otherwise hang this hook until
+      // it times out. Lets the suite "skip cleanly if unreachable" as intended.
+      await Promise.race([
+        getQueue('categorize').waitUntilReady(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('redis timeout')), 2000)),
+      ]);
       online = true;
     } catch {
       online = false;
