@@ -2,7 +2,7 @@ import { and, eq, gte, lt, isNull } from 'drizzle-orm';
 import { db, users, transactions, monthlySummaries } from '@spendlio/db';
 import type { Job } from '@spendlio/queue';
 import type { RecapJob } from '@spendlio/contracts';
-import { computeRecap, type RecapTxn } from '../lib/recap';
+import { computeRecap, type RecapTxn } from '@spendlio/core';
 
 /**
  * Build (or rebuild) a user's monthly recap into monthly_summaries.

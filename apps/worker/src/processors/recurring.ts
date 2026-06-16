@@ -2,7 +2,7 @@ import { and, eq, lte } from 'drizzle-orm';
 import { db, recurringRules, transactions } from '@spendlio/db';
 import type { Job } from '@spendlio/queue';
 import type { RecurringJob } from '@spendlio/queue';
-import { dueOccurrences, type Cadence } from '../lib/recurring';
+import { dueOccurrences, type Cadence } from '@spendlio/core';
 
 /**
  * Materialize due recurring transactions.
