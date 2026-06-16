@@ -1,7 +1,7 @@
 import { hasLiveProvider } from './config';
 import { OfflineProvider } from './offline';
 import { LazyLiveProvider } from './live/lazy';
-import type { AssistantTools, ChatArgs, ChatMessage, ChatResult, ChatStream, LLMProvider } from './provider';
+import type { ChatArgs, ChatResult, ChatStream, LLMProvider } from './provider';
 
 // Public surface
 export * from './provider';
@@ -41,5 +41,3 @@ export function streamAssistant(args: ChatArgs & { provider?: LLMProvider }): Ch
   const provider = args.provider ?? getProvider();
   return provider.streamChat({ messages: args.messages, tools: args.tools });
 }
-
-export type { ChatMessage };

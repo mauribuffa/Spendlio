@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { ReactNode } from 'react';
 import { X } from 'lucide-react';
@@ -11,29 +11,74 @@ export interface ModalProps {
   onClose: () => void;
   /** Header title. Omit for a bare panel. */
   title?: ReactNode;
+  /** Accessible name when there is no visible `title`. */
+  ariaLabel?: string;
   children: ReactNode;
   /** Max panel width in px. */
   width?: number;
   className?: string;
 }
 
+const FOCUSABLE =
+  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 /**
  * Centered modal dialog — warm-ink scrim + a rounded-2xl card panel. The web
  * analogue of the iOS bottom sheet. Escape and scrim-click close it; body
- * scroll is locked while open.
+ * scroll is locked while open. Focus moves into the panel on open, is trapped
+ * within it (Tab/Shift+Tab wrap), and is restored to the trigger on close.
  */
-export function Modal({ open, onClose, title, children, width = 480, className }: ModalProps) {
+export function Modal({ open, onClose, title, ariaLabel, children, width = 480, className }: ModalProps) {
+  const titleId = useId();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const restoreRef = useRef<HTMLElement | null>(null);
+
   useEffect(() => {
     if (!open) return;
+    // Remember what had focus so we can restore it when the modal closes.
+    restoreRef.current = (document.activeElement as HTMLElement | null) ?? null;
+
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const panel = panelRef.current;
+      if (!panel) return;
+      const items = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
+        (el) => el.offsetParent !== null || el === document.activeElement,
+      );
+      if (items.length === 0) {
+        e.preventDefault();
+        panel.focus();
+        return;
+      }
+      const first = items[0]!;
+      const last = items[items.length - 1]!;
+      const active = document.activeElement as HTMLElement | null;
+      if (e.shiftKey && (active === first || !panel.contains(active))) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
+
     document.addEventListener('keydown', onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+
+    // Move focus into the panel (first focusable, else the panel itself).
+    const panel = panelRef.current;
+    const firstFocusable = panel?.querySelector<HTMLElement>(FOCUSABLE);
+    (firstFocusable ?? panel)?.focus();
+
     return () => {
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = prev;
+      restoreRef.current?.focus?.();
     };
   }, [open, onClose]);
 
@@ -59,8 +104,12 @@ export function Modal({ open, onClose, title, children, width = 480, className }
         style={{ position: 'absolute', inset: 0, background: 'var(--surface-overlay)' }}
       />
       <div
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
+        aria-labelledby={title != null ? titleId : undefined}
+        aria-label={title == null ? ariaLabel : undefined}
+        tabIndex={-1}
         className={cn('spl-modal__panel', className)}
         style={{
           position: 'relative',
@@ -87,6 +136,7 @@ export function Modal({ open, onClose, title, children, width = 480, className }
             }}
           >
             <span
+              id={titleId}
               style={{
                 fontFamily: 'var(--font-display)',
                 fontWeight: 'var(--weight-bold)',
