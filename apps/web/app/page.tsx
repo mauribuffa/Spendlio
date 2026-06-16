@@ -137,8 +137,8 @@ export default async function OverviewPage() {
               <p style={{ color: 'var(--text-subtle)', fontSize: 'var(--text-sm)' }}>No budgets set.</p>
             ) : (
               <div style={{ display: 'grid', gap: 16 }}>
-                {budgets.data.map((b) => (
-                  <div key={b.category} style={{ display: 'grid', gap: 8 }}>
+                {budgets.data.map((b, i) => (
+                  <div key={`${b.category}-${i}`} style={{ display: 'grid', gap: 8 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, fontSize: 13 }}>
                       <span style={{ fontWeight: 'var(--weight-semibold)', color: 'var(--text-body)', textTransform: 'capitalize' }}>{b.category}</span>
                       <span style={{ color: 'var(--text-muted)', fontSize: 12.5 }}>

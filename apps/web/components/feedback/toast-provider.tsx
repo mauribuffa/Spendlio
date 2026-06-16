@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Toast, type ToastTone } from '@spendlio/ui';
@@ -36,7 +36,13 @@ const AUTO_DISMISS_MS = 4000;
  */
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([]);
+  const [mounted, setMounted] = useState(false);
   const idRef = useRef(0);
+
+  // Render the portal only after mount, so the server HTML (no portal) matches
+  // the first client render — otherwise a `typeof document` branch mismatches
+  // and React regenerates the whole tree (hydration error).
+  useEffect(() => setMounted(true), []);
 
   const remove = useCallback((id: number) => {
     setItems((prev) => prev.filter((t) => t.id !== id));
@@ -63,7 +69,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={api}>
       {children}
-      {typeof document !== 'undefined' &&
+      {mounted &&
         createPortal(
           <div
             style={{

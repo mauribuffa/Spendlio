@@ -76,10 +76,10 @@ export default async function BudgetsPage() {
 
             {/* Per-category budgets */}
             <div className={cn('spl-cards')} style={{ '--spl-gap': '16px', '--spl-min': '300px', alignItems: 'start' }}>
-              {data.map((b) => {
+              {data.map((b, i) => {
                 const over = b.remaining < 0;
                 return (
-                  <Card key={b.category} padding="lg">
+                  <Card key={`${b.category}-${i}`} padding="lg">
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
                       <CategoryIcon category={b.category} size="md" />
                       <div style={{ flex: 1, minWidth: 0 }}>
