@@ -16,9 +16,11 @@ import {
   UserPlus,
   TrendingUp,
   Menu,
+  LogOut,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Avatar, cn } from '@spendlio/ui';
+import { signOut } from 'next-auth/react';
 
 // Primary nav — ordered to read like the canonical sidebar; the repo's extra
 // routes (Receipts, People, Recap) sit beside their natural parents.
@@ -210,6 +212,27 @@ export function AppShell({
             </span>
             <Settings size={16} strokeWidth={2} aria-hidden="true" style={{ color: 'var(--text-subtle)', flex: 'none' }} />
           </Link>
+          <button
+            type="button"
+            onClick={() => signOut({ redirectTo: '/sign-in' })}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '8px 10px',
+              borderRadius: 'var(--radius-md)',
+              border: 'none',
+              background: 'transparent',
+              color: 'var(--text-muted)',
+              fontSize: 13,
+              fontWeight: 'var(--weight-medium)',
+              cursor: 'pointer',
+              transition: 'var(--transition-colors)',
+            }}
+          >
+            <LogOut size={16} strokeWidth={2} aria-hidden="true" />
+            Sign out
+          </button>
         </div>
       </aside>
 

@@ -6,8 +6,7 @@ import '@spendlio/ui/styles.css';
 import './globals.css';
 import { AppShell } from '@/components/layout/app-shell';
 import { ToastProvider } from '@/components/feedback/toast-provider';
-import { getMe } from '@/lib/resources';
-import { safe } from '@/lib/safe';
+import { auth } from '@/auth';
 
 // The three families the design system references. next/font self-hosts them
 // and exposes a CSS variable per family; globals.css aliases those variables to
@@ -35,16 +34,19 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // Read the signed-in user server-side for the sidebar profile chip. Degrades
-  // to a "Demo User" fallback in the shell when the API is unreachable.
-  const { data: me } = await safe(() => getMe(), null);
-  const user = me ? { name: me.name, email: me.email } : null;
+  // Read the session server-side. When signed out (only the /sign-in route gets
+  // here, since middleware redirects everything else) render children bare —
+  // no AppShell.
+  const session = await auth();
+  const user = session?.user
+    ? { name: session.user.name ?? 'You', email: session.user.email ?? '' }
+    : null;
 
   return (
     <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
       <body>
         <ToastProvider>
-          <AppShell user={user}>{children}</AppShell>
+          {user ? <AppShell user={user}>{children}</AppShell> : children}
         </ToastProvider>
       </body>
     </html>
