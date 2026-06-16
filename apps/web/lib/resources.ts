@@ -74,9 +74,21 @@ export function deleteTransaction(id: string): Promise<void> {
   return api.delete(`/transactions/${id}`);
 }
 
+/**
+ * Paginated list endpoints wrap rows in `{ items, nextCursor }`. These resources
+ * present the whole collection (no pager UI), so parse the envelope and return
+ * `items`. Endpoints that return a bare array (budgets/status, accounts/balances,
+ * groups, balances) keep using `z.array(...)` directly.
+ */
+function listItems<T extends z.ZodTypeAny>(path: string, item: T): Promise<z.infer<T>[]> {
+  return api
+    .get<{ items: z.infer<T>[] }>(path, z.object({ items: z.array(item) }))
+    .then((page) => page.items);
+}
+
 // ---- Budgets ----
 export function listBudgets(): Promise<Budget[]> {
-  return api.get(`/budgets`, z.array(BudgetSchema));
+  return listItems(`/budgets`, BudgetSchema);
 }
 
 export function getBudgetStatus(): Promise<BudgetStatus[]> {
@@ -89,12 +101,12 @@ export function createBudget(input: CreateBudgetInput): Promise<Budget> {
 
 // ---- Categories ----
 export function listCategories(): Promise<Category[]> {
-  return api.get(`/categories`, z.array(CategorySchema));
+  return listItems(`/categories`, CategorySchema);
 }
 
 // ---- Accounts ----
 export function listAccounts(): Promise<Account[]> {
-  return api.get(`/accounts`, z.array(AccountSchema));
+  return listItems(`/accounts`, AccountSchema);
 }
 
 export function getAccountBalances(): Promise<AccountBalance[]> {
@@ -103,7 +115,7 @@ export function getAccountBalances(): Promise<AccountBalance[]> {
 
 // ---- Split: people, splits, balances ----
 export function listPeople(): Promise<Person[]> {
-  return api.get(`/people`, z.array(PersonSchema));
+  return listItems(`/people`, PersonSchema);
 }
 
 export function createPerson(input: CreatePersonInput): Promise<Person> {
@@ -125,7 +137,7 @@ export function createGroup(input: CreateGroupInput): Promise<Group> {
 }
 
 export function listSplits(): Promise<Split[]> {
-  return api.get(`/splits`, z.array(SplitSchema));
+  return listItems(`/splits`, SplitSchema);
 }
 
 export function createSplit(input: CreateSplitInput): Promise<Split> {
