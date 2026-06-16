@@ -1,8 +1,8 @@
-import { listTransactions, listAccounts, type Transaction, type Account } from '../../lib/resources';
-import { safe } from '../../lib/safe';
-import { PageHeader } from '../_components/PageHeader';
-import { Notice } from '../_components/Notice';
-import { TransactionsView } from './TransactionsView';
+import { listTransactions, listAccounts, type Transaction, type Account } from '@/lib/resources';
+import { safe } from '@/lib/safe';
+import { PageHeader } from '@/components/layout/page-header';
+import { Notice } from '@/components/feedback/notice';
+import { TransactionsView } from '@/features/transactions/components/transactions-view';
 
 export default async function TransactionsPage() {
   const [tx, accts] = await Promise.all([

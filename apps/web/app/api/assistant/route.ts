@@ -1,4 +1,4 @@
-import { API_BASE, DEMO_USER_ID } from '../../../lib/config';
+import { API_BASE, DEMO_USER_ID } from '@/lib/config';
 
 // Same-origin proxy for the assistant chat. The browser's useChat hook POSTs
 // here; this handler runs server-side, injects the dev x-user-id header (so it

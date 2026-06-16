@@ -1,11 +1,11 @@
 import Link from 'next/link';
 import { Wallet, ArrowUpRight, ArrowDownLeft, PiggyBank, Sparkles, ArrowRight } from 'lucide-react';
-import { Card, MoneyAmount, TransactionRow, ProgressBar, formatSignedMoney, formatWhole, categoryColor } from '@spendlio/ui';
-import { listTransactions, getBudgetStatus, type Transaction, type BudgetStatus } from '../lib/resources';
-import { safe } from '../lib/safe';
-import { PageHeader } from './_components/PageHeader';
-import { Notice } from './_components/Notice';
-import { Donut } from './_components/charts';
+import { Card, MoneyAmount, TransactionRow, ProgressBar, formatSignedMoney, formatWhole, categoryColor, cn } from '@spendlio/ui';
+import { listTransactions, getBudgetStatus, type Transaction, type BudgetStatus } from '@/lib/resources';
+import { safe } from '@/lib/safe';
+import { PageHeader } from '@/components/layout/page-header';
+import { Notice } from '@/components/feedback/notice';
+import { Donut } from '@/components/domain/charts';
 
 function totals(items: Transaction[]) {
   let income = 0;
@@ -48,7 +48,7 @@ export default async function OverviewPage() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 18, maxWidth: 1160 }}>
         {/* Balance hero + recap */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.7fr 1fr', gap: 18, alignItems: 'stretch' }}>
+        <div className={cn('spl-grid-asym')} style={{ '--spl-cols': '1.7fr 1fr', '--spl-gap': '18px', alignItems: 'stretch' }}>
           <Card variant="inverse" style={{ borderRadius: 'var(--radius-2xl)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
@@ -108,7 +108,7 @@ export default async function OverviewPage() {
         </div>
 
         {/* Categories donut + budgets */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.7fr', gap: 18, alignItems: 'start' }}>
+        <div className={cn('spl-grid-asym')} style={{ '--spl-cols': '1fr 1.7fr', '--spl-gap': '18px', alignItems: 'start' }}>
           <Card title="Categories" padding="lg">
             {t.categories.length === 0 ? (
               <p style={{ color: 'var(--text-subtle)', fontSize: 'var(--text-sm)' }}>No spending yet.</p>

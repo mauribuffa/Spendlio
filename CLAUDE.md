@@ -56,6 +56,11 @@ docker-compose.yml    Postgres + Redis + MinIO
 - Packages are named `@spendlio/<name>`; import via the alias, never relative cross-package paths.
 - Commit messages: conventional commits. Migrations are committed and never edited after shipping — add a new one.
 
+## Front-end structure & styling (`apps/web`) — see ADR-031/032
+- **Three layers.** `packages/ui` = app-agnostic visual primitives (reusable by the future mobile client). `apps/web/components/` = shared cross-feature WEB composites (`layout/`, `form/`, `domain/`, `feedback/`). `apps/web/features/<domain>/{components,hooks,lib}` = domain-specific UI + server actions + feature utils. `apps/web/app/` is **routing only** — thin `page.tsx` files that compose a feature view. Rule of thumb: primitive → `packages/ui`; web composite → `components/`; domain → `features/<domain>`.
+- **Styling is token-driven inline styles** (`style={{}}` with `var(--token)`). The **only** things that go in CSS (`@spendlio/ui/styles.css`) are what inline style can't express: pseudo-states and **layout/breakpoints**. Use the `.spl-*` layout utilities (`spl-cards`, `spl-grid-asym`, `spl-form-row`, `spl-stack`, `spl-cluster`, `spl-only-mobile/desktop`) via `cn()`; pass per-instance values as inline CSS vars (`style={{ '--spl-cols': '1fr 1.7fr' }}`). Breakpoint is **768px** (`--bp-md`). No Tailwind, no CSS Modules. Render responsive swaps in CSS (both variants + `display`), not a JS `useMediaQuery`.
+- **Component filenames are kebab-case** (e.g. `button.tsx`, `add-transaction-form.tsx`); exported symbols stay PascalCase. (Enforcement via an `unicorn/filename-case` lint rule is deferred until the packages actually run ESLint — none currently have a `lint` script, so the rule would be inert today.)
+
 ## Commands
 ```
 pnpm install

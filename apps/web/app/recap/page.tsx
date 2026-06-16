@@ -1,11 +1,11 @@
-import { Card, Stat, MoneyAmount, CategoryIcon, ProgressBar, EmptyState } from '@spendlio/ui';
+import { Card, Stat, MoneyAmount, CategoryIcon, ProgressBar, EmptyState, cn } from '@spendlio/ui';
 import { CalendarRange } from 'lucide-react';
-import { getRecap, type MonthlySummary } from '../../lib/resources';
-import { safe } from '../../lib/safe';
-import { PageHeader } from '../_components/PageHeader';
-import { Notice } from '../_components/Notice';
-import { MonthPicker } from './MonthPicker';
-import { recentMonths, percentOfTotal } from './recap-utils';
+import { getRecap, type MonthlySummary } from '@/lib/resources';
+import { safe } from '@/lib/safe';
+import { PageHeader } from '@/components/layout/page-header';
+import { Notice } from '@/components/feedback/notice';
+import { MonthPicker } from '@/features/recap/components/month-picker';
+import { recentMonths, percentOfTotal } from '@/features/recap/lib/recap-utils';
 
 /** Current calendar month as YYYY-MM (UTC, matching the rest of the app). */
 function currentMonth(): string {
@@ -50,10 +50,10 @@ export default async function RecapPage({
       {data ? (
         <>
           <div
+            className={cn('spl-grid-asym')}
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 'var(--space-4)',
+              '--spl-cols': 'repeat(3, 1fr)',
+              '--spl-gap': 'var(--space-4)',
               marginBottom: 'var(--space-6)',
             }}
           >

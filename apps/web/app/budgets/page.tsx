@@ -1,10 +1,10 @@
 import { Plus } from 'lucide-react';
-import { Card, MoneyAmount, ProgressBar, Badge, CategoryIcon, EmptyState, formatWhole, categoryColor } from '@spendlio/ui';
-import { getBudgetStatus, type BudgetStatus } from '../../lib/resources';
-import { safe } from '../../lib/safe';
-import { PageHeader } from '../_components/PageHeader';
-import { Notice } from '../_components/Notice';
-import { Donut } from '../_components/charts';
+import { Card, MoneyAmount, ProgressBar, Badge, CategoryIcon, EmptyState, formatWhole, categoryColor, cn } from '@spendlio/ui';
+import { getBudgetStatus, type BudgetStatus } from '@/lib/resources';
+import { safe } from '@/lib/safe';
+import { PageHeader } from '@/components/layout/page-header';
+import { Notice } from '@/components/feedback/notice';
+import { Donut } from '@/components/domain/charts';
 
 export default async function BudgetsPage() {
   const { data, error } = await safe(() => getBudgetStatus(), [] as BudgetStatus[]);
@@ -75,7 +75,7 @@ export default async function BudgetsPage() {
             </Card>
 
             {/* Per-category budgets */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, alignItems: 'start' }}>
+            <div className={cn('spl-cards')} style={{ '--spl-gap': '16px', '--spl-min': '300px', alignItems: 'start' }}>
               {data.map((b) => {
                 const over = b.remaining < 0;
                 return (

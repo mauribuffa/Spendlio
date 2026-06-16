@@ -7,6 +7,7 @@ import {
   Badge,
   EmptyState,
   formatSignedMoney,
+  cn,
 } from '@spendlio/ui';
 import {
   listPeople,
@@ -15,13 +16,13 @@ import {
   type Person,
   type Group,
   type Balance,
-} from '../../lib/resources';
-import { safe } from '../../lib/safe';
-import { PageHeader } from '../_components/PageHeader';
-import { Notice } from '../_components/Notice';
-import { SettleUpForm } from './SettleUpForm';
-import { AddGroupForm } from './AddGroupForm';
-import { RemindButton } from './RemindButton';
+} from '@/lib/resources';
+import { safe } from '@/lib/safe';
+import { PageHeader } from '@/components/layout/page-header';
+import { Notice } from '@/components/feedback/notice';
+import { SettleUpForm } from '@/features/split/components/settle-up-form';
+import { AddGroupForm } from '@/features/split/components/add-group-form';
+import { RemindButton } from '@/features/split/components/remind-button';
 
 export default async function SplitPage() {
   const [people, groups, balances] = await Promise.all([
@@ -68,7 +69,7 @@ export default async function SplitPage() {
           </Notice>
         ) : null}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)', alignItems: 'start' }}>
+        <div className={cn('spl-grid-asym')} style={{ '--spl-cols': '1fr 1fr', '--spl-gap': 'var(--space-4)', alignItems: 'start' }}>
           {/* Groups */}
           <Card title="Groups" padding="none">
             {groups.data.length === 0 ? (
@@ -206,7 +207,7 @@ export default async function SplitPage() {
           </Card>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)', alignItems: 'start' }}>
+        <div className={cn('spl-grid-asym')} style={{ '--spl-cols': '1fr 1fr', '--spl-gap': 'var(--space-4)', alignItems: 'start' }}>
           <Card title="Settle up">
             <p style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)', margin: '0 0 var(--space-4)' }}>
               Record a payment between two people to clear what they owe — no fuss.

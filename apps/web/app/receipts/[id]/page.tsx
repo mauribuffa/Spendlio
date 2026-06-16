@@ -1,13 +1,13 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Card, MoneyAmount, Badge } from '@spendlio/ui';
-import { getReceipt, getReceiptImageUrl, listCategories, type Category } from '../../../lib/resources';
-import { safe } from '../../../lib/safe';
-import { PageHeader } from '../../_components/PageHeader';
-import { Notice } from '../../_components/Notice';
-import { StatusBadge } from '../StatusBadge';
-import { PollWhileProcessing } from '../PollWhileProcessing';
-import { ReceiptReviewForm } from '../ReceiptReviewForm';
+import { getReceipt, getReceiptImageUrl, listCategories, type Category } from '@/lib/resources';
+import { safe } from '@/lib/safe';
+import { PageHeader } from '@/components/layout/page-header';
+import { Notice } from '@/components/feedback/notice';
+import { StatusBadge } from '@/features/receipts/components/status-badge';
+import { PollWhileProcessing } from '@/features/receipts/components/poll-while-processing';
+import { ReceiptReviewForm } from '@/features/receipts/components/receipt-review-form';
 
 export const revalidate = 0;
 

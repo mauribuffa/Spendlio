@@ -1,8 +1,8 @@
-import { getAccountBalances, type AccountBalance } from '../../lib/resources';
-import { safe } from '../../lib/safe';
-import { PageHeader } from '../_components/PageHeader';
-import { Notice } from '../_components/Notice';
-import { AccountsTabs, AddAccountButton } from './AccountsTabs';
+import { getAccountBalances, type AccountBalance } from '@/lib/resources';
+import { safe } from '@/lib/safe';
+import { PageHeader } from '@/components/layout/page-header';
+import { Notice } from '@/components/feedback/notice';
+import { AccountsTabs, AddAccountButton } from '@/features/accounts/components/accounts-tabs';
 
 export default async function AccountsPage() {
   const { data, error } = await safe<AccountBalance[]>(() => getAccountBalances(), []);
