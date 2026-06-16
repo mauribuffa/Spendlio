@@ -195,6 +195,10 @@
   --sidebar-width:    256px;
   --header-height:    64px;
   --tabbar-height:    72px;
+  /* Canonical responsive breakpoint. NOTE: @media/@container conditions cannot
+     read CSS custom properties, so the rules below write 768px literally; this
+     token documents the value and is available to JS that needs to match it. */
+  --bp-md:            768px;
 
   /* ============================================================
      RADIUS
@@ -518,3 +522,48 @@
 .spl-skel--circle { border-radius: 50%; }
 .spl-skel-row { display: flex; align-items: center; gap: 13px; padding: 12px 4px; }
 .spl-skel-row__body { flex: 1; display: flex; flex-direction: column; gap: 7px; }
+
+/* ============================================================
+   RESPONSIVE LAYOUT UTILITIES
+   Layout + breakpoints are the things inline style can't express, so they
+   live here (see "COMPONENT INTERACTIONS" above for the same rationale).
+   Apply via cn(); pass the per-instance value with a CSS var inline, e.g.
+     <div className={cn('spl-grid-asym')} style={{ '--spl-cols': '1fr 1.7fr' }}>
+   The breakpoint is 768px (see --bp-md). Default gaps use the space scale and
+   can be overridden per instance with --spl-gap.
+   ============================================================ */
+
+/* Vertical stack with a token gap. */
+.spl-stack { display: flex; flex-direction: column; gap: var(--spl-gap, var(--space-4)); }
+
+/* Horizontal cluster that wraps; good for chips/toolbars/inline meta. */
+.spl-cluster { display: flex; flex-wrap: wrap; align-items: center; gap: var(--spl-gap, var(--space-3)); }
+
+/* Symmetric card grid — collapses with NO breakpoint via auto-fit. Override the
+   min track with --spl-min (default 320px). Covers repeat(2,1fr)/repeat(3,1fr)/1fr 1fr. */
+.spl-cards {
+  display: grid;
+  gap: var(--spl-gap, var(--space-4));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--spl-min, 320px)), 1fr));
+}
+
+/* Asymmetric page grid — single column on mobile, the --spl-cols ratio at >= md.
+   e.g. style={{ '--spl-cols': '1fr 1.7fr' }} */
+.spl-grid-asym { display: grid; gap: var(--spl-gap, var(--space-5)); grid-template-columns: 1fr; }
+@media (min-width: 768px) {
+  .spl-grid-asym { grid-template-columns: var(--spl-cols, 1fr 1fr); }
+}
+
+/* Form field row — single column on mobile, --spl-cols (default 2 equal) at >= md. */
+.spl-form-row { display: grid; gap: var(--spl-gap, var(--space-3)); grid-template-columns: 1fr; }
+@media (min-width: 768px) {
+  .spl-form-row { grid-template-columns: var(--spl-cols, repeat(2, 1fr)); }
+}
+
+/* Viewport-conditional rendering (e.g. desktop table vs mobile card list).
+   Render BOTH and let CSS pick — avoids a JS useMediaQuery + hydration mismatch. */
+.spl-only-mobile { display: none; }
+@media (max-width: 767px) {
+  .spl-only-desktop { display: none; }
+  .spl-only-mobile { display: block; }
+}
