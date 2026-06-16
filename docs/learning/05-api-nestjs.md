@@ -49,4 +49,8 @@ If it doesn't match the contract, the request is rejected with a 400 and a clear
 - Lists are paginated (`?cursor=` over `?page=` for stable infinite scroll).
 - **Alternative to plain REST:** **tRPC** (end-to-end typed calls, no client codegen) pairs beautifully with a TS monorepo — but Nest is REST-native and the mobile client benefits from a plain HTTP API. We'll decide REST vs tRPC-for-web in `decisions.md`.
 
-*To document as we build each module: error format, auth guard wiring, pagination helper, the ZodPipe.*
+## Auth guard wiring
+
+Auth is a **Bearer JWT** (ADR-033). The web mints a short-lived HS256 token (`{ sub: user_id, iss, aud, exp:+5m }`) from its Auth.js session and sends `Authorization: Bearer …`; the per-route `AuthGuard` (`common/auth.guard.ts`) verifies it with `jose` and sets `req.user = { id: sub }`, which `@CurrentUser()` exposes to controllers. There is **no global guard** — sign-in is public: the `auth/` module's `POST /auth/otp/{request,verify}` carry no `@UseGuards`. The OTP code lives in Redis (`@spendlio/queue`'s `getRedisClient()`); first verify provisions a `users` row by email. See `08-auth-security.md`.
+
+*To document as we build each module: error format, pagination helper, the ZodPipe.*

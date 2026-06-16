@@ -35,5 +35,9 @@ Client Component  ──mutation (server action / fetch)──▶ API ──▶ 
 
 ## ⬜ To decide / document as we build
 - Data layer: server actions hitting the API vs. a typed client (React Query / tRPC).
-- Auth integration on the web (sessions) — see [`08-auth-security.md`](./08-auth-security.md).
+- Auth integration on the web — **done**, see the "Auth" section below.
 - Charts: the UI kit uses CSS-only (div bars + conic-gradient donut). For richer charts, pick a lib (e.g. visx/Recharts) — logged in `decisions.md`.
+
+## Auth (Auth.js + email OTP)
+
+Sign-in is **email OTP** via Auth.js (next-auth v5, JWT sessions, no DB adapter — ADR-033). The two-step `/sign-in` form (`features/auth/`) calls a `requestOtp` server action (→ API `POST /auth/otp/request`), then `signIn('otp', { email, code })` whose Credentials `authorize` verifies against the API. `middleware.ts` redirects unauthenticated requests to `/sign-in`. Each server request mints a short-lived Bearer JWT via `lib/auth-token.ts#getApiToken()` (used by `lib/api.ts` + the assistant proxy) — replacing the old dev `x-user-id`. A dev-only Credentials provider signs in as the seeded demo user locally so OTP email need not work in dev. The root layout renders the `AppShell` only when there's a session.

@@ -40,3 +40,11 @@ Plain-English definitions of every term used in these docs. If something is jarg
 - **Tool / function calling:** giving an LLM typed functions to call (e.g. `spendByCategory`) so it uses real data instead of guessing.
 - **ISO 4217:** the standard 3-letter currency codes (`USD`, `EUR`).
 - **Cursor pagination:** paging a list with a pointer to the last item (stable for infinite scroll) instead of page numbers.
+- **OTP (one-time passcode):** a short numeric code, emailed to prove you own an address; single-use and short-lived. Spendlio uses a 6-digit code with a 10-minute TTL.
+- **JWT (JSON Web Token):** a signed, self-describing token. Spendlio's web mints a short-lived one the API verifies to learn the user's id (ADR-033).
+- **Bearer token:** a token sent in the `Authorization: Bearer <token>` header; whoever holds it is treated as authenticated, so it stays server-side.
+- **Auth.js (NextAuth):** the web's session library — manages the sign-in flow and the session cookie. We run it with JWT sessions and no database adapter.
+- **Session:** the record that "this browser is signed in as user X", kept in a cookie by Auth.js.
+- **Magic-link:** an alternative passwordless sign-in where you click a link in the email instead of typing a code (we chose OTP).
+- **Provisioning:** creating the app's `users` row on first sign-in, keyed on the verified email.
+- **HMAC:** a keyed hash; Spendlio stores `HMAC(code)` (not the raw code) in Redis.

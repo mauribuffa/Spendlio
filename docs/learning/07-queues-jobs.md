@@ -16,7 +16,7 @@ If these ran inside the request, users would wait (and time out), and a transien
 
 - **BullMQ** is a mature Node job queue; **Redis** is its backing store.
 - Gives us: delayed jobs, **repeatable (cron) jobs**, automatic **retries with backoff**, concurrency limits, and a dashboard (Bull Board) to watch jobs.
-- **Alternatives:** a Postgres-based queue (e.g. `pg-boss`) avoids adding Redis — simpler infra, fewer moving parts, slightly less throughput. **Worth considering if we want to keep infra minimal.** We'll pick in [`decisions.md`](./decisions.md); BullMQ is the default for its cron + retry ergonomics. (We likely want Redis anyway for caching/sessions.)
+- **Alternatives:** a Postgres-based queue (e.g. `pg-boss`) avoids adding Redis — simpler infra, fewer moving parts, slightly less throughput. **Worth considering if we want to keep infra minimal.** We'll pick in [`decisions.md`](./decisions.md); BullMQ is the default for its cron + retry ergonomics. (We likely want Redis anyway for caching/sessions — and as of Phase 5 it also backs email-OTP codes via `getRedisClient()`; see ADR-033.)
 
 ## The pipelines
 

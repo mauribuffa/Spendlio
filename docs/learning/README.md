@@ -16,7 +16,7 @@ Read in this order:
 6. [`05-api-nestjs.md`](./05-api-nestjs.md) — Nest module layout, validating input with contracts.
 7. [`06-web-nextjs.md`](./06-web-nextjs.md) — App Router, server vs client components, consuming the design system.
 8. [`07-queues-jobs.md`](./07-queues-jobs.md) — background jobs: OCR, AI categorization, recurring, recaps, notifications.
-9. [`08-auth-security.md`](./08-auth-security.md) — auth model and how we keep each user's data isolated.
+9. [`08-auth-security.md`](./08-auth-security.md) — auth model (email OTP + JWT to the API, ADR-033) and how we keep each user's data isolated.
 10. [`09-ai-ocr.md`](./09-ai-ocr.md) — receipt OCR, AI categorization, and the chat-over-your-data assistant.
 11. [`10-local-dev-and-cost.md`](./10-local-dev-and-cost.md) — Docker (Postgres/Redis/MinIO), $0 local dev, and the cheapest way to deploy.
 12. [`12-currency-and-fx.md`](./12-currency-and-fx.md) — multi-currency: a preferred base currency, expenses in any currency, exact per-currency "bank tabs", and converted totals.
