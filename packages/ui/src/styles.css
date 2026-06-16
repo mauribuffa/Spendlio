@@ -597,7 +597,11 @@
 }
 
 .spl-shell__main { flex: 1; min-width: 0; height: 100vh; display: flex; flex-direction: column; }
-.spl-shell__content { flex: 1; min-width: 0; overflow-y: auto; padding: 0 28px 28px; }
+.spl-shell__content { flex: 1; min-width: 0; overflow-y: auto; }
+/* Centered content column. Page bodies AND the full-bleed PageHeader live inside
+   it, so everything aligns to one max width centered in the area beside the
+   sidebar. The header's negative margin cancels this padding to span the column. */
+.spl-shell__page { max-width: var(--container-max); margin-inline: auto; padding: 0 28px 28px; }
 
 /* Mobile-only chrome — hidden on desktop. */
 .spl-shell__topbar { display: none; }
@@ -640,7 +644,7 @@
     background: var(--surface-card);
     border-bottom: 1px solid var(--border-subtle);
   }
-  .spl-shell__content { padding: 0 16px 16px; }
+  .spl-shell__page { padding: 0 16px 16px; }
 }
 
 .spl-shell__hamburger {

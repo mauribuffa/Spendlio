@@ -20,7 +20,7 @@ export default async function TransactionsPage() {
         subtitle={`${count} ${count === 1 ? 'transaction' : 'transactions'} this month`}
       />
 
-      <div style={{ maxWidth: 1160 }}>
+      <div>
         {tx.error ? (
           <Notice tone="warn">
             The API is not reachable yet, so this list is empty. Start the API (apps/api) and seed

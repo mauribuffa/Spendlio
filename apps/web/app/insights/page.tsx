@@ -118,7 +118,7 @@ export default async function InsightsPage() {
     <>
       <PageHeader eyebrow="Insights" title="Insights" subtitle={`A summary of your ${monthName}`} hideActions />
 
-      <div style={{ maxWidth: 1160 }}>
+      <div>
         {unreachable ? (
           <Notice tone="warn">The API is not reachable yet, so insights are empty. Start apps/api and seed the database.</Notice>
         ) : null}

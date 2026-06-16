@@ -28,7 +28,7 @@ export default async function BudgetsPage() {
         </Notice>
       ) : null}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 18, maxWidth: 1160 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
         {data.length === 0 ? (
           <Card padding="lg">
             <EmptyState

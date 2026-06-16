@@ -46,7 +46,7 @@ export default async function OverviewPage() {
         </Notice>
       ) : null}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 18, maxWidth: 1160 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
         {/* Balance hero + recap */}
         <div className={cn('spl-grid-asym')} style={{ '--spl-cols': '1.7fr 1fr', '--spl-gap': '18px', alignItems: 'stretch' }}>
           <Card variant="inverse" style={{ borderRadius: 'var(--radius-2xl)' }}>

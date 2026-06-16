@@ -24,7 +24,7 @@ export default async function AccountsPage() {
         action={<AddAccountButton />}
       />
 
-      <div style={{ maxWidth: 1160 }}>
+      <div>
         {error ? (
           <Notice tone="warn">
             The API is not reachable yet, so balances are empty. Start the API (apps/api) and seed the

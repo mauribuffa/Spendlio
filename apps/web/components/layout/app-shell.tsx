@@ -243,7 +243,9 @@ export function AppShell({
           </Link>
         </header>
 
-        <main className="spl-shell__content">{children}</main>
+        <main className="spl-shell__content">
+          <div className="spl-shell__page">{children}</div>
+        </main>
       </div>
     </div>
   );

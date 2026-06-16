@@ -9,7 +9,7 @@ export default async function AssistantPage() {
   return (
     <>
       <PageHeader title="Assistant" subtitle="Ask about your money." hideActions />
-      <div style={{ maxWidth: 1160 }}>
+      <div>
         <Assistant userName={me?.name ?? 'You'} />
       </div>
     </>

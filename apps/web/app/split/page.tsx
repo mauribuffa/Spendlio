@@ -62,7 +62,7 @@ export default async function SplitPage() {
     <>
       <PageHeader eyebrow="Shared" title="Split & settle" subtitle="Who owes whom, gently sorted." />
 
-      <div style={{ maxWidth: 1160, display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
         {unreachable ? (
           <Notice tone="warn">
             The API is not reachable yet. People, groups and balances will appear once apps/api is running.
