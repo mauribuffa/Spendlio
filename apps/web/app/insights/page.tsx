@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { TrendingDown, TrendingUp, AlertTriangle, Repeat, PiggyBank } from 'lucide-react';
-import { Card, MoneyAmount, formatWhole, categoryColor, capitalize } from '@spendlio/ui';
+import { Card, MoneyAmount, formatWhole, categoryColor, capitalize, cn } from '@spendlio/ui';
 import { listTransactions, getBudgetStatus, type Transaction, type BudgetStatus } from '@/lib/resources';
 import { safe } from '@/lib/safe';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -123,7 +123,7 @@ export default async function InsightsPage() {
           <Notice tone="warn">The API is not reachable yet, so insights are empty. Start apps/api and seed the database.</Notice>
         ) : null}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 18, alignItems: 'start' }}>
+        <div className={cn('spl-grid-asym')} style={{ '--spl-cols': '1.1fr 1fr', '--spl-gap': '18px', alignItems: 'start' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {insights.map((insight, i) => (
               <InsightCard key={i} insight={insight} />

@@ -1,4 +1,4 @@
-import { Card, Stat, MoneyAmount, CategoryIcon, ProgressBar, EmptyState } from '@spendlio/ui';
+import { Card, Stat, MoneyAmount, CategoryIcon, ProgressBar, EmptyState, cn } from '@spendlio/ui';
 import { CalendarRange } from 'lucide-react';
 import { getRecap, type MonthlySummary } from '@/lib/resources';
 import { safe } from '@/lib/safe';
@@ -50,10 +50,10 @@ export default async function RecapPage({
       {data ? (
         <>
           <div
+            className={cn('spl-grid-asym')}
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 'var(--space-4)',
+              '--spl-cols': 'repeat(3, 1fr)',
+              '--spl-gap': 'var(--space-4)',
               marginBottom: 'var(--space-6)',
             }}
           >

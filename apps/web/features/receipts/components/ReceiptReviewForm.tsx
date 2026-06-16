@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2, Calculator } from 'lucide-react';
-import { Button, IconButton, Input, Select, AmountInput } from '@spendlio/ui';
+import { Button, IconButton, Input, Select, AmountInput, cn } from '@spendlio/ui';
 import { getCurrencyDecimals } from '@spendlio/contracts';
 import { confirmReceiptAction } from '@/features/receipts/lib/actions';
 
@@ -119,7 +119,7 @@ export function ReceiptReviewForm({
 
   return (
     <div style={{ display: 'grid', gap: 'var(--space-4)' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 'var(--space-4)' }}>
+      <div className={cn('spl-form-row')} style={{ gap: 'var(--space-4)', '--spl-cols': '2fr 1fr' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           <label style={labelStyle}>Merchant</label>
           <Input value={merchantVal} onChange={(e) => setMerchant(e.target.value)} placeholder="Merchant" />
@@ -130,7 +130,7 @@ export function ReceiptReviewForm({
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+      <div className={cn('spl-form-row')} style={{ gap: 'var(--space-4)' }}>
         <Select
           label="Category"
           options={categories}

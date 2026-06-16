@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Card, SegmentedControl, MoneyAmount, EmptyState, Button } from '@spendlio/ui';
+import { Card, SegmentedControl, MoneyAmount, EmptyState, Button, cn } from '@spendlio/ui';
 import { CreditCard, PiggyBank, Wallet, Landmark, Plus, Info } from 'lucide-react';
 import type { ComponentType } from 'react';
 import type { AccountBalance } from '@/lib/resources';
@@ -217,7 +217,7 @@ export function AccountsTabs({ balances }: { balances: AccountBalance[] }) {
         </Card>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+      <div className={cn('spl-cards')} style={{ '--spl-gap': '14px', '--spl-min': '260px' }}>
         {visible.map((b) => (
           <AccountCard key={b.accountId} b={b} />
         ))}
