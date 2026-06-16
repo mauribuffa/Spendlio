@@ -56,7 +56,13 @@ export class OtpService {
     const redis = getRedisClient();
     const raw = await redis.get(key(email));
     if (!raw) throw new UnauthorizedException('Code expired or not found.');
-    const { codeHash, attempts } = JSON.parse(raw) as { codeHash: string; attempts: number };
+    let parsed: { codeHash: string; attempts: number };
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      throw new UnauthorizedException('Code expired or not found.');
+    }
+    const { codeHash, attempts } = parsed;
 
     const a = Buffer.from(hashCode(code), 'hex');
     const b = Buffer.from(codeHash, 'hex');
@@ -82,6 +88,7 @@ export class OtpService {
       .values({ email: lower, name })
       .onConflictDoNothing({ target: users.email });
     const [row] = await this.db.select().from(users).where(eq(users.email, lower));
+    if (!row) throw new UnauthorizedException('Could not provision the account.');
     return { id: row.id, email: row.email, name: row.name };
   }
 }
