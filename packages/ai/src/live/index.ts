@@ -70,21 +70,10 @@ export class LiveProvider implements LLMProvider {
   async extractReceipt(image: ReceiptImage): Promise<ReceiptOcrResult> {
     try {
       const { object } = await generateObject({
+        // One source of truth for the receipt shape — the contracts-backed
+        // ReceiptOcrResult (CurrencyCode + ReceiptLineItem), not a re-inline.
         model: this.model,
-        schema: z.object({
-          merchant: z.string().nullable(),
-          date: z.string().nullable(),
-          total: z.number().int(),
-          currency: z.string().length(3),
-          lineItems: z.array(
-            z.object({
-              description: z.string(),
-              quantity: z.number().int(),
-              amount: z.number().int(),
-            }),
-          ),
-          confidence: z.number().min(0).max(1),
-        }),
+        schema: ReceiptOcrResult,
         system:
           'You extract structured data from a receipt image. ' +
           'All money amounts are integer minor units (cents). Never do arithmetic that loses precision.',

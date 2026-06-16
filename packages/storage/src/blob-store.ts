@@ -3,17 +3,11 @@
  * Local (MinIO) and prod (R2/S3) are the same interface behind a config swap.
  * (Golden rule 6: target interfaces, not vendors.)
  */
+import type { PresignedUpload } from '@spendlio/contracts';
 
-export interface PresignedUpload {
-  /** PUT the file body to this URL with the same contentType to upload. */
-  url: string;
-  /** The HTTP method the client must use against `url`. */
-  method: 'PUT';
-  /** The object key the file will live at once uploaded. */
-  key: string;
-  /** Seconds until `url` stops working. */
-  expiresIn: number;
-}
+// The presigned-upload shape is owned by @spendlio/contracts (one source of
+// truth shared with the web edge); re-exported here for storage's consumers.
+export type { PresignedUpload };
 
 export interface PutObjectInput {
   key: string;

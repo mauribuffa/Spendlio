@@ -30,6 +30,18 @@ export const ReceiptSchema = z.object({
 });
 export type Receipt = z.infer<typeof ReceiptSchema>;
 
+// A short-lived presigned upload (the response of POST /receipts/presign). One
+// source of truth shared by @spendlio/storage (the producer) and the web edge
+// (the consumer), so a drift between them fails to typecheck rather than at
+// runtime. The client PUTs the file body to `url` with the same contentType.
+export const PresignedUploadSchema = z.object({
+  url: z.string().url(),
+  method: z.literal('PUT'),
+  key: z.string().min(1),
+  expiresIn: z.number().int().positive(),
+});
+export type PresignedUpload = z.infer<typeof PresignedUploadSchema>;
+
 // Content types we allow a receipt upload to be presigned for. The value shapes
 // the storage key's extension, so it must be validated (never attacker-shaped).
 export const ReceiptContentType = z.enum([
