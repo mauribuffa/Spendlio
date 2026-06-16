@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { DbModule } from './db/db.module';
+import { AuthModule } from './auth/auth.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { CategoriesModule } from './categories/categories.module';
 import { AccountsModule } from './accounts/accounts.module';
@@ -16,6 +17,7 @@ import { RecapsModule } from './recaps/recaps.module';
 @Module({
   imports: [
     DbModule,
+    AuthModule,
     TransactionsModule,
     CategoriesModule,
     AccountsModule,
