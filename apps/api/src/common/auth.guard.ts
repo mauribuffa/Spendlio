@@ -15,6 +15,7 @@ export class AuthGuard implements CanActivate {
     if (!token) throw new UnauthorizedException('Missing bearer token');
     try {
       const { payload } = await jwtVerify(token, secret(), {
+        algorithms: ['HS256'],
         issuer: 'spendlio-web',
         audience: 'spendlio-api',
       });
