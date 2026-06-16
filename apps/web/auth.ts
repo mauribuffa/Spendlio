@@ -43,9 +43,11 @@ const _auth: NextAuthResult = NextAuth({
   ...authConfig,
   providers,
   callbacks: {
+    // `authorized` (from authConfig) is middleware-only — Auth.js never invokes it
+    // for server-side auth() calls. Middleware builds its own instance from authConfig.
     ...authConfig.callbacks,
     jwt({ token, user }) {
-      if (user) token.sub = user.id;
+      if (user?.id) token.sub = user.id;
       return token;
     },
     session({ session, token }) {
