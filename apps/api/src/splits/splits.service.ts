@@ -17,25 +17,47 @@ export class SplitsService {
   }
 
   /**
-   * Create a split: core computes the per-person shares (deterministic leftover
-   * cents), then split + split_shares are written together.
+   * Create a split (model B — ADR-028): the user is the implicit payer/creditor,
+   * resolved server-side to their self-person. `dto.total` is the FULL expense;
+   * participants are friends only. Shares are computed over [self, ...friends]
+   * with self absorbing the remainder, and the self share is stored too so the
+   * rows reconcile to `total`. balances() / netBalances() skip the self share.
    */
   async create(userId: string, dto: CreateSplitInput) {
-    // Build the detail core needs from the weights map, per mode.
+    const selfId = await this.resolveSelfId(userId);
+
+    // IDOR guard: every participant must belong to this user and must not be the
+    // self-person (the self share is injected here, never sent by the client).
+    if (dto.participantIds.includes(selfId)) {
+      throw new BadRequestException('Participants cannot include yourself.');
+    }
+    const owned = await this.db
+      .select({ id: people.id })
+      .from(people)
+      .where(and(eq(people.userId, userId), eq(people.isSelf, false), inArray(people.id, dto.participantIds)));
+    const ownedIds = new Set(owned.map((p: { id: string }) => p.id));
+    if (dto.participantIds.some((id) => !ownedIds.has(id))) {
+      throw new BadRequestException('Every participant must be one of your people.');
+    }
+
+    const personIds = [selfId, ...dto.participantIds];
+
+    // Inject the self share explicitly (do NOT route self through weight(), which
+    // throws on a missing key). Keep detail rows in lockstep with personIds.
     let detail: { exact?: Share[]; percents?: { personId: string; pct: number }[] } | undefined;
     if (dto.mode === 'exact') {
-      detail = {
-        exact: dto.participantIds.map((id) => ({ personId: id, amount: this.weight(dto, id) })),
-      };
+      const friends = dto.participantIds.map((id) => ({ personId: id, amount: this.weight(dto, id) }));
+      const friendSum = friends.reduce((s, x) => s + x.amount, 0);
+      detail = { exact: [{ personId: selfId, amount: dto.total - friendSum }, ...friends] };
     } else if (dto.mode === 'percent') {
-      detail = {
-        percents: dto.participantIds.map((id) => ({ personId: id, pct: this.weight(dto, id) })),
-      };
+      const friends = dto.participantIds.map((id) => ({ personId: id, pct: this.weight(dto, id) }));
+      const friendPct = friends.reduce((s, x) => s + x.pct, 0);
+      detail = { percents: [{ personId: selfId, pct: 100 - friendPct }, ...friends] };
     }
 
     let shares: Share[];
     try {
-      shares = computeSplit(dto.mode, dto.total, dto.participantIds, dto.payerId, detail);
+      shares = computeSplit(dto.mode, dto.total, personIds, selfId, detail);
     } catch (e) {
       throw new BadRequestException((e as Error).message);
     }
@@ -47,14 +69,37 @@ export class SplitsService {
       mode: dto.mode,
       total: dto.total,
       currency: dto.currency,
-      payerId: dto.payerId,
+      payerId: selfId,
     }).returning();
 
     const sharesRows = await this.db.insert(splitShares).values(
       shares.map((s) => ({ splitId: split.id, personId: s.personId, amount: s.amount })),
     ).returning();
 
-    return { ...split, shares: sharesRows };
+    // Hide the self share from the client (presentation): friends only.
+    return { ...split, shares: sharesRows.filter((s: { personId: string }) => s.personId !== selfId) };
+  }
+
+  /**
+   * The user's self-person id (the implicit "you" — model B). Lazily created if
+   * missing; the partial unique index (people_one_self_per_user) makes this
+   * race-safe: a concurrent insert hits onConflictDoNothing and we re-select.
+   */
+  private async resolveSelfId(userId: string): Promise<string> {
+    const [existing] = await this.db
+      .select({ id: people.id })
+      .from(people)
+      .where(and(eq(people.userId, userId), eq(people.isSelf, true)))
+      .limit(1);
+    if (existing) return existing.id;
+
+    await this.db.insert(people).values({ userId, name: 'You', isSelf: true }).onConflictDoNothing();
+    const [self] = await this.db
+      .select({ id: people.id })
+      .from(people)
+      .where(and(eq(people.userId, userId), eq(people.isSelf, true)))
+      .limit(1);
+    return self.id;
   }
 
   async get(userId: string, id: string) {
@@ -62,7 +107,8 @@ export class SplitsService {
       .where(and(eq(splits.id, id), eq(splits.userId, userId), isNull(splits.deletedAt)));
     if (!split) throw new NotFoundException();
     const shares = await this.db.select().from(splitShares).where(eq(splitShares.splitId, id));
-    return { ...split, shares };
+    // The self share (split.payerId) is internal bookkeeping; the client sees friends only.
+    return { ...split, shares: shares.filter((s: { personId: string }) => s.personId !== split.payerId) };
   }
 
   async remove(userId: string, id: string) {

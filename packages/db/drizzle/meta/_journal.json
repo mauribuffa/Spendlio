@@ -22,6 +22,20 @@
       "when": 1781554020096,
       "tag": "0002_known_spectrum",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1781620205485,
+      "tag": "0003_silky_the_initiative",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1781620452174,
+      "tag": "0004_natural_genesis",
+      "breakpoints": true
     }
   ]
 }

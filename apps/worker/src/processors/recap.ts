@@ -19,6 +19,11 @@ export async function processRecap(job: Job<RecapJob>): Promise<void> {
   if (!user) return;
 
   const { start, end } = monthRange(month);
+  // Defense in depth (enqueue already validates the YYYY-MM shape): never let a
+  // bad range produce NaN bounds and overwrite a good recap with zeros.
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    throw new Error(`recap: invalid month "${month}"`);
+  }
 
   const rows = await db
     .select({

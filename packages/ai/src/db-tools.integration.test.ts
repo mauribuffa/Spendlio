@@ -11,6 +11,7 @@ describe.skipIf(!RUN)('createDbTools (live DB)', () => {
   const UB = '0000a100-0000-0000-0000-0000000000b1'; // user B (scoping foil)
   const BOB = '0000a100-0000-0000-0000-00000000b0b0';
   const CAROL = '0000a100-0000-0000-0000-0000000ca201';
+  const SELF_A = '0000a100-0000-0000-0000-0000000005e1f'; // A's self-person (model B)
   const SPLIT_A = '0000a100-0000-0000-0000-00000005111a';
 
   // Lazy imports so the module (which opens a pg Pool) only loads when RUN.
@@ -55,17 +56,19 @@ describe.skipIf(!RUN)('createDbTools (live DB)', () => {
       { userId: UA, category: 'dining', limit: 20000, currency: 'USD', period: 'monthly' },
     ]);
 
-    // A's people + a split A paid: bob owes $10, carol owes $5. B owns no people here.
+    // A's people (incl. the self-person) + a split A owns (model B — ADR-028):
+    // self is the payer/creditor and holds a share that must be SKIPPED in netting.
     await db.insert(schema.people).values([
+      { id: SELF_A, userId: UA, name: 'You', isSelf: true },
       { id: BOB, userId: UA, name: 'Bob' },
       { id: CAROL, userId: UA, name: 'Carol' },
     ]);
     await db.insert(schema.splits).values([
-      { id: SPLIT_A, userId: UA, mode: 'exact', total: 1500, currency: 'USD', payerId: BOB },
+      { id: SPLIT_A, userId: UA, mode: 'exact', total: 3000, currency: 'USD', payerId: SELF_A },
     ]);
-    // Note: payer is BOB here only to exercise the edge logic deterministically.
     await db.insert(schema.splitShares).values([
-      { splitId: SPLIT_A, personId: CAROL, amount: 1500 }, // carol owes bob 1500
+      { splitId: SPLIT_A, personId: SELF_A, amount: 1500 }, // the user's own share — must be skipped
+      { splitId: SPLIT_A, personId: CAROL, amount: 1500 }, // carol owes the user 1500
     ]);
   });
 
@@ -113,5 +116,6 @@ describe.skipIf(!RUN)('createDbTools (live DB)', () => {
     const balances = await tools.balancesSummary();
     const carol = balances.find((b) => b.personName === 'Carol');
     expect(carol?.netCents).toBe(1500); // carol owes (via the split A owns)
+    expect(balances.some((b) => b.personName === 'You')).toBe(false); // self share skipped
   });
 });

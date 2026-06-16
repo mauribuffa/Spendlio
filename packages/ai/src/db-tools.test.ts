@@ -24,35 +24,42 @@ describe('monthBounds / monthOf', () => {
   });
 });
 
-describe('netBalances (ADR-021 model B, exact integer cents)', () => {
-  // The user owns one split (user is the implicit creditor); two friends owe shares.
+describe('netBalances (model B — ADR-028, exact integer cents)', () => {
+  // The user owns one split; self holds a share (skipped), two friends owe shares.
+  const SELF = 'self';
   const splits: SplitRow[] = [{ id: 's1', currency: 'USD' }];
   const shares: ShareRow[] = [
+    { splitId: 's1', personId: SELF, amount: 2000 }, // the user's own share — skipped
     { splitId: 's1', personId: 'bob', amount: 1000 }, // bob owes $10.00
     { splitId: 's1', personId: 'carol', amount: 500 }, // carol owes $5.00
   ];
 
   it('each share-holder owes the user exact cents', () => {
-    const { net } = netBalances(splits, shares, []);
+    const { net } = netBalances(splits, shares, [], SELF);
     expect(net.get('bob')).toBe(1000);
     expect(net.get('carol')).toBe(500);
+  });
+
+  it('skips the self share and never emits a "You" balance', () => {
+    const { net } = netBalances(splits, shares, [], SELF);
+    expect(net.has(SELF)).toBe(false);
   });
 
   it("a settled settlement reduces that person's debt", () => {
     // Bob settles $10 → his +1000 nets to 0 and is dropped; carol unchanged.
     const settled: SettlementRow[] = [
-      { fromPersonId: 'bob', toPersonId: 'anyone', amount: 1000, currency: 'USD' },
+      { fromPersonId: 'bob', toPersonId: SELF, amount: 1000, currency: 'USD' },
     ];
-    const { net } = netBalances(splits, shares, settled);
+    const { net } = netBalances(splits, shares, settled, SELF);
     expect(net.has('bob')).toBe(false); // 1000 - 1000 = 0
     expect(net.get('carol')).toBe(500);
   });
 
   it('a partial settlement leaves the exact remaining debt', () => {
     const settled: SettlementRow[] = [
-      { fromPersonId: 'bob', toPersonId: 'anyone', amount: 400, currency: 'USD' },
+      { fromPersonId: 'bob', toPersonId: SELF, amount: 400, currency: 'USD' },
     ];
-    const { net } = netBalances(splits, shares, settled);
+    const { net } = netBalances(splits, shares, settled, SELF);
     expect(net.get('bob')).toBe(600); // 1000 - 400
   });
 
@@ -65,14 +72,14 @@ describe('netBalances (ADR-021 model B, exact integer cents)', () => {
       { splitId: 's1', personId: 'bob', amount: 1000 },
       { splitId: 's2', personId: 'bob', amount: 250 },
     ];
-    const { net } = netBalances(twoSplits, moreShares, []);
+    const { net } = netBalances(twoSplits, moreShares, [], SELF);
     expect(net.get('bob')).toBe(1250);
   });
 
   it('carries the split currency per person', () => {
     const eurSplits: SplitRow[] = [{ id: 's2', currency: 'EUR' }];
     const eurShares: ShareRow[] = [{ splitId: 's2', personId: 'pia', amount: 250 }];
-    const { net, currency } = netBalances(eurSplits, eurShares, []);
+    const { net, currency } = netBalances(eurSplits, eurShares, [], SELF);
     expect(net.get('pia')).toBe(250);
     expect(currency.get('pia')).toBe('EUR');
   });

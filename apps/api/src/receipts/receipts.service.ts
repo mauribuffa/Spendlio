@@ -105,6 +105,11 @@ export class ReceiptsService {
       updatedAt: new Date(),
     }).where(and(eq(receipts.id, id), eq(receipts.userId, userId)));
 
+    // The transaction now exists — kick off categorization (jobId derives to
+    // `categorize-<txnId>`, idempotent). OCR can't do this: at scan time there is
+    // no transaction yet.
+    await enqueue('categorize', { transactionId: txn.id });
+
     return txn;
   }
 

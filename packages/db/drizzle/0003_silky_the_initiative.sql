@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "people_one_self_per_user" ON "people" USING btree ("user_id") WHERE "people"."is_self";

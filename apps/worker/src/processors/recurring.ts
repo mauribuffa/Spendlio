@@ -10,8 +10,9 @@ import { dueOccurrences, type Cadence } from '../lib/recurring';
  *  scopes to one. For each due occurrence we insert a transaction (source
  *  'recurring', linked via recurringId), then advance nextRunAt/lastRunAt.
  *
- * Idempotent: before inserting an occurrence we check whether a transaction for
- * (recurringId, occurredAt) already exists, so a re-run never double-creates.
+ * Idempotent: a partial unique index on (recurring_id, occurred_at) +
+ * onConflictDoNothing guarantees a re-run (or a concurrent sweep) never
+ * double-materializes money. The pre-SELECT below stays as a cheap fast-path.
  */
 export async function processRecurring(job: Job<RecurringJob>): Promise<void> {
   const now = new Date();
@@ -55,7 +56,7 @@ export async function processRecurring(job: Job<RecurringJob>): Promise<void> {
         status: 'cleared',
         source: 'recurring',
         recurringId: rule.id,
-      });
+      }).onConflictDoNothing();
     }
 
     await db

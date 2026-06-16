@@ -79,15 +79,15 @@ export async function createExpenseAction(payload: ExpensePayload): Promise<Expe
   }
 
   if (split && split.shares.length > 0) {
-    const total = split.shares.reduce((s, x) => s + x.cents, 0);
     const participantIds = split.shares.map((s) => s.personId);
-    // Even: let core divide the others' portion. Exact: send per-person weights.
+    // `total` is the FULL expense (model B — ADR-028); the API resolves the payer
+    // to your self-person, injects your share, and splits across [you, ...friends].
+    // Even: core divides the full total. Exact: send each friend's cents as a weight.
     const splitInput = CreateSplitInput.safeParse({
       transactionId: txnId,
       mode: split.mode === 'even' ? 'even' : 'exact',
-      total,
+      total: magnitude,
       currency: currency.toUpperCase(),
-      payerId: participantIds[0], // ignored by model-B netting (ADR-021)
       participantIds,
       ...(split.mode === 'even'
         ? {}
