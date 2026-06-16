@@ -1,12 +1,28 @@
-// auth.guard.ts — replace the stub body with JWT verification in Phase 5 (ADR-009)
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+// auth.guard.ts — verifies the short-lived Bearer JWT the web mints (ADR-033).
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { jwtVerify } from 'jose';
+
+function secret(): Uint8Array {
+  return new TextEncoder().encode(process.env.API_JWT_SECRET ?? 'change-me-dev-only');
+}
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  canActivate(ctx: ExecutionContext): boolean {
+  async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const req = ctx.switchToHttp().getRequest();
-    // DEV ONLY: trust a header so you can build the API before auth exists.
-    req.user = { id: req.header('x-user-id') ?? '00000000-0000-0000-0000-000000000001' };
-    return true;
+    const header: string | undefined = req.header('authorization');
+    const token = header?.startsWith('Bearer ') ? header.slice('Bearer '.length) : undefined;
+    if (!token) throw new UnauthorizedException('Missing bearer token');
+    try {
+      const { payload } = await jwtVerify(token, secret(), {
+        issuer: 'spendlio-web',
+        audience: 'spendlio-api',
+      });
+      if (!payload.sub) throw new Error('missing sub');
+      req.user = { id: payload.sub };
+      return true;
+    } catch {
+      throw new UnauthorizedException('Invalid token');
+    }
   }
 }
