@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { CategoryKey } from '@spendlio/contracts';
-import { CategoryIcon } from './CategoryIcon';
+import { CategoryIcon } from './category-icon';
 
 // Drive the test off the contracts enum so it covers exactly the 12 keys and
 // fails if a category is added without a mapping.

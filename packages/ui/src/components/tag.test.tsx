@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { Tag } from './Tag';
+import { Tag } from './tag';
 
 describe('Tag', () => {
   it('renders children and the base class', () => {

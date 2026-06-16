@@ -2,9 +2,9 @@
 
 import { useActionState, useEffect, useRef, useState } from 'react';
 import { Button, Input, Card, SegmentedControl, Select, cn } from '@spendlio/ui';
-import { FormField } from '@/components/form/FormField';
-import { FieldError } from '@/components/form/FieldError';
-import { useToast } from '@/components/feedback/ToastProvider';
+import { FormField } from '@/components/form/form-field';
+import { FieldError } from '@/components/form/field-error';
+import { useToast } from '@/components/feedback/toast-provider';
 import { createTransactionAction, type ActionResult } from '@/features/transactions/lib/actions';
 
 const CATEGORIES = [

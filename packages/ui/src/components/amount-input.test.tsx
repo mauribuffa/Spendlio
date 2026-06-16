@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { AmountInput } from './AmountInput';
+import { AmountInput } from './amount-input';
 
 describe('AmountInput', () => {
   it('shows the currency prefix and the value with tabular figures', () => {

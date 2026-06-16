@@ -3,8 +3,8 @@ import { Wallet, ArrowUpRight, ArrowDownLeft, PiggyBank, Sparkles, ArrowRight } 
 import { Card, MoneyAmount, TransactionRow, ProgressBar, formatSignedMoney, formatWhole, categoryColor, cn } from '@spendlio/ui';
 import { listTransactions, getBudgetStatus, type Transaction, type BudgetStatus } from '@/lib/resources';
 import { safe } from '@/lib/safe';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { Notice } from '@/components/feedback/Notice';
+import { PageHeader } from '@/components/layout/page-header';
+import { Notice } from '@/components/feedback/notice';
 import { Donut } from '@/components/domain/charts';
 
 function totals(items: Transaction[]) {

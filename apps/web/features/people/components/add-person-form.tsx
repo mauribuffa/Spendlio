@@ -2,9 +2,9 @@
 
 import { useActionState, useEffect, useRef } from 'react';
 import { Button, Input, Card, cn } from '@spendlio/ui';
-import { FormField } from '@/components/form/FormField';
-import { FieldError } from '@/components/form/FieldError';
-import { useToast } from '@/components/feedback/ToastProvider';
+import { FormField } from '@/components/form/form-field';
+import { FieldError } from '@/components/form/field-error';
+import { useToast } from '@/components/feedback/toast-provider';
 import { createPersonAction, type ActionResult } from '@/features/people/lib/actions';
 
 const initial: ActionResult = { ok: false };

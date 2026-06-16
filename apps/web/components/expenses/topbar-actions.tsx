@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { Plus, ScanLine } from 'lucide-react';
 import { Button, Modal } from '@spendlio/ui';
-import { AddExpenseModal } from './AddExpenseModal';
-import { UploadReceipt } from '@/features/receipts/components/UploadReceipt';
+import { AddExpenseModal } from './add-expense-modal';
+import { UploadReceipt } from '@/features/receipts/components/upload-receipt';
 
 /**
  * The global topbar actions: Scan a receipt + Add expense. Each opens a modal.

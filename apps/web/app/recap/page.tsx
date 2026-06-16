@@ -2,9 +2,9 @@ import { Card, Stat, MoneyAmount, CategoryIcon, ProgressBar, EmptyState, cn } fr
 import { CalendarRange } from 'lucide-react';
 import { getRecap, type MonthlySummary } from '@/lib/resources';
 import { safe } from '@/lib/safe';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { Notice } from '@/components/feedback/Notice';
-import { MonthPicker } from '@/features/recap/components/MonthPicker';
+import { PageHeader } from '@/components/layout/page-header';
+import { Notice } from '@/components/feedback/notice';
+import { MonthPicker } from '@/features/recap/components/month-picker';
 import { recentMonths, percentOfTotal } from '@/features/recap/lib/recap-utils';
 
 /** Current calendar month as YYYY-MM (UTC, matching the rest of the app). */

@@ -18,11 +18,11 @@ import {
   type Balance,
 } from '@/lib/resources';
 import { safe } from '@/lib/safe';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { Notice } from '@/components/feedback/Notice';
-import { SettleUpForm } from '@/features/split/components/SettleUpForm';
-import { AddGroupForm } from '@/features/split/components/AddGroupForm';
-import { RemindButton } from '@/features/split/components/RemindButton';
+import { PageHeader } from '@/components/layout/page-header';
+import { Notice } from '@/components/feedback/notice';
+import { SettleUpForm } from '@/features/split/components/settle-up-form';
+import { AddGroupForm } from '@/features/split/components/add-group-form';
+import { RemindButton } from '@/features/split/components/remind-button';
 
 export default async function SplitPage() {
   const [people, groups, balances] = await Promise.all([

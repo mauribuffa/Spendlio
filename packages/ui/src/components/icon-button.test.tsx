@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { IconButton } from './IconButton';
+import { IconButton } from './icon-button';
 
 describe('IconButton', () => {
   it('exposes the label as accessible name and title', () => {

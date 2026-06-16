@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
-import { Skeleton, SkeletonRow } from './Skeleton';
+import { Skeleton, SkeletonRow } from './skeleton';
 
 describe('Skeleton', () => {
   it('applies the base shimmer class and a circle modifier', () => {

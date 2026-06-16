@@ -1,8 +1,8 @@
 import type { HTMLAttributes, ReactNode } from 'react';
 import type { CategoryKey } from '@spendlio/contracts';
 import { cn } from '../cn';
-import { CategoryIcon } from './CategoryIcon';
-import { MoneyAmount } from './MoneyAmount';
+import { CategoryIcon } from './category-icon';
+import { MoneyAmount } from './money-amount';
 
 export interface TransactionRowProps extends HTMLAttributes<HTMLDivElement> {
   category: CategoryKey;

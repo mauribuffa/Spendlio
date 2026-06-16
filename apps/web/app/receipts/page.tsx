@@ -3,11 +3,11 @@ import { ReceiptText } from 'lucide-react';
 import { Card, EmptyState, MoneyAmount } from '@spendlio/ui';
 import { listReceipts, type Receipt } from '@/lib/resources';
 import { safe } from '@/lib/safe';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { Notice } from '@/components/feedback/Notice';
-import { UploadReceipt } from '@/features/receipts/components/UploadReceipt';
-import { StatusBadge } from '@/features/receipts/components/StatusBadge';
-import { PollWhileProcessing } from '@/features/receipts/components/PollWhileProcessing';
+import { PageHeader } from '@/components/layout/page-header';
+import { Notice } from '@/components/feedback/notice';
+import { UploadReceipt } from '@/features/receipts/components/upload-receipt';
+import { StatusBadge } from '@/features/receipts/components/status-badge';
+import { PollWhileProcessing } from '@/features/receipts/components/poll-while-processing';
 
 export const revalidate = 0;
 

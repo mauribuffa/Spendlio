@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { FieldError } from './FieldError';
+import { FieldError } from './field-error';
 
 export interface FormFieldProps {
   /** Matches the `id` on the control so the label is associated with it. */

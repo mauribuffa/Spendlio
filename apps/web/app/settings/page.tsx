@@ -1,9 +1,9 @@
 import { Card, Avatar, Badge } from '@spendlio/ui';
 import { getMe, type User } from '@/lib/resources';
 import { safe } from '@/lib/safe';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { Notice } from '@/components/feedback/Notice';
-import { SettingsForm } from '@/features/settings/components/SettingsForm';
+import { PageHeader } from '@/components/layout/page-header';
+import { Notice } from '@/components/feedback/notice';
+import { SettingsForm } from '@/features/settings/components/settings-form';
 
 export default async function SettingsPage() {
   const { data, error } = await safe<User | null>(() => getMe(), null);

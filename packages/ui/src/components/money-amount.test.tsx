@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { MoneyAmount, formatSignedMoney } from './MoneyAmount';
+import { MoneyAmount, formatSignedMoney } from './money-amount';
 
 describe('formatSignedMoney', () => {
   it('formats -675 cents USD as a signed "-$6.75"', () => {

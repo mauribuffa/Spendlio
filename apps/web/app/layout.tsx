@@ -4,8 +4,8 @@ import { Space_Grotesk, Hanken_Grotesk, Space_Mono } from 'next/font/google';
 // Imported once here so every page inherits them.
 import '@spendlio/ui/styles.css';
 import './globals.css';
-import { AppShell } from '@/components/layout/AppShell';
-import { ToastProvider } from '@/components/feedback/ToastProvider';
+import { AppShell } from '@/components/layout/app-shell';
+import { ToastProvider } from '@/components/feedback/toast-provider';
 import { getMe } from '@/lib/resources';
 import { safe } from '@/lib/safe';
 
