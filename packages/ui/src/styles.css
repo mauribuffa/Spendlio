@@ -514,16 +514,14 @@
   .spl-modal__scrim, .spl-modal__panel { animation: none; }
 }
 
-/* Layout: centered card on desktop, full-width bottom sheet on mobile. */
+/* Centered dialog at every size. On small screens it keeps its margins small
+   and gains a little height, so it stays comfortably in the middle of the
+   viewport (panel width is capped by max-width:100% on the inline style). */
 .spl-modal__overlay { display: flex; align-items: center; justify-content: center; padding: 24px; }
 .spl-modal__panel { border-radius: var(--radius-sheet); max-height: 90vh; }
 @media (max-width: 767px) {
-  .spl-modal__overlay { align-items: flex-end; padding: 0; }
-  .spl-modal__panel {
-    max-width: 100%;
-    border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
-    max-height: 92vh;
-  }
+  .spl-modal__overlay { padding: 16px; }
+  .spl-modal__panel { max-height: 92vh; }
 }
 
 /* ---- Skeleton ---- */
