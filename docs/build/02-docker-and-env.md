@@ -68,9 +68,11 @@ STORAGE_KEY=spendlio
 STORAGE_SECRET=spendlio123
 STORAGE_FORCE_PATH_STYLE=true   # required for MinIO; false for AWS S3
 
-# Auth (fill when you reach Phase 5)
-AUTH_SECRET=change-me-dev-only
-JWT_SECRET=change-me-dev-only
+# Auth (Phase 5 — email OTP + Auth.js + short-lived JWT to the API; ADR-033)
+AUTH_SECRET=change-me-dev-only        # Auth.js session secret (web)
+AUTH_URL=http://localhost:3000        # Auth.js base URL (web)
+API_JWT_SECRET=change-me-dev-only     # shared HS256 secret: web mints, API verifies
+EMAIL_FROM=Spendlio <no-reply@spendlio.app>   # used by the prod email adapter (deferred)
 
 # API
 API_PORT=4000
