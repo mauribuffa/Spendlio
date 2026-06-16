@@ -110,7 +110,7 @@ test('every web GET endpoint parses against its schema', async () => {
     const r = schema.safeParse(body);
     if (!r.success) {
       const i = r.error.issues[0];
-      failures.push(`${path} → ${i.path.join('.') || '(root)'}: ${i.message}`);
+      if (i) failures.push(`${path} → ${i.path.join('.') || '(root)'}: ${i.message}`);
     }
   }
 
