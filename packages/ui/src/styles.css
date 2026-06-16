@@ -567,3 +567,84 @@
   .spl-only-desktop { display: none; }
   .spl-only-mobile { display: block; }
 }
+
+/* ============================================================
+   APP SHELL (responsive)
+   Desktop: static sticky sidebar + scrollable content.
+   Mobile (< 768px): sidebar becomes an off-canvas drawer behind a scrim,
+   toggled by a hamburger in a sticky top bar. The only responsive JS is the
+   open/close state, which flips the [data-drawer-open] attribute the CSS reads.
+   ============================================================ */
+.spl-shell { display: flex; min-height: 100vh; }
+
+.spl-shell__sidebar {
+  width: 248px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.spl-shell__main { flex: 1; min-width: 0; height: 100vh; display: flex; flex-direction: column; }
+.spl-shell__content { flex: 1; min-width: 0; overflow-y: auto; padding: 0 28px 28px; }
+
+/* Mobile-only chrome — hidden on desktop. */
+.spl-shell__topbar { display: none; }
+.spl-shell__scrim { display: none; }
+
+@media (max-width: 767px) {
+  .spl-shell__sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    height: 100dvh;
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform var(--dur-base) var(--ease-standard);
+    box-shadow: var(--shadow-xl);
+  }
+  .spl-shell[data-drawer-open="true"] .spl-shell__sidebar { transform: translateX(0); }
+
+  .spl-shell__scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background: var(--surface-overlay);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-base) var(--ease-standard);
+  }
+  .spl-shell[data-drawer-open="true"] .spl-shell__scrim { opacity: 1; pointer-events: auto; }
+
+  .spl-shell__topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    height: var(--header-height);
+    padding: 0 12px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--surface-card);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .spl-shell__content { padding: 0 16px 16px; }
+}
+
+.spl-shell__hamburger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-md);
+  color: var(--text-strong);
+  cursor: pointer;
+  transition: var(--transition-colors);
+}
+.spl-shell__hamburger:hover { background: var(--surface-sunken); }
+.spl-shell__hamburger:focus-visible { outline: none; box-shadow: var(--focus-ring); }

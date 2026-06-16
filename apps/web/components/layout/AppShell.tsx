@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import {
   LayoutDashboard,
   ArrowLeftRight,
@@ -14,9 +15,10 @@ import {
   Landmark,
   UserPlus,
   TrendingUp,
+  Menu,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { Avatar } from '@spendlio/ui';
+import { Avatar, cn } from '@spendlio/ui';
 
 // Primary nav — ordered to read like the canonical sidebar; the repo's extra
 // routes (Receipts, People, Recap) sit beside their natural parents.
@@ -39,9 +41,12 @@ function isActive(pathname: string, href: string): boolean {
 }
 
 /**
- * The web app frame: a fixed 248px sidebar (logo + nav + an "Ask Spendlio AI"
- * promo and the signed-in profile pinned to the foot) plus the scrollable page
- * body on the warm canvas. The page owns its sticky topbar (PageHeader).
+ * The web app frame. On desktop: a static 248px sidebar (logo + nav + an "Ask
+ * Spendlio AI" promo and the signed-in profile pinned to the foot) beside the
+ * scrollable page body. Below 768px the sidebar collapses into an off-canvas
+ * drawer behind a scrim, opened by a hamburger in a sticky mobile top bar; the
+ * page still owns its own sticky topbar (PageHeader). The responsive flip is
+ * pure CSS — only the open/close state is JS.
  */
 export function AppShell({
   user,
@@ -52,25 +57,46 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const settingsActive = pathname.startsWith('/settings');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // Close the drawer whenever the route changes (a nav tap navigates).
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [pathname]);
+
+  // Esc closes the drawer while it's open.
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setDrawerOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [drawerOpen]);
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div className={cn('spl-shell')} data-drawer-open={drawerOpen ? 'true' : 'false'}>
+      {/* Mobile-only scrim; tapping it closes the drawer. */}
+      <div
+        className="spl-shell__scrim"
+        aria-hidden="true"
+        onClick={() => setDrawerOpen(false)}
+      />
+
       <aside
+        id="app-drawer"
+        className="spl-shell__sidebar"
         style={{
-          width: 248,
-          flexShrink: 0,
           borderRight: '1px solid var(--border-subtle)',
           background: 'var(--surface-card)',
           padding: '20px 14px',
-          position: 'sticky',
-          top: 0,
-          height: '100vh',
           display: 'flex',
           flexDirection: 'column',
         }}
       >
         <Link
           href="/"
+          onClick={() => setDrawerOpen(false)}
           style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '4px 8px 22px' }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -95,6 +121,7 @@ export function AppShell({
               <Link
                 key={href}
                 href={href}
+                onClick={() => setDrawerOpen(false)}
                 aria-current={active ? 'page' : undefined}
                 style={{
                   display: 'flex',
@@ -120,6 +147,7 @@ export function AppShell({
         <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <Link
             href="/assistant"
+            onClick={() => setDrawerOpen(false)}
             style={{
               display: 'block',
               background: 'var(--green-900)',
@@ -139,6 +167,7 @@ export function AppShell({
 
           <Link
             href="/settings"
+            onClick={() => setDrawerOpen(false)}
             aria-current={settingsActive ? 'page' : undefined}
             style={{
               display: 'flex',
@@ -184,19 +213,38 @@ export function AppShell({
         </div>
       </aside>
 
-      <main
-        style={{
-          flex: 1,
-          minWidth: 0,
-          height: '100vh',
-          overflowY: 'auto',
-          display: 'flex',
-          flexDirection: 'column',
-          padding: '0 28px 28px',
-        }}
-      >
-        {children}
-      </main>
+      <div className="spl-shell__main">
+        {/* Mobile-only top bar: hamburger + wordmark. Hidden on desktop. */}
+        <header className="spl-shell__topbar">
+          <button
+            type="button"
+            className="spl-shell__hamburger"
+            aria-label="Open navigation menu"
+            aria-expanded={drawerOpen}
+            aria-controls="app-drawer"
+            onClick={() => setDrawerOpen(true)}
+          >
+            <Menu size={22} strokeWidth={2} aria-hidden="true" />
+          </button>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-mark.svg" width={26} height={26} alt="" />
+            <span
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontWeight: 'var(--weight-bold)',
+                fontSize: 18,
+                letterSpacing: '-0.02em',
+                color: 'var(--green-900)',
+              }}
+            >
+              Spendlio
+            </span>
+          </Link>
+        </header>
+
+        <main className="spl-shell__content">{children}</main>
+      </div>
     </div>
   );
 }
