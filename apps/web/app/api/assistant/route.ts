@@ -1,25 +1,24 @@
-import { API_BASE, DEMO_USER_ID } from '@/lib/config';
+import { API_BASE } from '@/lib/config';
+import { getApiToken } from '@/lib/auth-token';
 
 // Same-origin proxy for the assistant chat. The browser's useChat hook POSTs
-// here; this handler runs server-side, injects the dev x-user-id header (so it
-// never reaches the client), and streams the API's response back. Pointing
-// useChat at a same-origin route also sidesteps CORS.
-//
-// The API (POST /api/assistant) validates the body (AssistantChatRequest) and
-// returns an AI-SDK UI-message stream via
-// streamAssistant(...).toUIMessageStreamResponse().
+// here; this handler runs server-side, attaches the signed-in user's Bearer
+// token (so it never reaches the client), and streams the API's response back.
+// Pointing useChat at a same-origin route also sidesteps CORS.
 
 export async function POST(req: Request): Promise<Response> {
+  const token = await getApiToken();
+  if (!token) {
+    return Response.json({ error: 'unauthorized' }, { status: 401 });
+  }
+
   const body = await req.text();
 
   let upstream: Response;
   try {
     upstream = await fetch(`${API_BASE}/assistant`, {
       method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-user-id': DEMO_USER_ID,
-      },
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
       body,
     });
   } catch {
@@ -30,7 +29,6 @@ export async function POST(req: Request): Promise<Response> {
     );
   }
 
-  // Stream the upstream body (and its content-type) through unchanged.
   return new Response(upstream.body, {
     status: upstream.status,
     headers: {

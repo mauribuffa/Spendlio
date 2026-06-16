@@ -1,11 +1,12 @@
 import 'server-only';
 import { z } from 'zod';
-import { API_BASE, DEMO_USER_ID } from './config';
+import { API_BASE } from './config';
+import { getApiToken } from './auth-token';
 
 /**
  * Typed client for the Spendlio API (apps/api, NestJS).
  *
- * Server-side only — it carries the dev `x-user-id` header, so it must never
+ * Server-side only — it mints a short-lived Bearer token from the Auth.js session, so it must never
  * run in the browser (the `server-only` import enforces that at build time).
  * The web app does all reads in server components and all writes in server
  * actions, so the demo-user header never reaches the client.
@@ -38,12 +39,15 @@ interface RequestOptions {
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, schema, cache = 'no-store' } = options;
 
+  const token = await getApiToken();
+  if (!token) throw new ApiError(401, 'Not authenticated');
+
   const res = await fetch(`${API_BASE}${path}`, {
     method,
     cache,
     headers: {
       'content-type': 'application/json',
-      'x-user-id': DEMO_USER_ID,
+      authorization: `Bearer ${token}`,
     },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
