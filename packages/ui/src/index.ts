@@ -5,6 +5,8 @@
 export { cn } from './cn';
 export type { ClassValue } from './cn';
 
+export { formatWhole, capitalize } from './format';
+
 export { Button } from './components/Button';
 export type { ButtonProps, ButtonVariant, ButtonSize } from './components/Button';
 
@@ -29,7 +31,7 @@ export type { AvatarProps, AvatarGroupProps, AvatarSize } from './components/Ava
 export { MoneyAmount, formatSignedMoney } from './components/MoneyAmount';
 export type { MoneyAmountProps } from './components/MoneyAmount';
 
-export { CategoryIcon } from './components/CategoryIcon';
+export { CategoryIcon, categoryColor } from './components/CategoryIcon';
 export type { CategoryIconProps, CategoryIconSize } from './components/CategoryIcon';
 
 export { TransactionRow } from './components/TransactionRow';

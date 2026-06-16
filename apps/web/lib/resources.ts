@@ -36,6 +36,8 @@ import {
   type Receipt,
   type CreateReceiptInput,
   type ConfirmReceiptInput,
+  PresignedUploadSchema,
+  type PresignedUpload,
   SettlementSchema,
   type Settlement,
   type CreateSettlementInput,
@@ -161,15 +163,9 @@ export function updateMe(input: UpdateUserInput): Promise<User> {
 // ---- Receipts (OCR) ----
 const ReceiptPage = Page(ReceiptSchema);
 
-// The presign response shape mirrors @spendlio/storage's PresignedUpload. We
-// validate it here so a drift between storage + the web edge fails loudly.
-const PresignedUpload = z.object({
-  url: z.string().url(),
-  method: z.literal('PUT'),
-  key: z.string().min(1),
-  expiresIn: z.number().int().positive(),
-});
-export type PresignedUpload = z.infer<typeof PresignedUpload>;
+// The presign response shape is owned by @spendlio/contracts (PresignedUploadSchema),
+// shared with @spendlio/storage — re-exported here for the web's callers.
+export type { PresignedUpload };
 
 export function listReceipts(): Promise<z.infer<typeof ReceiptPage>> {
   return api.get(`/receipts`, ReceiptPage);
@@ -189,7 +185,7 @@ export async function getReceiptImageUrl(id: string): Promise<string> {
  *  The content hash makes the storage key content-addressed (dedup-friendly). */
 export function presignReceipt(contentType: string, sha256?: string): Promise<PresignedUpload> {
   const qs = `?contentType=${encodeURIComponent(contentType)}${sha256 ? `&sha256=${sha256}` : ''}`;
-  return api.post(`/receipts/presign${qs}`, undefined, PresignedUpload);
+  return api.post(`/receipts/presign${qs}`, undefined, PresignedUploadSchema);
 }
 
 /** Step 3 of upload: register the uploaded object key → creates the row + enqueues OCR. */

@@ -1,27 +1,11 @@
 import Link from 'next/link';
 import { Wallet, ArrowUpRight, ArrowDownLeft, PiggyBank, Sparkles, ArrowRight } from 'lucide-react';
-import { Card, MoneyAmount, TransactionRow, ProgressBar, formatSignedMoney } from '@spendlio/ui';
-import { getCurrencyDecimals } from '@spendlio/contracts';
+import { Card, MoneyAmount, TransactionRow, ProgressBar, formatSignedMoney, formatWhole, categoryColor } from '@spendlio/ui';
 import { listTransactions, getBudgetStatus, type Transaction, type BudgetStatus } from '../lib/resources';
 import { safe } from '../lib/safe';
 import { PageHeader } from './_components/PageHeader';
 import { Notice } from './_components/Notice';
 import { Donut } from './_components/charts';
-
-/** --cat ramp slot per category — mirrors @spendlio/ui CategoryIcon. */
-const CAT_SLOT: Record<string, number> = {
-  groceries: 1, dining: 2, transport: 3, housing: 4, utilities: 6, shopping: 5,
-  health: 4, entertainment: 5, travel: 3, subscriptions: 7, income: 1, transfer: 8,
-};
-const catColor = (c: string) => `var(--cat-${CAT_SLOT[c] ?? 8})`;
-
-/** Whole-currency formatter for compact figures (no sign, no cents). */
-function whole(cents: number, currency: string): string {
-  const d = getCurrencyDecimals(currency);
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(
-    Math.abs(cents) / 10 ** d,
-  );
-}
 
 function totals(items: Transaction[]) {
   let income = 0;
@@ -87,9 +71,9 @@ export default async function OverviewPage() {
             </div>
             <div style={{ display: 'flex', gap: 12, marginTop: 22 }}>
               {[
-                { icon: ArrowUpRight, label: 'Spent', value: whole(t.expense, t.currency) },
-                { icon: ArrowDownLeft, label: 'Income', value: whole(t.income, t.currency) },
-                { icon: PiggyBank, label: 'Saved', value: whole(Math.max(0, t.net), t.currency) },
+                { icon: ArrowUpRight, label: 'Spent', value: formatWhole(t.expense, t.currency) },
+                { icon: ArrowDownLeft, label: 'Income', value: formatWhole(t.income, t.currency) },
+                { icon: PiggyBank, label: 'Saved', value: formatWhole(Math.max(0, t.net), t.currency) },
               ].map(({ icon: Icon, label, value }) => (
                 <div key={label} style={{ flex: 1, background: 'rgba(255,255,255,0.08)', borderRadius: 'var(--radius-lg)', padding: '13px 15px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, ...onDark, fontSize: 12, fontWeight: 600 }}>
@@ -131,14 +115,14 @@ export default async function OverviewPage() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
                 <Donut
-                  data={t.categories.slice(0, 6).map((c) => ({ value: c.value, color: catColor(c.category) }))}
+                  data={t.categories.slice(0, 6).map((c) => ({ value: c.value, color: categoryColor(c.category) }))}
                   centerLabel="Spent"
-                  centerValue={whole(t.expense, t.currency)}
+                  centerValue={formatWhole(t.expense, t.currency)}
                 />
                 <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {t.categories.slice(0, 4).map((c) => (
                     <div key={c.category} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13 }}>
-                      <span style={{ width: 9, height: 9, borderRadius: 3, background: catColor(c.category), flex: 'none' }} />
+                      <span style={{ width: 9, height: 9, borderRadius: 3, background: categoryColor(c.category), flex: 'none' }} />
                       <span style={{ flex: 1, color: 'var(--text-body)', fontWeight: 500, textTransform: 'capitalize' }}>{c.category}</span>
                       <MoneyAmount amount={-c.value} currency={t.currency} color="off" size="sm" />
                     </div>
@@ -158,7 +142,7 @@ export default async function OverviewPage() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, fontSize: 13 }}>
                       <span style={{ fontWeight: 'var(--weight-semibold)', color: 'var(--text-body)', textTransform: 'capitalize' }}>{b.category}</span>
                       <span style={{ color: 'var(--text-muted)', fontSize: 12.5 }}>
-                        {whole(b.spent, b.currency)} <span style={{ color: 'var(--text-subtle)' }}>/ {whole(b.limit, b.currency)}</span>
+                        {formatWhole(b.spent, b.currency)} <span style={{ color: 'var(--text-subtle)' }}>/ {formatWhole(b.limit, b.currency)}</span>
                       </span>
                     </div>
                     <ProgressBar value={b.spent} max={b.limit} label={`${b.category} budget usage`} />

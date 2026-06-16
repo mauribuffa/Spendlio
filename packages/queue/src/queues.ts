@@ -1,7 +1,34 @@
 import { Queue, type JobsOptions } from 'bullmq';
-import { QUEUES, type QueueName } from '@spendlio/contracts';
+import {
+  QUEUES,
+  type QueueName,
+  OcrJob,
+  CategorizeJob,
+  RecapJob,
+  RecurringJob,
+  NotifyJob,
+} from '@spendlio/contracts';
 import { getConnectionOptions } from './connection';
 import type { JobPayloadMap } from './jobs';
+
+// Structural shape of a validator — avoids a direct `zod` dependency here (queue
+// stays BullMQ + contracts only); the contracts schemas satisfy it.
+interface PayloadValidator {
+  parse(value: unknown): unknown;
+}
+
+/**
+ * Job payload schemas keyed by queue name. Validating at enqueue() turns "a bad
+ * job poisons the worker (and silently dies in the fail set)" into "a bad enqueue
+ * is rejected at the producer, synchronously, with a clear error".
+ */
+const JOB_SCHEMAS: Record<QueueName, PayloadValidator> = {
+  ocr: OcrJob,
+  categorize: CategorizeJob,
+  recap: RecapJob,
+  recurring: RecurringJob,
+  notify: NotifyJob,
+};
 
 /**
  * Default job policy (doc 07): retry transient failures with exponential
@@ -11,7 +38,10 @@ export const DEFAULT_JOB_OPTIONS: JobsOptions = {
   attempts: 3,
   backoff: { type: 'exponential', delay: 2000 },
   removeOnComplete: { count: 1000 }, // keep the last 1k for inspection
-  removeOnFail: { count: 5000 },     // keep more failures (the dead-letter view)
+  // Short-term inspection only — the durable record of a permanently-failed job
+  // is the `dead_letters` table the worker writes on the final attempt (ADR-029),
+  // not this evictable set.
+  removeOnFail: { count: 5000 },
 };
 
 // One Queue instance per registered name, lazily created. BullMQ builds its own
@@ -45,7 +75,7 @@ function defaultJobId<N extends QueueName>(name: N, payload: JobPayloadMap[N]): 
     case 'categorize':  return `categorize-${p.transactionId}`;
     case 'recap':       return `recap-${p.userId}-${p.month}`;
     case 'recurring':   return `recurring-${p.ruleId ?? 'all'}`;
-    case 'notify':      return `notify-${p.userId}-${p.type}`;
+    case 'notify':      return `notify-${p.userId}-${p.type}${p.dedupeKey ? `-${p.dedupeKey}` : ''}`;
     default:            return undefined;
   }
 }
@@ -64,6 +94,9 @@ export function enqueue<N extends QueueName>(
   payload: JobPayloadMap[N],
   opts?: JobsOptions,
 ) {
+  // Reject malformed payloads at the producer (throws ZodError) rather than
+  // letting them fail repeatedly in the worker and vanish into the fail set.
+  JOB_SCHEMAS[name].parse(payload);
   const jobId = opts && 'jobId' in opts ? opts.jobId : defaultJobId(name, payload);
   // The boundary above is fully typed (name + matching payload). BullMQ's add()
   // first param is `NameType`, derived via a conditional over DataType that TS

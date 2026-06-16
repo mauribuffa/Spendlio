@@ -1,9 +1,8 @@
 import type { CategoryKey } from '@spendlio/contracts';
 
 /**
- * Pure recap aggregation — no DB, no framework. Liftable to @spendlio/core
- * (the job's "work") once core gains a recap module; kept here for now so the
- * worker is self-contained. All amounts are integer minor units (cents).
+ * Pure recap aggregation — no DB, no framework (a job's "work" lives in core).
+ * All amounts are integer minor units (cents).
  *
  * Convention: each transaction is reduced to a single amount IN THE BASE
  * CURRENCY using its FX snapshot when present (fxBaseAmount), else its own

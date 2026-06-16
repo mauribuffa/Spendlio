@@ -35,7 +35,7 @@ packages/db           Drizzle schema + migrations + client + seed
 packages/queue        BullMQ connection + typed enqueue() + QUEUES registry
 packages/storage      BlobStore interface (S3-compatible: MinIO/R2/S3)
 packages/ui           the design system (tokens + React components)
-packages/config       shared tsconfig / eslint / prettier
+packages/config       shared ESLint config (the base tsconfig is tsconfig.base.json at the repo root; Prettier runs on defaults)
 docs/                 learning/ (the why) + build/ (step-by-step) ; decisions.md ADR log
 PROGRESS.md           build tracker — update after every completed step (status + checkbox + log)
 docker-compose.yml    Postgres + Redis + MinIO

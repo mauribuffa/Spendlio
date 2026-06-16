@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
-import { CreateReceiptInput, ConfirmReceiptInput } from '@spendlio/contracts';
+import { CreateReceiptInput, ConfirmReceiptInput, PresignReceiptQuery } from '@spendlio/contracts';
 import { ZodPipe } from '../common/zod.pipe';
 import { AuthGuard } from '../common/auth.guard';
 import { CurrentUser } from '../common/current-user.decorator';
@@ -18,10 +18,9 @@ export class ReceiptsController {
   @Post('presign')
   presign(
     @CurrentUser() u: { id: string },
-    @Query('contentType') contentType?: string,
-    @Query('sha256') sha256?: string,
+    @Query(new ZodPipe(PresignReceiptQuery)) query: PresignReceiptQuery,
   ) {
-    return this.svc.presign(u.id, contentType, sha256);
+    return this.svc.presign(u.id, query.contentType, query.sha256);
   }
 
   // Step 2: register the uploaded key → create row + enqueue OCR.

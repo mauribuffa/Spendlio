@@ -55,30 +55,32 @@ export interface SettlementRow {
 
 /**
  * Net per-person balances (exact integer cents) from the user's viewpoint
- * (ADR-021 model B: the user is the implicit payer/creditor of their own splits;
- * there is no self-person row). Pure — the SQL layer just feeds it rows. Direct
- * per-person aggregation:
- *   - each split_share `personId` owes you their `amount`  (+)
+ * (model B — ADR-028: the user is the implicit payer/creditor, represented by
+ * their self-person `selfId`, who also holds a share row). Pure — the SQL layer
+ * just feeds it rows. Direct per-person aggregation:
+ *   - each split_share `personId` (except the self share) owes you their `amount` (+)
  *   - a person who has SETTLED a settlement reduces their debt by `amount`  (−)
- * Returns Map<personId, netCents> (positive = they owe you, negative = you owe
- * them), zero balances dropped, plus the per-person currency.
+ * The self share is skipped and `selfId` is dropped from the output, mirroring
+ * SplitsService.balances() exactly — otherwise the assistant reports a phantom
+ * "You" balance. Returns Map<personId, netCents> (positive = they owe you,
+ * negative = you owe them), zero balances dropped, plus the per-person currency.
  *
  * `splitRows` carries each split's currency so shares inherit it.
- * Mixed-payer / "a friend paid" splits need a self-person row + bidirectional
- * netting — out of scope here (ADR-021 follow-up).
  */
 export function netBalances(
   splitRows: SplitRow[],
   shareRows: ShareRow[],
   settlementRows: SettlementRow[],
+  selfId: string | null,
 ): { net: Map<string, number>; currency: Map<string, string> } {
   const currencyOf = new Map(splitRows.map((s) => [s.id, s.currency]));
   const net = new Map<string, number>();
   const personCurrency = new Map<string, string>();
   const bump = (id: string, d: number) => net.set(id, (net.get(id) ?? 0) + d);
 
-  // Each share is a person owing the user their portion.
+  // Each share is a person owing the user their portion — skip the user's own share.
   for (const sh of shareRows) {
+    if (sh.personId === selfId) continue;
     bump(sh.personId, sh.amount);
     const cur = currencyOf.get(sh.splitId);
     if (cur) personCurrency.set(sh.personId, cur);
@@ -89,7 +91,8 @@ export function netBalances(
     if (!personCurrency.has(st.fromPersonId)) personCurrency.set(st.fromPersonId, st.currency);
   }
 
-  // Drop zero balances.
+  // Drop the self-person (the viewpoint) and zero balances.
+  if (selfId) net.delete(selfId);
   for (const [id, v] of net) if (v === 0) net.delete(id);
   return { net, currency: personCurrency };
 }
@@ -184,6 +187,14 @@ export function createDbTools(db: DB, userId: string): AssistantTools {
     },
 
     async balancesSummary(): Promise<BalanceLine[]> {
+      // The self-person (model B viewpoint) is skipped in netting — resolve it up front.
+      const [self] = await db
+        .select({ id: people.id })
+        .from(people)
+        .where(and(eq(people.userId, userId), eq(people.isSelf, true)))
+        .limit(1);
+      const selfId = self?.id ?? null;
+
       // Pull this user's splits, their per-person shares, and settled settlements.
       const userSplits = await db
         .select({ id: splits.id, currency: splits.currency })
@@ -222,6 +233,7 @@ export function createDbTools(db: DB, userId: string): AssistantTools {
           amount: Number(st.amount),
           currency: st.currency,
         })),
+        selfId,
       );
 
       // Resolve names; anyone not in this user's people is dropped.

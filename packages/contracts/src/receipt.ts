@@ -30,6 +30,37 @@ export const ReceiptSchema = z.object({
 });
 export type Receipt = z.infer<typeof ReceiptSchema>;
 
+// A short-lived presigned upload (the response of POST /receipts/presign). One
+// source of truth shared by @spendlio/storage (the producer) and the web edge
+// (the consumer), so a drift between them fails to typecheck rather than at
+// runtime. The client PUTs the file body to `url` with the same contentType.
+export const PresignedUploadSchema = z.object({
+  url: z.string().url(),
+  method: z.literal('PUT'),
+  key: z.string().min(1),
+  expiresIn: z.number().int().positive(),
+});
+export type PresignedUpload = z.infer<typeof PresignedUploadSchema>;
+
+// Content types we allow a receipt upload to be presigned for. The value shapes
+// the storage key's extension, so it must be validated (never attacker-shaped).
+export const ReceiptContentType = z.enum([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/heic',
+  'application/pdf',
+]);
+export type ReceiptContentType = z.infer<typeof ReceiptContentType>;
+
+// Query params for POST /receipts/presign. Both optional (the flow degrades),
+// but when present they are constrained so they can't poison the storage key.
+export const PresignReceiptQuery = z.object({
+  contentType: ReceiptContentType.optional(),
+  sha256: Sha256Hex.optional(),
+});
+export type PresignReceiptQuery = z.infer<typeof PresignReceiptQuery>;
+
 // Client creates a receipt by registering an uploaded image key (+ the content
 // hash it computed before upload); OCR fills the rest. sha256 is optional so the
 // flow degrades gracefully, but the web client always sends it.

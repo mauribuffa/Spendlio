@@ -14,3 +14,4 @@ export * from './settlements';
 export * from './notifications';
 export * from './monthly_summaries';
 export * from './fx_rates';
+export * from './dead_letters';

@@ -17,6 +17,13 @@ export class S3BlobStore implements BlobStore {
   private readonly bucket: string;
 
   constructor(config: StorageConfig = loadStorageConfig()) {
+    // Fail fast on missing credentials rather than building a client with empty
+    // strings (which fails opaquely later, on the first presign/upload).
+    if (!config.accessKeyId || !config.secretAccessKey) {
+      throw new Error(
+        'Storage is not configured: set STORAGE_KEY and STORAGE_SECRET (see .env / docker-compose MinIO).',
+      );
+    }
     this.bucket = config.bucket;
     this.client = new S3Client({
       region: config.region,

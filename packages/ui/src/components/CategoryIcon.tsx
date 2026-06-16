@@ -38,6 +38,16 @@ const CATEGORY_META: Record<CategoryKey, { icon: LucideIcon; cat: number }> = {
   transfer: { icon: ArrowLeftRight, cat: 8 }, // stone
 };
 
+/**
+ * The --cat ramp color for a category (e.g. `var(--cat-2)`), from the same
+ * canonical map the icon uses. Accepts a plain string (page data isn't always
+ * typed as CategoryKey); unknown categories fall back to the neutral stone slot.
+ */
+export function categoryColor(category: string): string {
+  const meta = (CATEGORY_META as Record<string, { cat: number }>)[category];
+  return `var(--cat-${meta?.cat ?? 8})`;
+}
+
 export type CategoryIconSize = 'sm' | 'md' | 'lg';
 
 export interface CategoryIconProps {

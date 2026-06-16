@@ -3,7 +3,6 @@ import { eq } from 'drizzle-orm';
 import { db, receipts } from '@spendlio/db';
 import { getBlobStore } from '@spendlio/storage';
 import { getProvider } from '@spendlio/ai';
-import { enqueue } from '@spendlio/queue';
 import type { Job } from '@spendlio/queue';
 import type { OcrJob } from '@spendlio/contracts';
 
@@ -11,10 +10,13 @@ import type { OcrJob } from '@spendlio/contracts';
  * OCR pipeline: receipt image -> structured data.
  *  load receipt -> fetch bytes from storage -> AI extractReceipt (validated by
  *  the provider against the contracts schema) -> persist parsed fields + raw OCR,
- *  set status 'parsed' -> enqueue categorize for the linked transaction.
+ *  set status 'parsed'. Categorization is enqueued later, from receipts.confirm()
+ *  (which is what actually creates the transaction) — at OCR time there is no
+ *  transaction to categorize yet.
  *
  * Idempotent: re-running re-derives from the stored image and overwrites the
- * same row; a missing/processed receipt is a no-op. id-only payload.
+ * same row; an already-parsed receipt is a no-op so a retry never re-calls the
+ * paid AI provider; a missing receipt is a no-op. id-only payload.
  */
 export async function processOcr(job: Job<OcrJob>): Promise<void> {
   const { receiptId } = job.data;
@@ -22,6 +24,10 @@ export async function processOcr(job: Job<OcrJob>): Promise<void> {
   const [receipt] = await db.select().from(receipts).where(eq(receipts.id, receiptId)).limit(1);
   if (!receipt) {
     // Nothing to do — receipt was deleted before the job ran.
+    return;
+  }
+  if (receipt.status === 'parsed') {
+    // Already extracted — don't re-call the paid provider on a retry/duplicate.
     return;
   }
 
@@ -52,11 +58,6 @@ export async function processOcr(job: Job<OcrJob>): Promise<void> {
         updatedAt: new Date(),
       })
       .where(eq(receipts.id, receiptId));
-
-    // Hand off to categorization for the linked transaction, if any.
-    if (receipt.transactionId) {
-      await enqueue('categorize', { transactionId: receipt.transactionId });
-    }
   } catch (err) {
     // Only flip to 'failed' once BullMQ has exhausted its retries — otherwise the
     // receipt stays 'processing' between attempts. (The web's PollWhileProcessing

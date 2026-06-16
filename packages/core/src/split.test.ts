@@ -45,6 +45,23 @@ describe('splitEven', () => {
     const ids = ['z', 'a', 'm'];
     expect(splitEven(900, ids, 'a').map((x) => x.personId)).toEqual(ids);
   });
+
+  it('never loses a cent when the payer is not a participant', () => {
+    // 1000 / 3 = 333 base, remainder 1. Payer 'OUTSIDER' holds no share, so the
+    // leftover cent must land on the first real share-holder, not vanish.
+    const s = splitEven(1000, ['a', 'b', 'c'], 'OUTSIDER');
+    expect(s.map((x) => x.amount)).toEqual([334, 333, 333]);
+    expect(sum(s)).toBe(1000);
+  });
+
+  it('prepends a self payer so it absorbs the remainder (model-B create path)', () => {
+    // $96.00 across self + 2 friends: 9600 / 3 = 3200 each, no remainder.
+    expect(splitEven(9600, ['self', 'alex', 'sam'], 'self').map((x) => x.amount)).toEqual([3200, 3200, 3200]);
+    // 1000 / 3 = 333 base, remainder 1 -> self (payer, first) absorbs it.
+    const s = splitEven(1000, ['self', 'a', 'b'], 'self');
+    expect(s.find((x) => x.personId === 'self')!.amount).toBe(334);
+    expect(sum(s)).toBe(1000);
+  });
 });
 
 describe('splitExact', () => {
@@ -90,6 +107,23 @@ describe('splitPercent', () => {
 
   it('throws when percentages exceed 100', () => {
     expect(() => splitPercent(1000, [{ personId: 'a', pct: 70 }, { personId: 'b', pct: 40 }], 'a')).toThrow();
+  });
+
+  it('accepts a sum within epsilon of 100 (floating-point tolerance)', () => {
+    // 33.34 + 33.33 + 33.33 = 100.00000000000001 in IEEE-754; must not throw.
+    const s = splitPercent(
+      1000,
+      [{ personId: 'a', pct: 33.34 }, { personId: 'b', pct: 33.33 }, { personId: 'c', pct: 33.33 }],
+      'a',
+    );
+    expect(sum(s)).toBe(1000);
+  });
+
+  it('routes the remainder to a self payer holding a percent share', () => {
+    // self 40% = 400, friend 60% floored = 600 -> sums to 1000 exactly here.
+    const s = splitPercent(1000, [{ personId: 'self', pct: 40 }, { personId: 'a', pct: 60 }], 'self');
+    expect(new Map(s.map((x) => [x.personId, x.amount])).get('self')).toBe(400);
+    expect(sum(s)).toBe(1000);
   });
 });
 

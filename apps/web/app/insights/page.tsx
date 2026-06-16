@@ -1,26 +1,11 @@
 import type { ReactNode } from 'react';
 import { TrendingDown, TrendingUp, AlertTriangle, Repeat, PiggyBank } from 'lucide-react';
-import { Card, MoneyAmount } from '@spendlio/ui';
-import { getCurrencyDecimals } from '@spendlio/contracts';
+import { Card, MoneyAmount, formatWhole, categoryColor, capitalize } from '@spendlio/ui';
 import { listTransactions, getBudgetStatus, type Transaction, type BudgetStatus } from '../../lib/resources';
 import { safe } from '../../lib/safe';
 import { PageHeader } from '../_components/PageHeader';
 import { Notice } from '../_components/Notice';
 import { Donut } from '../_components/charts';
-
-const CAT_SLOT: Record<string, number> = {
-  groceries: 1, dining: 2, transport: 3, housing: 4, utilities: 6, shopping: 5,
-  health: 4, entertainment: 5, travel: 3, subscriptions: 7, income: 1, transfer: 8,
-};
-const catColor = (c: string) => `var(--cat-${CAT_SLOT[c] ?? 8})`;
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-
-function whole(cents: number, currency: string): string {
-  const d = getCurrencyDecimals(currency);
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(
-    Math.abs(cents) / 10 ** d,
-  );
-}
 
 interface Insight {
   icon: ReactNode;
@@ -87,11 +72,11 @@ export default async function InsightsPage() {
   if (top) {
     insights.push({
       icon: <TrendingUp size={18} strokeWidth={2} aria-hidden="true" />,
-      tint: catColor(top.category),
-      title: `${cap(top.category)} leads your spending`,
+      tint: categoryColor(top.category),
+      title: `${capitalize(top.category)} leads your spending`,
       body: (
         <>
-          You&rsquo;ve spent <strong>{whole(top.value, currency)}</strong> on {top.category} so far this month — your largest category.
+          You&rsquo;ve spent <strong>{formatWhole(top.value, currency)}</strong> on {top.category} so far this month — your largest category.
         </>
       ),
     });
@@ -101,11 +86,11 @@ export default async function InsightsPage() {
       ? {
           icon: <AlertTriangle size={18} strokeWidth={2} aria-hidden="true" />,
           tint: 'var(--negative-500)',
-          title: `${cap(over.category)} over budget`,
+          title: `${capitalize(over.category)} over budget`,
           body: (
             <>
-              You&rsquo;re <strong>{whole(over.spent - over.limit, over.currency)}</strong> over your{' '}
-              {whole(over.limit, over.currency)} {over.category} budget this month.
+              You&rsquo;re <strong>{formatWhole(over.spent - over.limit, over.currency)}</strong> over your{' '}
+              {formatWhole(over.limit, over.currency)} {over.category} budget this month.
             </>
           ),
         }
@@ -151,15 +136,15 @@ export default async function InsightsPage() {
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap', justifyContent: 'center' }}>
                 <Donut
-                  data={categories.slice(0, 8).map((c) => ({ value: c.value, color: catColor(c.category) }))}
+                  data={categories.slice(0, 8).map((c) => ({ value: c.value, color: categoryColor(c.category) }))}
                   centerLabel="Total"
-                  centerValue={whole(expense, currency)}
+                  centerValue={formatWhole(expense, currency)}
                 />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, minWidth: 180, flex: 1 }}>
                   {categories.slice(0, 6).map((c) => (
                     <div key={c.category} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13.5 }}>
-                      <span style={{ width: 9, height: 9, borderRadius: '50%', background: catColor(c.category), flex: 'none' }} />
-                      <span style={{ flex: 1, color: 'var(--text-body)', fontWeight: 500 }}>{cap(c.category)}</span>
+                      <span style={{ width: 9, height: 9, borderRadius: '50%', background: categoryColor(c.category), flex: 'none' }} />
+                      <span style={{ flex: 1, color: 'var(--text-body)', fontWeight: 500 }}>{capitalize(c.category)}</span>
                       <MoneyAmount amount={-c.value} currency={currency} color="off" size="sm" />
                     </div>
                   ))}

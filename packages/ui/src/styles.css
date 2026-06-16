@@ -425,8 +425,9 @@
 .spl-tag[data-static='true'] { cursor: default; }
 .spl-tag[data-static='true']:hover { background: var(--surface-card); }
 .spl-tag__dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
-.spl-tag__x { display: inline-flex; margin-right: -3px; opacity: 0.6; cursor: pointer; }
+.spl-tag__x { display: inline-flex; align-items: center; margin-right: -3px; opacity: 0.6; cursor: pointer; appearance: none; background: none; border: none; padding: 0; color: inherit; }
 .spl-tag__x:hover { opacity: 1; }
+.spl-tag__x:focus-visible { outline: none; opacity: 1; box-shadow: var(--focus-ring); border-radius: var(--radius-sm); }
 
 /* ---- Select ---- */
 .spl-select { display: flex; flex-direction: column; gap: 6px; font-family: var(--font-sans); }

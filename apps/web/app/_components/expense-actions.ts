@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { CreateTransactionInput, CreateSplitInput, toMinorUnits } from '@spendlio/contracts';
-import { createTransaction, createSplit, listPeople } from '../../lib/resources';
+import { createTransaction, createSplit, listPeople, getMe } from '../../lib/resources';
 import { ApiError } from '../../lib/api';
 import type { Person } from '../../lib/resources';
 
@@ -19,6 +19,15 @@ export async function loadPeople(): Promise<Person[]> {
     return await listPeople();
   } catch {
     return [];
+  }
+}
+
+/** The signed-in user's default currency (server-fetched for the modal); USD fallback. */
+export async function loadDefaultCurrency(): Promise<string> {
+  try {
+    return (await getMe()).defaultCurrency ?? 'USD';
+  } catch {
+    return 'USD';
   }
 }
 
@@ -79,15 +88,15 @@ export async function createExpenseAction(payload: ExpensePayload): Promise<Expe
   }
 
   if (split && split.shares.length > 0) {
-    const total = split.shares.reduce((s, x) => s + x.cents, 0);
     const participantIds = split.shares.map((s) => s.personId);
-    // Even: let core divide the others' portion. Exact: send per-person weights.
+    // `total` is the FULL expense (model B — ADR-028); the API resolves the payer
+    // to your self-person, injects your share, and splits across [you, ...friends].
+    // Even: core divides the full total. Exact: send each friend's cents as a weight.
     const splitInput = CreateSplitInput.safeParse({
       transactionId: txnId,
       mode: split.mode === 'even' ? 'even' : 'exact',
-      total,
+      total: magnitude,
       currency: currency.toUpperCase(),
-      payerId: participantIds[0], // ignored by model-B netting (ADR-021)
       participantIds,
       ...(split.mode === 'even'
         ? {}

@@ -16,6 +16,12 @@ import {
 /** Format integer cents at the UI edge so tool outputs render as money. Defaults to USD. */
 const money = (cents: number, currency = 'USD'): string => formatMoney({ amount: cents, currency });
 
+// Bounded per-call timeouts (ADR-029) so a hung provider can't pin a worker
+// concurrency slot forever. OCR's bound sits below the worker's lockDuration (120s).
+const CATEGORIZE_TIMEOUT_MS = 30_000;
+const OCR_TIMEOUT_MS = 90_000;
+const CHAT_TIMEOUT_MS = 60_000;
+
 const CHAT_SYSTEM =
   'You are a grounded personal-finance assistant. Answer using ONLY the numbers returned by the tools. ' +
   'Never compute or estimate money amounts yourself — call a tool. Be concise and plain-spoken.';
@@ -35,58 +41,62 @@ export class LiveProvider implements LLMProvider {
 
   /** Constrained classification: the model returns exactly one CategoryKey, validated against the enum. */
   async categorize(input: CategorizeInput): Promise<CategoryKey | null> {
-    const { object } = await generateObject({
-      model: this.model,
-      output: 'enum',
-      enum: [...CategoryKey.options],
-      system:
-        'You categorize a single financial transaction into exactly one category. ' +
-        'Reply with only the category key.',
-      prompt:
-        `Title: ${input.title}\n` +
-        `Merchant: ${input.merchant ?? 'unknown'}\n` +
-        `Amount (minor units): ${input.amount} ${input.currency}`,
-    });
-    // Defensive: the enum mode already constrains output, but validate anyway.
-    const parsed = CategoryKey.safeParse(object);
-    return parsed.success ? parsed.data : null;
+    try {
+      const { object } = await generateObject({
+        model: this.model,
+        output: 'enum',
+        enum: [...CategoryKey.options],
+        system:
+          'You categorize a single financial transaction into exactly one category. ' +
+          'Reply with only the category key.',
+        prompt:
+          `Title: ${input.title}\n` +
+          `Merchant: ${input.merchant ?? 'unknown'}\n` +
+          `Amount (minor units): ${input.amount} ${input.currency}`,
+        abortSignal: AbortSignal.timeout(CATEGORIZE_TIMEOUT_MS),
+      });
+      // Defensive: the enum mode already constrains output, but validate anyway.
+      const parsed = CategoryKey.safeParse(object);
+      return parsed.success ? parsed.data : null;
+    } catch (err) {
+      // categorize's contract is null-on-failure (timeout/abort/provider error);
+      // the worker then leaves the existing category untouched. Don't throw.
+      console.error(`[ai] categorize failed: ${(err as Error).message}`);
+      return null;
+    }
   }
 
   /** Vision OCR: the model returns the receipt shape, re-validated against the OCR schema. */
   async extractReceipt(image: ReceiptImage): Promise<ReceiptOcrResult> {
-    const { object } = await generateObject({
-      model: this.model,
-      schema: z.object({
-        merchant: z.string().nullable(),
-        date: z.string().nullable(),
-        total: z.number().int(),
-        currency: z.string().length(3),
-        lineItems: z.array(
-          z.object({
-            description: z.string(),
-            quantity: z.number().int(),
-            amount: z.number().int(),
-          }),
-        ),
-        confidence: z.number().min(0).max(1),
-      }),
-      system:
-        'You extract structured data from a receipt image. ' +
-        'All money amounts are integer minor units (cents). Never do arithmetic that loses precision.',
-      messages: [
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: 'Extract the merchant, purchase date (YYYY-MM-DD), total, currency, and line items.' },
-            image.bytes
-              ? { type: 'image', image: image.bytes }
-              : { type: 'text', text: `Receipt image key: ${image.key}` },
-          ],
-        },
-      ],
-    });
-    // Re-validate through the contract before returning.
-    return ReceiptOcrResult.parse(object);
+    try {
+      const { object } = await generateObject({
+        // One source of truth for the receipt shape — the contracts-backed
+        // ReceiptOcrResult (CurrencyCode + ReceiptLineItem), not a re-inline.
+        model: this.model,
+        schema: ReceiptOcrResult,
+        system:
+          'You extract structured data from a receipt image. ' +
+          'All money amounts are integer minor units (cents). Never do arithmetic that loses precision.',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: 'Extract the merchant, purchase date (YYYY-MM-DD), total, currency, and line items.' },
+              image.bytes
+                ? { type: 'image', image: image.bytes }
+                : { type: 'text', text: `Receipt image key: ${image.key}` },
+            ],
+          },
+        ],
+        abortSignal: AbortSignal.timeout(OCR_TIMEOUT_MS),
+      });
+      // Re-validate through the contract before returning.
+      return ReceiptOcrResult.parse(object);
+    } catch (err) {
+      // Surface a typed error so the worker retries (and dead-letters on the
+      // final attempt) rather than persisting a half-baked receipt.
+      throw new Error(`receipt extraction failed: ${(err as Error).message}`);
+    }
   }
 
   /**
@@ -100,6 +110,7 @@ export class LiveProvider implements LLMProvider {
       messages: toModelMessages(args.messages),
       tools: buildTools(args.tools),
       stopWhen: stepCountIs(6),
+      abortSignal: AbortSignal.timeout(CHAT_TIMEOUT_MS),
     });
     return { answer: result.text, usedTools: toolNames(result.steps) };
   }
@@ -116,6 +127,7 @@ export class LiveProvider implements LLMProvider {
       messages: toModelMessages(args.messages),
       tools: buildTools(args.tools),
       stopWhen: stepCountIs(6),
+      abortSignal: AbortSignal.timeout(CHAT_TIMEOUT_MS),
     });
     return {
       textStream: result.textStream,

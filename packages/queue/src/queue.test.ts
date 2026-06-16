@@ -25,6 +25,19 @@ describe('JobPayloadMap (type-level)', () => {
   });
 });
 
+// enqueue() validates the payload BEFORE touching Redis (ADR-029), so these
+// throw synchronously and need no broker connection.
+describe('enqueue payload validation', () => {
+  it('rejects a malformed payload at the producer (no Redis needed)', () => {
+    // receiptId must be a uuid.
+    expect(() => enqueue('ocr', { receiptId: 'not-a-uuid' } as never)).toThrow();
+    // recap month must be YYYY-MM.
+    expect(() =>
+      enqueue('recap', { userId: '00000000-0000-0000-0000-000000000001', month: '2026/05' } as never),
+    ).toThrow();
+  });
+});
+
 // Real enqueue against Redis (docker compose up). Skips cleanly if unreachable.
 // Always tears down (closeQueues + closeRedisClient) so vitest exits with no
 // open handles.
@@ -33,7 +46,13 @@ describe('enqueue (Redis)', () => {
 
   beforeAll(async () => {
     try {
-      await getQueue('categorize').waitUntilReady();
+      // Race readiness against a short timeout — ioredis keeps retrying a down
+      // broker rather than rejecting, which would otherwise hang this hook until
+      // it times out. Lets the suite "skip cleanly if unreachable" as intended.
+      await Promise.race([
+        getQueue('categorize').waitUntilReady(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('redis timeout')), 2000)),
+      ]);
       online = true;
     } catch {
       online = false;

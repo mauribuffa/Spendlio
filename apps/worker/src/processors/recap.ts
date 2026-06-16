@@ -2,7 +2,7 @@ import { and, eq, gte, lt, isNull } from 'drizzle-orm';
 import { db, users, transactions, monthlySummaries } from '@spendlio/db';
 import type { Job } from '@spendlio/queue';
 import type { RecapJob } from '@spendlio/contracts';
-import { computeRecap, type RecapTxn } from '../lib/recap';
+import { computeRecap, type RecapTxn } from '@spendlio/core';
 
 /**
  * Build (or rebuild) a user's monthly recap into monthly_summaries.
@@ -19,6 +19,11 @@ export async function processRecap(job: Job<RecapJob>): Promise<void> {
   if (!user) return;
 
   const { start, end } = monthRange(month);
+  // Defense in depth (enqueue already validates the YYYY-MM shape): never let a
+  // bad range produce NaN bounds and overwrite a good recap with zeros.
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    throw new Error(`recap: invalid month "${month}"`);
+  }
 
   const rows = await db
     .select({

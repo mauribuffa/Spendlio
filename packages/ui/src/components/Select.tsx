@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import { forwardRef, useId } from 'react';
 import type { ReactNode, SelectHTMLAttributes } from 'react';
 import { cn } from '../cn';
 
@@ -16,14 +16,22 @@ export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
 
 /** Styled native dropdown — category, account, currency, group pickers. */
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
-  { label = null, options, placeholder = null, className, ...rest },
+  { label = null, options, placeholder = null, className, id, ...rest },
   ref,
 ) {
+  // Associate the label with the control. Honor a caller-supplied id, else
+  // generate a stable one (useId) so the <label htmlFor> actually targets it.
+  const generatedId = useId();
+  const selectId = id ?? generatedId;
   return (
     <div className={cn('spl-select', className)}>
-      {label && <label className="spl-select__label">{label}</label>}
+      {label && (
+        <label className="spl-select__label" htmlFor={selectId}>
+          {label}
+        </label>
+      )}
       <div className="spl-select__box">
-        <select ref={ref} {...rest}>
+        <select id={selectId} ref={ref} {...rest}>
           {placeholder && (
             <option value="" disabled>
               {placeholder}

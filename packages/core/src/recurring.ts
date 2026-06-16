@@ -1,5 +1,5 @@
 /**
- * Pure cadence math for recurring rules — no DB. Liftable to @spendlio/core.
+ * Pure cadence math for recurring rules — no DB, no framework.
  * Advances a run date by N cadence units (daily/weekly/monthly/yearly).
  */
 export type Cadence = 'daily' | 'weekly' | 'monthly' | 'yearly';

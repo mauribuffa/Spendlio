@@ -42,7 +42,7 @@ Three packages are **"pure"** — they import no framework, no database driver, 
 | `core` | money math, split calculation, settlement netting | `contracts` |
 | `db` | Drizzle schema, migrations, the typed client | `contracts` |
 | `ui` | design tokens + React components (this project) | React |
-| `config` | shared `tsconfig`, `eslint`, `prettier` | nothing |
+| `config` | shared **ESLint** config only (base tsconfig is `tsconfig.base.json` at the repo root, extended by path; Prettier runs on defaults) | nothing |
 | `apps/web` | Next.js pages, server actions, UI composition | `ui`, `contracts` |
 | `apps/api` | Nest HTTP controllers + queue workers | `contracts`, `core`, `db` |
 

@@ -36,7 +36,7 @@ Each `[box]` is a **named queue** with its own worker and concurrency.
 
 1. **Idempotent.** A job may run twice (retries, redeploys). Design so running it again is safe — e.g. "create the recurring txn for 2026-06-01" checks if it already exists. Use a deterministic job id where possible.
 2. **Small payloads.** Enqueue an **id**, not the whole object. The worker re-reads fresh data from the DB. (Never put a receipt image *in* the job — store it, pass the receipt id.)
-3. **Explicit retries + backoff.** Transient failures (a flaky AI endpoint) retry with exponential backoff; permanent failures go to a **dead-letter** state we can inspect.
+3. **Explicit retries + backoff.** Transient failures (a flaky AI endpoint) retry with exponential backoff; on the **final** failed attempt the worker writes a durable row to the `dead_letters` table (ADR-029) and alerts — a real dead-letter queue with a `redriveDeadLetter()` re-enqueue helper, not just BullMQ's evictable `failed` set.
 4. **Status on the row, not just the job.** A `Receipt` carries `status: processing | parsed | failed` so the client can show progress without knowing about queues.
 5. **Workers are the same NestJS app** in worker mode — they reuse the same services and `db` client as the HTTP API. → [`05-api-nestjs.md`](./05-api-nestjs.md)
 
@@ -73,7 +73,7 @@ Worth understanding so failures don't surprise you.
 
 - **A queue is Redis data structures.** BullMQ stores jobs as Redis hashes and moves their *ids* between lists/sorted-sets representing states: `wait → active → completed | failed`, plus `delayed` (a sorted set keyed by "run at" timestamp) and `paused`. Atomic **Lua scripts** move jobs between states so two workers can't grab the same job.
 - **Reliability via "stalled" detection.** A worker that picks up a job must periodically renew a **lock** (a Redis key with a TTL). If the worker crashes, the lock expires, BullMQ marks the job **stalled** and another worker retries it. This is *at-least-once* delivery — which is exactly why jobs must be **idempotent** (see the rules above): a job can legitimately run twice.
-- **Retries + backoff** are just the job being re-added to `wait`/`delayed` with an attempt counter; exhaust the attempts and it lands in `failed` (your dead-letter to inspect).
+- **Retries + backoff** are just the job being re-added to `wait`/`delayed` with an attempt counter; exhaust the attempts and it lands in `failed`. BullMQ's `failed` set is **evictable** (`removeOnFail` trims it), so the durable record of a permanently-failed job is the `dead_letters` table the worker writes on the final attempt (ADR-029) — that's what you inspect and `redriveDeadLetter()` from, not the `failed` set.
 - **Delayed & repeatable (cron) jobs** sit in the `delayed` set; a worker promotes them to `wait` when their time arrives. Repeatable jobs (daily recurring run, monthly recap) are re-scheduled automatically after each run.
 - **Concurrency** is per-worker (`new Worker(name, fn, { concurrency: 5 })`) — how many jobs that process handles at once. Total throughput = workers × concurrency. Tune per queue: OCR (slow, IO-bound) wants higher concurrency; CPU-heavy work wants less.
 - **Backpressure & cost:** because everything is Redis, a flood of jobs grows Redis memory. Keep payloads to **ids**, set `removeOnComplete`/`removeOnFail` limits so finished jobs are trimmed, and you stay within a free Redis tier. → `10-local-dev-and-cost.md`

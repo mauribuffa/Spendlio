@@ -1,4 +1,5 @@
-import { pgTable, uuid, varchar, bigint, timestamp, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, bigint, timestamp, index, uniqueIndex } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import { users } from './users';
 import { accounts } from './accounts';
 
@@ -29,4 +30,10 @@ export const transactions = pgTable('transactions', {
 }, (t) => ({
   byUser: index('txn_user_occurred_idx').on(t.userId, t.occurredAt),
   byAccount: index('txn_account_idx').on(t.accountId),
+  // One materialized occurrence per (recurring rule, occurredAt) — backs the
+  // recurring processor's onConflictDoNothing so retried/concurrent sweeps can't
+  // double-create money. Partial: only rows that came from a recurring rule.
+  oneOccurrencePerRule: uniqueIndex('txn_recurring_occurred_idx')
+    .on(t.recurringId, t.occurredAt)
+    .where(sql`${t.recurringId} is not null`),
 }));
