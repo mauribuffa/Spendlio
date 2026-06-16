@@ -1,7 +1,9 @@
 'use client';
 
 import { useActionState, useEffect, useRef } from 'react';
-import { Button, Input, Card } from '@spendlio/ui';
+import { Button, Input, Card, cn } from '@spendlio/ui';
+import { FormField } from '@/components/form/FormField';
+import { FieldError } from '@/components/form/FieldError';
 import { createPersonAction, type ActionResult } from '@/features/people/lib/actions';
 
 const initial: ActionResult = { ok: false };
@@ -20,39 +22,25 @@ export function AddPersonForm() {
 
   const fieldError = (name: string) => state.fieldErrors?.[name]?.[0];
 
-  const labelStyle = {
-    display: 'block',
-    fontSize: 'var(--text-sm)',
-    fontWeight: 'var(--weight-medium)',
-    color: 'var(--text-muted)',
-    marginBottom: 'var(--space-1)',
-  } as const;
-
   return (
     <Card padding="lg" style={{ marginBottom: 'var(--space-6)' }}>
       <form ref={formRef} action={formAction} style={{ display: 'grid', gap: 'var(--space-4)' }}>
         <h2 style={{ fontSize: 'var(--text-lg)', fontFamily: 'var(--font-display)' }}>Add a person</h2>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
-          <div>
-            <label htmlFor="name" style={labelStyle}>Name</label>
+        <div className={cn('spl-form-row')} style={{ gap: 'var(--space-4)' }}>
+          <FormField htmlFor="name" label="Name" error={fieldError('name')}>
             <Input id="name" name="name" placeholder="Maya" invalid={!!fieldError('name')} required />
-            {fieldError('name') ? <FieldError>{fieldError('name')}</FieldError> : null}
-          </div>
-          <div>
-            <label htmlFor="email" style={labelStyle}>Email (optional)</label>
+          </FormField>
+          <FormField htmlFor="email" label="Email (optional)" error={fieldError('email')}>
             <Input id="email" name="email" type="email" placeholder="maya@example.com" invalid={!!fieldError('email')} />
-            {fieldError('email') ? <FieldError>{fieldError('email')}</FieldError> : null}
-          </div>
+          </FormField>
         </div>
 
-        <div>
-          <label htmlFor="avatarUrl" style={labelStyle}>Avatar URL (optional)</label>
+        <FormField htmlFor="avatarUrl" label="Avatar URL (optional)" error={fieldError('avatarUrl')}>
           <Input id="avatarUrl" name="avatarUrl" type="url" placeholder="https://…" invalid={!!fieldError('avatarUrl')} />
-          {fieldError('avatarUrl') ? <FieldError>{fieldError('avatarUrl')}</FieldError> : null}
-        </div>
+        </FormField>
 
-        {state.error ? <FieldError>{state.error}</FieldError> : null}
+        <FieldError>{state.error}</FieldError>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button type="submit" disabled={pending}>
@@ -61,13 +49,5 @@ export function AddPersonForm() {
         </div>
       </form>
     </Card>
-  );
-}
-
-function FieldError({ children }: { children: React.ReactNode }) {
-  return (
-    <p style={{ color: 'var(--negative-500)', fontSize: 'var(--text-xs)', margin: 'var(--space-1) 0 0' }}>
-      {children}
-    </p>
   );
 }

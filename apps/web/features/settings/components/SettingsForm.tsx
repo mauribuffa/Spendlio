@@ -5,19 +5,13 @@ import { useActionState } from 'react';
 import { Card, Avatar, Button, Input, Select } from '@spendlio/ui';
 import { Mail, Languages, Clock, Check } from 'lucide-react';
 import { CURRENCY_DECIMALS, type User } from '@spendlio/contracts';
+import { FormField } from '@/components/form/FormField';
+import { FieldError } from '@/components/form/FieldError';
 import { updateMeAction, type ActionResult } from '@/features/settings/lib/actions';
 
 const CURRENCIES = Object.keys(CURRENCY_DECIMALS).sort();
 
 const initial: ActionResult = { ok: false };
-
-const fieldLabel = {
-  display: 'block',
-  fontSize: 'var(--text-sm)',
-  fontWeight: 'var(--weight-medium)',
-  color: 'var(--text-muted)',
-  marginBottom: 'var(--space-1)',
-} as const;
 
 const eyebrow = {
   display: 'block',
@@ -120,13 +114,9 @@ export function SettingsForm({ user }: { user: User }) {
       {/* Editable preferences */}
       <Section title="Preferences">
         <form action={formAction} style={{ display: 'grid', gap: 'var(--space-4)' }}>
-          <div>
-            <label htmlFor="name" style={fieldLabel}>
-              Name
-            </label>
+          <FormField htmlFor="name" label="Name" error={fieldError('name')}>
             <Input id="name" name="name" defaultValue={user.name} invalid={!!fieldError('name')} required />
-            {fieldError('name') ? <FieldError>{fieldError('name')}</FieldError> : null}
-          </div>
+          </FormField>
 
           <div>
             <Select
@@ -135,10 +125,10 @@ export function SettingsForm({ user }: { user: User }) {
               defaultValue={user.defaultCurrency}
               options={CURRENCIES}
             />
-            {fieldError('defaultCurrency') ? <FieldError>{fieldError('defaultCurrency')}</FieldError> : null}
+            <FieldError>{fieldError('defaultCurrency')}</FieldError>
           </div>
 
-          {state.error ? <FieldError>{state.error}</FieldError> : null}
+          <FieldError>{state.error}</FieldError>
           {state.ok ? (
             <p
               style={{
@@ -189,13 +179,5 @@ export function SettingsForm({ user }: { user: User }) {
 
       <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-subtle)' }}>Spendlio · v1.0.0</div>
     </div>
-  );
-}
-
-function FieldError({ children }: { children: ReactNode }) {
-  return (
-    <p style={{ color: 'var(--negative-500)', fontSize: 'var(--text-xs)', margin: 'var(--space-1) 0 0' }}>
-      {children}
-    </p>
   );
 }

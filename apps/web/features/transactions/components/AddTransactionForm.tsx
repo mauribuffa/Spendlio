@@ -1,7 +1,9 @@
 'use client';
 
 import { useActionState, useEffect, useRef, useState } from 'react';
-import { Button, Input, Card, SegmentedControl, Select } from '@spendlio/ui';
+import { Button, Input, Card, SegmentedControl, Select, cn } from '@spendlio/ui';
+import { FormField } from '@/components/form/FormField';
+import { FieldError } from '@/components/form/FieldError';
 import { createTransactionAction, type ActionResult } from '@/features/transactions/lib/actions';
 
 const CATEGORIES = [
@@ -40,14 +42,6 @@ export function AddTransactionForm({ bare = false, onSuccess }: AddTransactionFo
 
   const fieldError = (name: string) => state.fieldErrors?.[name]?.[0];
 
-  const labelStyle = {
-    display: 'block',
-    fontSize: 'var(--text-sm)',
-    fontWeight: 'var(--weight-medium)',
-    color: 'var(--text-muted)',
-    marginBottom: 'var(--space-1)',
-  } as const;
-
   const form = (
       <form ref={formRef} action={formAction} style={{ display: 'grid', gap: 'var(--space-4)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-4)' }}>
@@ -64,14 +58,11 @@ export function AddTransactionForm({ bare = false, onSuccess }: AddTransactionFo
         </div>
         <input type="hidden" name="direction" value={direction} />
 
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 'var(--space-4)' }}>
-          <div>
-            <label htmlFor="title" style={labelStyle}>Title</label>
+        <div className={cn('spl-form-row')} style={{ gap: 'var(--space-4)', '--spl-cols': '2fr 1fr' }}>
+          <FormField htmlFor="title" label="Title" error={fieldError('title')}>
             <Input id="title" name="title" placeholder="Coffee" invalid={!!fieldError('title')} required />
-            {fieldError('title') ? <FieldError>{fieldError('title')}</FieldError> : null}
-          </div>
-          <div>
-            <label htmlFor="amountMajor" style={labelStyle}>Amount</label>
+          </FormField>
+          <FormField htmlFor="amountMajor" label="Amount" error={fieldError('amountMajor')}>
             <Input
               id="amountMajor"
               name="amountMajor"
@@ -82,32 +73,26 @@ export function AddTransactionForm({ bare = false, onSuccess }: AddTransactionFo
               invalid={!!fieldError('amountMajor')}
               required
             />
-            {fieldError('amountMajor') ? <FieldError>{fieldError('amountMajor')}</FieldError> : null}
-          </div>
+          </FormField>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 'var(--space-4)' }}>
-          <div>
-            <label htmlFor="category" style={labelStyle}>Category</label>
+        <div className={cn('spl-form-row')} style={{ gap: 'var(--space-4)', '--spl-cols': 'repeat(3, 1fr)' }}>
+          <FormField htmlFor="category" label="Category">
             <Select id="category" name="category" defaultValue="dining" options={CATEGORY_OPTIONS} />
-          </div>
-          <div>
-            <label htmlFor="currency" style={labelStyle}>Currency</label>
+          </FormField>
+          <FormField htmlFor="currency" label="Currency">
             <Input id="currency" name="currency" defaultValue="USD" maxLength={3} />
-          </div>
-          <div>
-            <label htmlFor="occurredAt" style={labelStyle}>Date</label>
+          </FormField>
+          <FormField htmlFor="occurredAt" label="Date" error={fieldError('occurredAt')}>
             <Input id="occurredAt" name="occurredAt" type="date" invalid={!!fieldError('occurredAt')} required />
-            {fieldError('occurredAt') ? <FieldError>{fieldError('occurredAt')}</FieldError> : null}
-          </div>
+          </FormField>
         </div>
 
-        <div>
-          <label htmlFor="merchant" style={labelStyle}>Merchant (optional)</label>
+        <FormField htmlFor="merchant" label="Merchant (optional)">
           <Input id="merchant" name="merchant" placeholder="Blue Bottle" />
-        </div>
+        </FormField>
 
-        {state.error ? <FieldError>{state.error}</FieldError> : null}
+        <FieldError>{state.error}</FieldError>
 
         <div style={{ display: 'flex', justifyContent: bare ? 'stretch' : 'flex-end' }}>
           <Button type="submit" disabled={pending} fullWidth={bare}>
@@ -122,13 +107,5 @@ export function AddTransactionForm({ bare = false, onSuccess }: AddTransactionFo
     <Card padding="lg" style={{ marginBottom: 'var(--space-6)' }}>
       {form}
     </Card>
-  );
-}
-
-function FieldError({ children }: { children: React.ReactNode }) {
-  return (
-    <p style={{ color: 'var(--negative-500)', fontSize: 'var(--text-xs)', margin: 'var(--space-1) 0 0' }}>
-      {children}
-    </p>
   );
 }
