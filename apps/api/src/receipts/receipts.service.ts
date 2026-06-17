@@ -134,7 +134,7 @@ export class ReceiptsService {
     await requeue('ocr', { receiptId: id });
 
     const [updated] = await this.db.select().from(receipts)
-      .where(and(eq(receipts.id, id), eq(receipts.userId, userId)));
+      .where(and(eq(receipts.id, id), eq(receipts.userId, userId), isNull(receipts.deletedAt)));
     return this.toReceipt(updated);
   }
 
