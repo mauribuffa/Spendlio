@@ -105,10 +105,8 @@ export class ReceiptsService {
       updatedAt: new Date(),
     }).where(and(eq(receipts.id, id), eq(receipts.userId, userId)));
 
-    // The transaction now exists — kick off categorization (jobId derives to
-    // `categorize-<txnId>`, idempotent). OCR can't do this: at scan time there is
-    // no transaction yet.
-    await enqueue('categorize', { transactionId: txn.id });
+    // No auto-categorize job here: the user's reviewed category (OCR-suggested,
+    // editable) is authoritative — re-deriving it would risk overwriting their choice.
 
     return txn;
   }
@@ -157,6 +155,7 @@ export class ReceiptsService {
     return {
       ...row,
       lineItems: Array.isArray(ocr?.lineItems) ? ocr.lineItems : [],
+      category: ocr?.category ?? null,
       raw: ocr ?? undefined,
     };
   }
