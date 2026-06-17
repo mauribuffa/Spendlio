@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { CreateReceiptInput, ConfirmReceiptInput, toMinorUnits } from '@spendlio/contracts';
-import { presignReceipt, registerReceipt, confirmReceipt, type PresignedUpload } from '@/lib/resources';
+import { presignReceipt, registerReceipt, confirmReceipt, retryReceipt, type PresignedUpload } from '@/lib/resources';
 import { ApiError } from '@/lib/api';
 
 export interface PresignResult {
@@ -95,5 +95,23 @@ export async function confirmReceiptAction(id: string, payload: ConfirmPayload):
   revalidatePath('/receipts');
   revalidatePath('/transactions');
   revalidatePath('/');
+  return { ok: true };
+}
+
+export interface RetryResult {
+  ok: boolean;
+  error?: string;
+}
+
+/** Re-run OCR on a failed receipt. Revalidates the list + detail so the UI flips to 'processing'. */
+export async function retryReceiptAction(id: string): Promise<RetryResult> {
+  try {
+    await retryReceipt(id);
+  } catch (err) {
+    if (err instanceof ApiError) return { ok: false, error: err.message };
+    return { ok: false, error: 'Could not retry this scan.' };
+  }
+  revalidatePath(`/receipts/${id}`);
+  revalidatePath('/receipts');
   return { ok: true };
 }

@@ -210,6 +210,11 @@ export function confirmReceipt(id: string, input: ConfirmReceiptInput): Promise<
   return api.post(`/receipts/${id}/confirm`, input, TransactionSchema);
 }
 
+/** Re-run OCR on a failed receipt → back to 'processing'. Returns the updated receipt. */
+export function retryReceipt(id: string): Promise<Receipt> {
+  return api.post(`/receipts/${id}/retry`, undefined, ReceiptSchema);
+}
+
 export type {
   Transaction,
   Budget,
