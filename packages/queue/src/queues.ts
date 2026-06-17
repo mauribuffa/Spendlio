@@ -106,6 +106,21 @@ export function enqueue<N extends QueueName>(
   return queue.add(name, payload, { ...opts, jobId });
 }
 
+/**
+ * Force a fresh run of an idempotent job. `enqueue` alone is a no-op when a job
+ * with the same deterministic id already exists (BullMQ dedupes by jobId, and
+ * DEFAULT_JOB_OPTIONS keeps failed jobs around) — so remove any existing job for
+ * this payload's id first, then enqueue it again (attempt counter reset).
+ */
+export async function requeue<N extends QueueName>(name: N, payload: JobPayloadMap[N]) {
+  const jobId = defaultJobId(name, payload);
+  if (jobId) {
+    const existing = await getQueue(name).getJob(jobId);
+    if (existing) await existing.remove();
+  }
+  return enqueue(name, payload);
+}
+
 /** Close all open Queue instances (graceful shutdown). */
 export async function closeQueues(): Promise<void> {
   await Promise.all([...queues.values()].map((q) => q.close()));
