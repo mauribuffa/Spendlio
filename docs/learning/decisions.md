@@ -164,6 +164,9 @@ Format: `ADR-NNN · status · title` — context → decision → alternatives.
 - **Deferred:** refresh tokens / mobile secure-storage; OAuth providers; MFA; Postgres RLS backstop; per-IP rate limiting on `/request`; OTP email as a queue job; RS256/JWKS instead of the shared HS256 secret; account self-management. Tracked in `08-auth-security.md`.
 - **Design spec:** `docs/superpowers/specs/2026-06-16-phase-5-auth-otp-design.md`.
 
+### ADR-034 · ✅ · Retry a failed receipt scan + surface a friendly failure reason
+- **Decision:** Denormalize a typed `failure_reason` code onto the `receipts` row (worker classifies the raw error via `core.classifyOcrFailure` on the final failed attempt; raw error stays in `dead_letters`) rather than joining `dead_letters` on read — the receipt stays self-contained and cheap for list + detail, and `core` stays pure/testable. The web maps code → friendly text; raw errors are never shown. Retry goes through a new `queue.requeue()` that **removes the existing deterministic job before re-enqueuing**, because BullMQ dedupes by `jobId` and `removeOnFail` keeps the failed job, so a plain re-`enqueue` is a no-op. Retry re-runs OCR on the same image; re-uploading a new photo is out of scope.
+
 ---
 
 ## Open questions parked for you
