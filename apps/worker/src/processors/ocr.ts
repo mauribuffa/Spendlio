@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm';
 import { db, receipts } from '@spendlio/db';
 import { getBlobStore } from '@spendlio/storage';
 import { getProvider } from '@spendlio/ai';
+import { classifyOcrFailure } from '@spendlio/core';
 import type { Job } from '@spendlio/queue';
 import type { OcrJob } from '@spendlio/contracts';
 
@@ -50,6 +51,7 @@ export async function processOcr(job: Job<OcrJob>): Promise<void> {
       .update(receipts)
       .set({
         status: 'parsed',
+        failureReason: null,
         merchant: result.merchant,
         total: result.total,
         currency: result.currency,
@@ -68,7 +70,11 @@ export async function processOcr(job: Job<OcrJob>): Promise<void> {
     if (isFinalAttempt) {
       await db
         .update(receipts)
-        .set({ status: 'failed', updatedAt: new Date() })
+        .set({
+          status: 'failed',
+          failureReason: classifyOcrFailure((err as Error)?.message),
+          updatedAt: new Date(),
+        })
         .where(eq(receipts.id, receiptId));
     }
     throw err;
