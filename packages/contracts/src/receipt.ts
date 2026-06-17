@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { ownedEntity } from './common';
 import { CurrencyCode } from './money';
-import { ReceiptStatus, CategoryKey } from './enums';
+import { ReceiptStatus, ReceiptFailureReason, CategoryKey } from './enums';
 
 // Lowercase hex SHA-256 (64 chars) — the client-computed content hash.
 export const Sha256Hex = z.string().regex(/^[0-9a-f]{64}$/, 'expected a 64-char hex SHA-256');
@@ -19,6 +19,7 @@ export const ReceiptSchema = z.object({
   imageKey: z.string().min(1),                       // object-storage key (S3/MinIO)
   sha256: Sha256Hex.nullable().optional(),           // client content hash (null on legacy rows)
   status: ReceiptStatus,
+  failureReason: ReceiptFailureReason.nullable().optional(), // why a 'failed' scan failed (friendly text mapped at the web edge)
   merchant: z.string().nullable().optional(),
   total: z.number().int().nullable().optional(),     // minor units, OCR-parsed
   currency: CurrencyCode.nullable().optional(),

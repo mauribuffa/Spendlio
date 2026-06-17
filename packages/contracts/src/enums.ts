@@ -24,5 +24,8 @@ export type SplitMode = z.infer<typeof SplitMode>;
 export const ReceiptStatus = z.enum(['processing','parsed','failed']);
 export type ReceiptStatus = z.infer<typeof ReceiptStatus>;
 
+export const ReceiptFailureReason = z.enum(['timeout','unreadable','image_unavailable','unknown']);
+export type ReceiptFailureReason = z.infer<typeof ReceiptFailureReason>;
+
 export const SettlementStatus = z.enum(['pending','settled']);
 export type SettlementStatus = z.infer<typeof SettlementStatus>;
