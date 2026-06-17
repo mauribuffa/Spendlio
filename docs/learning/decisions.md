@@ -167,6 +167,9 @@ Format: `ADR-NNN · status · title` — context → decision → alternatives.
 ### ADR-034 · ✅ · Retry a failed receipt scan + surface a friendly failure reason
 - **Decision:** Denormalize a typed `failure_reason` code onto the `receipts` row (worker classifies the raw error via `core.classifyOcrFailure` on the final failed attempt; raw error stays in `dead_letters`) rather than joining `dead_letters` on read — the receipt stays self-contained and cheap for list + detail, and `core` stays pure/testable. The web maps code → friendly text; raw errors are never shown. Retry goes through a new `queue.requeue()` that **removes the existing deterministic job before re-enqueuing**, because BullMQ dedupes by `jobId` and `removeOnFail` keeps the failed job, so a plain re-`enqueue` is a no-op. Retry re-runs OCR on the same image; re-uploading a new photo is out of scope.
 
+### ADR-035 · ✅ · OCR suggests a spending category; reviewed category is authoritative
+- **Decision:** The OCR vision model now infers a `CategoryKey` (`ReceiptOcrResult.category`, `.nullable()` so it stays OpenAI-strict-output-safe and the model can abstain) — it has the richest context (merchant + line items), so this beats a second rules/LLM pass on merchant text. The category rides the existing `ocr` JSONB (no new column) and is surfaced via `ReceiptSchema.category` to pre-fill the review form. Because the user reviews/edits it before approving, `receipts.confirm()` no longer enqueues the `categorize` job — the reviewed category wins and is not silently overwritten. The `categorize` job remains for non-receipt flows (manual/import/recurring). Constraining the suggestion to expense-only categories is deferred (the user catches the rare `income`/`transfer` misfire at review).
+
 ---
 
 ## Open questions parked for you
