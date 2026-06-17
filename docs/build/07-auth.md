@@ -15,6 +15,8 @@ Real authentication replacing the dev `x-user-id` header: email OTP sign-in on t
 ## Env
 `AUTH_SECRET`, `AUTH_URL`, `API_JWT_SECRET` (shared web↔API), `EMAIL_FROM`, `REDIS_URL` (already present).
 
+**Two env files — don't miss the web one.** The API/db/worker read the repo-root `.env` (the API via `--env-file-if-exists=../../.env`). The **web** (`apps/web`) reads only `apps/web/.env.local` — Next.js does **not** read the root `.env`. So `cp apps/web/.env.local.example apps/web/.env.local`; it MUST include `AUTH_SECRET` (Auth.js v5 has no fallback — missing it = `Configuration` error / HTTP 500 on every `/api/auth/*` route, breaking both OTP and dev login) and `API_JWT_SECRET` set to the **same** value as the root `.env` (so web-minted tokens verify at the API). Restart `next dev` after creating it.
+
 ## Acceptance check
 - `pnpm typecheck` · `pnpm --filter @spendlio/ui test` · `pnpm --filter @spendlio/contracts test` · `pnpm --filter @spendlio/web build` all green.
 - With the stack up: visiting any route while signed out redirects to `/sign-in`; "Dev: sign in as demo user" lands on the dashboard with seeded data; the email-OTP flow (code printed in the API console) signs in a fresh user with empty data; `curl :4000/api/me` with no token returns 401.
