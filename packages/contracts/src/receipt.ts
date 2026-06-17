@@ -26,6 +26,7 @@ export const ReceiptSchema = z.object({
   purchasedAt: z.coerce.date().nullable().optional(),
   lineItems: z.array(ReceiptLineItem).default([]),
   raw: z.unknown().optional(),                       // raw OCR payload (JSONB)
+  category: CategoryKey.nullable().optional(),    // OCR-suggested spending category (from the ocr blob)
   transactionId: z.string().uuid().nullable().optional(),
   deletedAt: z.coerce.date().nullable().optional(),
 });
