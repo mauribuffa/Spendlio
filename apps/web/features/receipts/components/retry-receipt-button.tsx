@@ -27,12 +27,12 @@ export function RetryReceiptButton({ id, size = 'sm' }: { id: string; size?: 'sm
   }
 
   return (
-    <span style={{ display: 'inline-flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
+    <span style={{ display: 'inline-flex', flexDirection: 'column', gap: 'var(--space-1)', alignItems: 'flex-end' }}>
       <Button type="button" variant="secondary" size={size} disabled={pending} onClick={onRetry}>
         {pending ? 'Retrying…' : 'Retry'}
       </Button>
       {error ? (
-        <span style={{ color: 'var(--negative-500)', fontSize: 'var(--text-xs)' }}>{error}</span>
+        <p style={{ color: 'var(--negative-500)', fontSize: 'var(--text-xs)', margin: 0 }}>{error}</p>
       ) : null}
     </span>
   );
