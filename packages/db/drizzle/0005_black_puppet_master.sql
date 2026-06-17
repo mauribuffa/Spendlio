@@ -1,0 +1,1 @@
+ALTER TABLE "receipts" ADD COLUMN "failure_reason" varchar(32);

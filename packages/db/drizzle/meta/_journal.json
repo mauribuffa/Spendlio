@@ -36,6 +36,13 @@
       "when": 1781620452174,
       "tag": "0004_natural_genesis",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1781710032380,
+      "tag": "0005_black_puppet_master",
+      "breakpoints": true
     }
   ]
 }

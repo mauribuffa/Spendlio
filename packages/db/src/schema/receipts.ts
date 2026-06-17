@@ -7,6 +7,7 @@ export const receipts = pgTable('receipts', {
   imageKey: varchar('image_key', { length: 1024 }).notNull(),  // object-storage key (S3/MinIO)
   sha256: varchar('sha256', { length: 64 }),                   // client-computed content hash (hex); content-addressed key + dedup + integrity
   status: varchar('status', { length: 16 }).notNull(),         // processing|parsed|failed
+  failureReason: varchar('failure_reason', { length: 32 }),     // why a 'failed' receipt failed; null otherwise (ReceiptFailureReason)
   merchant: varchar('merchant', { length: 200 }),
   total: bigint('total', { mode: 'number' }),                  // minor units, OCR-parsed
   currency: varchar('currency', { length: 3 }),
