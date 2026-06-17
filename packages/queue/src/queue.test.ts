@@ -77,7 +77,10 @@ describe('enqueue (Redis)', () => {
     expect(a.id).toBe(jobId);
     expect(b.id).toBe(a.id);
     expect(a.data).toEqual({ transactionId: txnId });
-    expect(await q.getJobCounts('wait').then((c) => c.wait)).toBeGreaterThanOrEqual(1);
+    // The job exists in Redis under its deterministic id. Assert via getJob, NOT
+    // the 'wait' count — a running worker drains the queue (moving the job out of
+    // 'wait' into active/completed), which would otherwise flake this assertion.
+    expect(await q.getJob(jobId)).toBeTruthy();
 
     await q.remove(jobId).catch(() => {});
   });
