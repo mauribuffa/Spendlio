@@ -4,3 +4,4 @@ export * from './balances';
 export * from './accounts';
 export * from './recap';
 export * from './recurring';
+export * from './ocr';
