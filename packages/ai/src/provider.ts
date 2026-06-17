@@ -22,6 +22,16 @@ export interface ReceiptImage {
 }
 
 /**
+ * Line item for the OCR schema. OpenAI strict structured outputs require EVERY
+ * property to be in the JSON schema's `required` array; the contract's
+ * `ReceiptLineItem` defaults `quantity` (→ emitted as optional → OpenAI rejects
+ * it: "Missing 'quantity'"). Override `quantity` to required here — a scanned
+ * line always has a quantity — while the contract keeps its lenient default for
+ * the confirm/storage paths.
+ */
+const OcrLineItem = ReceiptLineItem.extend({ quantity: z.number().int() });
+
+/**
  * Structured OCR result. This is AI output and therefore untrusted —
  * it is validated against `ReceiptOcrResult` before any provider returns it.
  * Money fields are integer minor units (cents).
@@ -31,7 +41,7 @@ export const ReceiptOcrResult = z.object({
   date: z.string().nullable(), // YYYY-MM-DD (purchase date), null if unreadable
   total: z.number().int(), // minor units
   currency: CurrencyCode,
-  lineItems: z.array(ReceiptLineItem),
+  lineItems: z.array(OcrLineItem),
   confidence: z.number().min(0).max(1),
 });
 export type ReceiptOcrResult = z.infer<typeof ReceiptOcrResult>;
