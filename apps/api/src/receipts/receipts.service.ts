@@ -3,7 +3,7 @@ import { and, desc, eq, isNull } from 'drizzle-orm';
 import { receipts, transactions } from '@spendlio/db';
 // (sha256 is validated at the API edge by CreateReceiptInput / the presign query.)
 import { getBlobStore, receiptKey } from '@spendlio/storage';
-import { enqueue } from '@spendlio/queue';
+import { enqueue, requeue } from '@spendlio/queue';
 import type { CreateReceiptInput, ConfirmReceiptInput } from '@spendlio/contracts';
 import { DB } from '../db/db.module';
 
@@ -111,6 +111,31 @@ export class ReceiptsService {
     await enqueue('categorize', { transactionId: txn.id });
 
     return txn;
+  }
+
+  /**
+   * Re-run OCR on a failed receipt's existing image. Flips it back to
+   * 'processing' (clearing the stale reason) and re-enqueues the id-only job.
+   * `requeue` removes the deduped failed job first, otherwise the re-enqueue
+   * is a no-op. Rejects anything not currently 'failed'.
+   */
+  async retry(userId: string, id: string) {
+    const [row] = await this.db.select().from(receipts)
+      .where(and(eq(receipts.id, id), eq(receipts.userId, userId), isNull(receipts.deletedAt)));
+    if (!row) throw new NotFoundException();
+    if (row.status !== 'failed') {
+      throw new BadRequestException("This receipt isn't in a failed state.");
+    }
+
+    await this.db.update(receipts)
+      .set({ status: 'processing', failureReason: null, updatedAt: new Date() })
+      .where(and(eq(receipts.id, id), eq(receipts.userId, userId)));
+
+    await requeue('ocr', { receiptId: id });
+
+    const [updated] = await this.db.select().from(receipts)
+      .where(and(eq(receipts.id, id), eq(receipts.userId, userId)));
+    return this.toReceipt(updated);
   }
 
   /** A short-lived URL to view the receipt's image (user-scoped). */

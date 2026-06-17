@@ -43,6 +43,12 @@ export class ReceiptsController {
     return this.svc.confirm(u.id, id, dto);
   }
 
+  // Re-run OCR on a failed receipt → back to 'processing'.
+  @Post(':id/retry')
+  retry(@CurrentUser() u: { id: string }, @Param('id') id: string) {
+    return this.svc.retry(u.id, id);
+  }
+
   @Get(':id')
   get(@CurrentUser() u: { id: string }, @Param('id') id: string) { return this.svc.get(u.id, id); }
 
