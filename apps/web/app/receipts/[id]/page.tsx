@@ -8,6 +8,8 @@ import { Notice } from '@/components/feedback/notice';
 import { StatusBadge } from '@/features/receipts/components/status-badge';
 import { PollWhileProcessing } from '@/features/receipts/components/poll-while-processing';
 import { ReceiptReviewForm } from '@/features/receipts/components/receipt-review-form';
+import { RetryReceiptButton } from '@/features/receipts/components/retry-receipt-button';
+import { failureReasonText } from '@/features/receipts/lib/failure-reason';
 
 export const revalidate = 0;
 
@@ -60,6 +62,22 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
             alt={receipt.merchant ? `Receipt from ${receipt.merchant}` : 'Receipt image'}
             style={{ display: 'block', width: '100%', maxHeight: 520, objectFit: 'contain', borderRadius: 'var(--radius-md)' }}
           />
+        </Card>
+      ) : null}
+
+      {receipt.status === 'failed' ? (
+        <Card padding="lg" style={{ marginBottom: 'var(--space-5)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-4)', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', minWidth: 0 }}>
+              <span style={{ fontWeight: 'var(--weight-semibold)', color: 'var(--text-strong)' }}>
+                Scan failed
+              </span>
+              <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
+                {failureReasonText(receipt.failureReason)}
+              </span>
+            </div>
+            <RetryReceiptButton id={receipt.id} size="md" />
+          </div>
         </Card>
       ) : null}
 
@@ -151,7 +169,7 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
               {receipt.status === 'processing'
                 ? 'Still reading the receipt — line items will appear here once OCR finishes.'
                 : receipt.status === 'failed'
-                  ? 'We couldn\'t read this receipt. Try scanning a clearer photo.'
+                  ? 'No line items were read.'
                   : 'No line items were detected on this receipt.'}
             </Notice>
           )}

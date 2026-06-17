@@ -8,6 +8,7 @@ import { Notice } from '@/components/feedback/notice';
 import { UploadReceipt } from '@/features/receipts/components/upload-receipt';
 import { StatusBadge } from '@/features/receipts/components/status-badge';
 import { PollWhileProcessing } from '@/features/receipts/components/poll-while-processing';
+import { RetryReceiptButton } from '@/features/receipts/components/retry-receipt-button';
 
 export const revalidate = 0;
 
@@ -43,28 +44,38 @@ export default async function ReceiptsPage() {
       ) : (
         <div style={{ display: 'grid', gap: 'var(--space-3)' }}>
           {data.items.map((r) => (
-            <Link key={r.id} href={`/receipts/${r.id}`} style={{ display: 'block' }}>
-              <Card padding="md">
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-4)' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', minWidth: 0 }}>
-                    <span style={{ fontWeight: 'var(--weight-semibold)', color: 'var(--text-strong)' }}>
-                      {r.merchant ?? 'Receipt'}
-                    </span>
-                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-subtle)' }}>
-                      {r.purchasedAt
-                        ? new Date(r.purchasedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                        : new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
-                    {r.total != null && r.currency ? (
-                      <MoneyAmount amount={-Math.abs(r.total)} currency={r.currency} color="off" />
-                    ) : null}
-                    <StatusBadge status={r.status} />
-                  </div>
+            <Card key={r.id} padding="md" style={{ position: 'relative' }}>
+              {/* Whole-card click target. Sits under the content; the Retry button
+                  re-enables pointer events so it isn't swallowed (no button-in-anchor). */}
+              <Link
+                href={`/receipts/${r.id}`}
+                aria-label={`Open ${r.merchant ?? 'receipt'}`}
+                style={{ position: 'absolute', inset: 0, borderRadius: 'var(--radius-md)' }}
+              />
+              <div style={{ position: 'relative', pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-4)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', minWidth: 0 }}>
+                  <span style={{ fontWeight: 'var(--weight-semibold)', color: 'var(--text-strong)' }}>
+                    {r.merchant ?? 'Receipt'}
+                  </span>
+                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-subtle)' }}>
+                    {r.purchasedAt
+                      ? new Date(r.purchasedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                      : new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </span>
                 </div>
-              </Card>
-            </Link>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+                  {r.total != null && r.currency ? (
+                    <MoneyAmount amount={-Math.abs(r.total)} currency={r.currency} color="off" />
+                  ) : null}
+                  <StatusBadge status={r.status} />
+                  {r.status === 'failed' ? (
+                    <span style={{ pointerEvents: 'auto' }}>
+                      <RetryReceiptButton id={r.id} />
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            </Card>
           ))}
         </div>
       )}
