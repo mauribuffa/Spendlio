@@ -40,6 +40,12 @@
 ## Phase 5 · Auth — ✅ done (2026-06-16) · email OTP via Auth.js + short-lived JWT to the API (ADR-033)
 - [x] Auth.js (web, email OTP, JWT sessions) + short-lived Bearer JWT to the API; dev `AuthGuard` (`x-user-id`) removed
 
+## Next up — candidate next steps (post–Phase 5)
+Phase 5 unblocked "real users / deploy." Each is a brainstorm → spec → plan candidate:
+- [ ] **A) Real email delivery for OTP** — codes currently only print to the dev console / on-screen hint. Add a real provider (Resend/SMTP/SES) behind the existing `EmailSender` interface (`apps/api/src/auth/email/`) + `EMAIL_FROM`. Turns auth from dev-only into real-user-ready. _(Recommended first.)_
+- [ ] **B) Deploy mini-phase** — resolve hosting (ADR-013); set real `AUTH_SECRET` + `API_JWT_SECRET` in prod (drop the `change-me-dev-only` fallback — add a startup fail-fast in `auth.guard.ts` + `lib/auth-token.ts`); rename `apps/web/middleware.ts` → `proxy.ts` (Next 16 deprecation). Depends on A for a usable sign-in.
+- [ ] **C) Remaining feature gaps** — FX/multi-currency totals (ADR-016), or real onboarding persistence (currently presentational; can now build on the Phase-5 session).
+
 ---
 
 ## Open decisions to resolve (from `docs/learning/decisions.md`)
@@ -59,7 +65,7 @@
 - [x] **Split "Groups" + per-person "Remind"** (design Image #7) — ✅ DONE (ADR-025). NestJS `groups` resource (`GET`/`POST /groups`, member-ownership validated) + synchronous `POST /people/:id/remind` (records an in-app `settle_reminder` notification; no email/push transport yet). Split page reskinned to the bundle: Groups card (AvatarGroup + net badge derived from balances) + People card (inline Remind for "owes you") + New-group form. Group net is web-derived (sum of members' balances), not stored.
 - [x] **Split math vs the user** — ✅ DONE (ADR-028, builds on ADR-024's self-person). User-created splits route through the self-person **server-side**: `CreateSplitInput` drops the client `payerId`, `total` is the full expense, `SplitsService.create` resolves the self-person (race-safe partial unique index), validates participant ownership (the missing IDOR check), injects + stores the self share, and **both** balance readers (`SplitsService.balances` + the AI `netBalances`) skip the self share — so no friend's debt vanishes and the assistant no longer reports a phantom "You". `core` no longer drops a remainder cent when the payer isn't a participant. Migration `0003`.
 - [x] **Seed data is sparse** — ✅ DONE. `@spendlio/db` seed now has 4 accounts (real balances via txns), 23 transactions across June+May 2026 with `accountId` + varied statuses (income/recurring/split/pending/cleared), 5 budgets, 4 friends + a self-person, 3 groups, 2 splits (+shares), and a settlement. Idempotent (fixed UUIDs + `onConflictDoNothing`). Verified live: Overview/Transactions/Accounts/Split populate; Alex/Sam owe $137.00, Maya settled. Mockup figures ($8,186 etc.) remain illustrative.
-- [ ] **Onboarding is presentational** — no auth/persistence yet; the final step just enters the app. Real onboarding lands with Auth.js (Phase 5, deferred).
+- [ ] **Onboarding is presentational** — no persistence yet; the final step just enters the app. Real onboarding can now build on Auth.js/session (Phase 5 done) — see "Next up · C".
 - [ ] **Mobile UI kit** — out of scope until an `apps/mobile` exists; the bundle's mobile screens are archived at `docs/design-bundle/ui_kits/mobile/`.
 - [~] **Live visual QA** — extensively done on 2026-06-16 via Playwright: responsive sweep at 390/768/1280px (shell drawer, grids, transactions card list, centered modal — caught a scrim + a modal-centering bug), a console-error sweep of all 12 pages (caught hydration + duplicate-key bugs), and an end-to-end write-path smoke of all 6 mutation flows (success toasts confirmed). **Still not exercised live:** the receipt upload→OCR→confirm flow (needs a real image + OCR provider) and `error.tsx` / `loading.tsx` (hard to trigger without a forced error / slow fetch).
 
