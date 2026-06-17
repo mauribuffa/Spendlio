@@ -24,6 +24,8 @@ interface Props {
   /** Receipt line items in minor units. */
   lineItems: { description: string; quantity: number; amount: number }[];
   categories: { value: string; label: string }[];
+  /** OCR-suggested CategoryKey to pre-select (null/absent → user picks). */
+  suggestedCategory?: string | null;
 }
 
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'ARS', 'BRL', 'MXN', 'JPY', 'CLP'];
@@ -49,6 +51,7 @@ export function ReceiptReviewForm({
   totalMinor,
   lineItems,
   categories,
+  suggestedCategory,
 }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -57,7 +60,7 @@ export function ReceiptReviewForm({
   const [currency, setCurrency] = useState(initialCurrency || 'USD');
   const [merchantVal, setMerchant] = useState(merchant ?? '');
   const [dateVal, setDate] = useState(toDateInput(occurredAt) || new Date().toISOString().slice(0, 10));
-  const [category, setCategory] = useState('');
+  const [category, setCategory] = useState(suggestedCategory ?? '');
   const [total, setTotal] = useState(totalMinor != null ? toMajorStr(totalMinor, initialCurrency || 'USD') : '');
   const [items, setItems] = useState<ItemRow[]>(
     lineItems.map((li) => ({

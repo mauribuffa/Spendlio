@@ -101,6 +101,7 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
             totalMinor={receipt.total ?? null}
             lineItems={receipt.lineItems}
             categories={categories.map((c) => ({ value: c.key, label: c.label }))}
+            suggestedCategory={receipt.category ?? null}
           />
         </Card>
       ) : (
