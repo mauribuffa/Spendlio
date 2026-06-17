@@ -176,6 +176,8 @@ function buildTools(t: AssistantTools) {
     }),
     recentTransactions: tool({
       description: 'The most recent transactions, newest first. Returns exact amounts.',
+      // `.default()` is safe here: tool/function calls are sent non-strict. If this ever becomes a
+      // strict structured call, switch params to `.nullable()` — OpenAI strict requires every property.
       inputSchema: z.object({ limit: z.number().int().min(1).max(50).default(5) }),
       execute: async ({ limit }) => {
         const txns = await t.recentTransactions(limit);
