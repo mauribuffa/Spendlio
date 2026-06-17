@@ -43,6 +43,10 @@ export const ReceiptOcrResult = z.object({
   currency: CurrencyCode,
   lineItems: z.array(OcrLineItem),
   confidence: z.number().min(0).max(1),
+  // Best-fit spending category the vision model infers from the whole receipt.
+  // `.nullable()` (not optional/default) keeps it in OpenAI strict-output `required`;
+  // the model returns null when it is not confident.
+  category: CategoryKey.nullable(),
 });
 export type ReceiptOcrResult = z.infer<typeof ReceiptOcrResult>;
 

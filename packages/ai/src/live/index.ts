@@ -81,7 +81,7 @@ export class LiveProvider implements LLMProvider {
           {
             role: 'user',
             content: [
-              { type: 'text', text: 'Extract the merchant, purchase date (YYYY-MM-DD), total, currency, and line items.' },
+              { type: 'text', text: 'Extract the merchant, purchase date (YYYY-MM-DD), total, currency, line items, and the single best-fit spending category (use null if unsure).' },
               image.bytes
                 ? { type: 'image', image: image.bytes }
                 : { type: 'text', text: `Receipt image key: ${image.key}` },

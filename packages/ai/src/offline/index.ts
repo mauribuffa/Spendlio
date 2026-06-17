@@ -41,6 +41,7 @@ export class OfflineProvider implements LLMProvider {
         { description: 'Oat milk', quantity: 2, amount: 600 },
       ],
       confidence: 0.5,
+      category: 'groceries' as const,
     };
     // Treat our own output as untrusted: parse it through the contract.
     return ReceiptOcrResult.parse(result);
