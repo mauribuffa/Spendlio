@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState, useEffect, useRef, useState } from 'react';
-import { Button, Input, Card, SegmentedControl, Select, cn } from '@spendlio/ui';
+import { Button, Input, Card, SegmentedControl, Select, cn, capitalize } from '@spendlio/ui';
 import { FormField } from '@/components/form/form-field';
 import { FieldError } from '@/components/form/field-error';
 import { useToast } from '@/components/feedback/toast-provider';
@@ -12,8 +12,7 @@ const CATEGORIES = [
   'health', 'entertainment', 'travel', 'subscriptions', 'income', 'transfer',
 ] as const;
 
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-const CATEGORY_OPTIONS = CATEGORIES.map((c) => ({ value: c, label: cap(c) }));
+const CATEGORY_OPTIONS = CATEGORIES.map((c) => ({ value: c, label: capitalize(c) }));
 
 const initial: ActionResult = { ok: false };
 

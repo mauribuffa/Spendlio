@@ -3,27 +3,10 @@ import { Wallet, ArrowUpRight, ArrowDownLeft, PiggyBank, Sparkles, ArrowRight } 
 import { Card, MoneyAmount, TransactionRow, ProgressBar, formatSignedMoney, formatWhole, categoryColor, cn } from '@spendlio/ui';
 import { listTransactions, getBudgetStatus, type Transaction, type BudgetStatus } from '@/lib/resources';
 import { safe } from '@/lib/safe';
+import { summarizeSpending } from '@/features/transactions/lib/summarize-spending';
 import { PageHeader } from '@/components/layout/page-header';
 import { Notice } from '@/components/feedback/notice';
 import { Donut } from '@/components/domain/charts';
-
-function totals(items: Transaction[]) {
-  let income = 0;
-  let expense = 0;
-  const byCategory = new Map<string, number>();
-  for (const item of items) {
-    if (item.amount >= 0) income += item.amount;
-    else {
-      expense += -item.amount;
-      byCategory.set(item.category, (byCategory.get(item.category) ?? 0) + -item.amount);
-    }
-  }
-  const currency = items[0]?.currency ?? 'USD';
-  const categories = [...byCategory.entries()]
-    .map(([category, value]) => ({ category, value }))
-    .sort((a, b) => b.value - a.value);
-  return { income, expense, net: income - expense, currency, categories };
-}
 
 export default async function OverviewPage() {
   const [tx, budgets] = await Promise.all([
@@ -31,7 +14,7 @@ export default async function OverviewPage() {
     safe(() => getBudgetStatus(), [] as BudgetStatus[]),
   ]);
 
-  const t = totals(tx.data.items);
+  const t = summarizeSpending(tx.data.items);
   const recent = tx.data.items.slice(0, 6);
   const unreachable = tx.error || budgets.error;
   const onDark = { color: 'var(--green-200)' };

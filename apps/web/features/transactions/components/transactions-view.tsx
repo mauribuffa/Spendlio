@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
-import { Card, Badge, Input, MoneyAmount, CategoryIcon, Tag, TransactionRow } from '@spendlio/ui';
+import { Card, Badge, Input, MoneyAmount, CategoryIcon, Tag, TransactionRow, capitalize } from '@spendlio/ui';
 import type { BadgeTone } from '@spendlio/ui';
 import type { TransactionStatus } from '@spendlio/contracts';
 import type { Transaction, Account } from '@/lib/resources';
@@ -26,8 +26,6 @@ const FILTERS = [
 ] as const;
 
 type FilterKey = (typeof FILTERS)[number]['key'];
-
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 const th: React.CSSProperties = {
   textAlign: 'left',
@@ -71,7 +69,7 @@ export function TransactionsView({
   const accountLabel = (t: Transaction): string => {
     const a = t.accountId ? accountById.get(t.accountId) : undefined;
     if (!a) return '—';
-    return a.last4 ? `${cap(a.type)} ••${a.last4}` : cap(a.type);
+    return a.last4 ? `${capitalize(a.type)} ••${a.last4}` : capitalize(a.type);
   };
 
   return (

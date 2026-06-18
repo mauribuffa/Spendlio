@@ -3,6 +3,7 @@ import { TrendingDown, TrendingUp, AlertTriangle, Repeat, PiggyBank } from 'luci
 import { Card, MoneyAmount, formatWhole, categoryColor, capitalize, cn } from '@spendlio/ui';
 import { listTransactions, getBudgetStatus, type Transaction, type BudgetStatus } from '@/lib/resources';
 import { safe } from '@/lib/safe';
+import { summarizeSpending } from '@/features/transactions/lib/summarize-spending';
 import { PageHeader } from '@/components/layout/page-header';
 import { Notice } from '@/components/feedback/notice';
 import { Donut } from '@/components/domain/charts';
@@ -52,18 +53,8 @@ export default async function InsightsPage() {
   const unreachable = tx.error || budgets.error;
 
   const items = tx.data.items;
-  const currency = items[0]?.currency ?? 'USD';
-  const byCategory = new Map<string, number>();
-  let expense = 0;
-  let recurring = 0;
-  for (const t of items) {
-    if (t.status === 'recurring') recurring += 1;
-    if (t.amount < 0) {
-      expense += -t.amount;
-      byCategory.set(t.category, (byCategory.get(t.category) ?? 0) + -t.amount);
-    }
-  }
-  const categories = [...byCategory.entries()].map(([category, value]) => ({ category, value })).sort((a, b) => b.value - a.value);
+  const { expense, currency, categories } = summarizeSpending(items);
+  const recurring = items.filter((t) => t.status === 'recurring').length;
   const top = categories[0];
   const over = budgets.data.find((b) => b.spent > b.limit);
   const monthName = new Date().toLocaleString('en-US', { month: 'long' });

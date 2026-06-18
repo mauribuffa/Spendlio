@@ -12,6 +12,7 @@ import {
   Avatar,
   CategoryIcon,
   Button,
+  capitalize,
 } from '@spendlio/ui';
 import { type CategoryKey, toMinorUnits, getCurrencyDecimals, formatMoney } from '@spendlio/contracts';
 import type { Person } from '@/lib/resources';
@@ -22,8 +23,6 @@ type SplitMode = 'even' | 'exact' | 'percent';
 // The quick-pick categories shown as icon chips (the rest stay reachable via
 // the full transactions flow). Order mirrors the design.
 const QUICK_CATS: CategoryKey[] = ['groceries', 'dining', 'transport', 'shopping', 'travel', 'subscriptions'];
-
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export function AddExpenseModal({
   open,
@@ -183,7 +182,7 @@ export function AddExpenseModal({
                 <span style={{ borderRadius: 999, boxShadow: category === c ? 'var(--ring-brand)' : 'none' }}>
                   <CategoryIcon category={c} size="lg" />
                 </span>
-                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>{cap(c)}</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>{capitalize(c)}</span>
               </button>
             ))}
           </div>
