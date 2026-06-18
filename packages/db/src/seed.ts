@@ -152,7 +152,8 @@ const DEMO_SPLIT_SHARES = [
   { id: id('0009', '07'), splitId: S.lisbon, personId: P.sam,  amount: 10500 },
 ];
 // Maya paid you back her Lisbon share → her net clears to "Settled up".
-// Settlement edge nets toPersonId owes fromPersonId, so SELF receives from Maya.
+// Model B (ADR-028/039): to=SELF means "a friend paid you", so this reduces
+// Maya's debt by the amount (core.netBalances handles the direction).
 const DEMO_SETTLEMENTS = [
   { id: id('000a', '01'), fromPersonId: P.maya, toPersonId: SELF, amount: 10500, currency: 'USD', status: 'settled', settledAt: d('2026-06-14T16:00:00Z') },
 ];

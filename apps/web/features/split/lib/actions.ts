@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { CreateSettlementInput, CreateGroupInput, toMinorUnits } from '@spendlio/contracts';
+import { CreateSettlementInput, CreateGroupInput, SettlementDirection, toMinorUnits } from '@spendlio/contracts';
 import { createSettlement, createGroup, remindPerson } from '@/lib/resources';
 import { ApiError } from '@/lib/api';
 
@@ -12,11 +12,12 @@ export interface ActionResult {
   fieldErrors?: Record<string, string[]>;
 }
 
-// The form posts strings; coerce the amount (major units typed by a human, e.g.
-// "25.00") to integer cents, then validate with the same contract the API enforces.
+// Model B (ADR-028): a settlement is between you and ONE friend, with a
+// direction. The form posts strings; coerce the amount (major units typed by a
+// human) to integer cents, then validate with the same contract the API enforces.
 const FormSchema = z.object({
-  fromPersonId: z.string().uuid('Pick who is paying.'),
-  toPersonId: z.string().uuid('Pick who is being paid.'),
+  personId: z.string().uuid('Pick a person.'),
+  direction: SettlementDirection,
   amountMajor: z.coerce.number().positive('Enter an amount greater than zero.'),
   currency: z.string().length(3),
 });
@@ -26,8 +27,8 @@ export async function settleUpAction(
   formData: FormData,
 ): Promise<ActionResult> {
   const parsed = FormSchema.safeParse({
-    fromPersonId: formData.get('fromPersonId'),
-    toPersonId: formData.get('toPersonId'),
+    personId: formData.get('personId'),
+    direction: formData.get('direction'),
     amountMajor: formData.get('amountMajor'),
     currency: formData.get('currency'),
   });
@@ -36,15 +37,12 @@ export async function settleUpAction(
     return { ok: false, fieldErrors: parsed.error.flatten().fieldErrors as Record<string, string[]> };
   }
 
-  const { fromPersonId, toPersonId, amountMajor, currency } = parsed.data;
-  if (fromPersonId === toPersonId) {
-    return { ok: false, error: 'A payment must be between two different people.' };
-  }
+  const { personId, direction, amountMajor, currency } = parsed.data;
   const amount = toMinorUnits(amountMajor, currency.toUpperCase()); // per-currency minor units
 
   const input = CreateSettlementInput.safeParse({
-    fromPersonId,
-    toPersonId,
+    personId,
+    direction,
     amount,
     currency: currency.toUpperCase(),
   });

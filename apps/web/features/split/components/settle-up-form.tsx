@@ -20,21 +20,25 @@ export function SettleUpForm({ people }: { people: Person[] }) {
     if (state.ok) formRef.current?.reset();
   }, [state.ok]);
 
-  if (people.length < 2) {
+  if (people.length === 0) {
     return (
       <p style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)', margin: 0 }}>
-        Add at least two people before you can settle up between them.
+        Add someone you split with before you can settle up.
       </p>
     );
   }
 
   const options = people.map((p) => ({ value: p.id, label: p.name }));
+  const directionOptions = [
+    { value: 'they_paid_you', label: 'They paid you' },
+    { value: 'you_paid_them', label: 'You paid them' },
+  ];
 
   return (
     <form ref={formRef} action={formAction} style={{ display: 'grid', gap: 'var(--space-4)' }}>
       <div style={{ display: 'grid', gap: 'var(--space-4)', gridTemplateColumns: '1fr 1fr' }}>
-        <Select name="fromPersonId" label="Payer" options={options} placeholder="Who paid" defaultValue="" required />
-        <Select name="toPersonId" label="Payee" options={options} placeholder="Who was paid" defaultValue="" required />
+        <Select name="personId" label="Person" options={options} placeholder="Who" defaultValue="" required />
+        <Select name="direction" label="Direction" options={directionOptions} defaultValue="they_paid_you" required />
       </div>
 
       <div style={{ display: 'grid', gap: 'var(--space-4)', gridTemplateColumns: '2fr 1fr', alignItems: 'end' }}>

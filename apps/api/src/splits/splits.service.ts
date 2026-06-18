@@ -2,10 +2,11 @@ import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { and, desc, eq, inArray, isNull } from 'drizzle-orm';
 import { people, settlements, splits, splitShares } from '@spendlio/db';
 import type { DB as Database } from '@spendlio/db';
-import { computeSplit, type Edge, type Share } from '@spendlio/core';
+import { computeSplit, netBalances, type Share, type ShareInput, type SettlementInput } from '@spendlio/core';
 import type { Balance, CreateSplitInput } from '@spendlio/contracts';
 import { DB } from '../db/db.module';
 import { or404 } from '../common/or404';
+import { resolveSelfPersonId, getSelfPersonId } from '../common/self-person';
 
 @Injectable()
 export class SplitsService {
@@ -82,26 +83,10 @@ export class SplitsService {
     return { ...split, shares: sharesRows.filter((s) => s.personId !== selfId) };
   }
 
-  /**
-   * The user's self-person id (the implicit "you" — model B). Lazily created if
-   * missing; the partial unique index (people_one_self_per_user) makes this
-   * race-safe: a concurrent insert hits onConflictDoNothing and we re-select.
-   */
-  private async resolveSelfId(userId: string): Promise<string> {
-    const [existing] = await this.db
-      .select({ id: people.id })
-      .from(people)
-      .where(and(eq(people.userId, userId), eq(people.isSelf, true)))
-      .limit(1);
-    if (existing) return existing.id;
-
-    await this.db.insert(people).values({ userId, name: 'You', isSelf: true }).onConflictDoNothing();
-    const [self] = await this.db
-      .select({ id: people.id })
-      .from(people)
-      .where(and(eq(people.userId, userId), eq(people.isSelf, true)))
-      .limit(1);
-    return self!.id;
+  /** The user's self-person id (the implicit "you" — model B). Shared resolver
+   *  (lazily created, race-safe) — see common/self-person.ts. */
+  private resolveSelfId(userId: string): Promise<string> {
+    return resolveSelfPersonId(this.db, userId);
   }
 
   async get(userId: string, id: string) {
@@ -121,19 +106,23 @@ export class SplitsService {
   }
 
   /**
-   * Net who-owes-whom per person, from the user's viewpoint (+ they owe you).
-   * Same edge model as @spendlio/ai's balancesSummary: the payer is the
-   * creditor, each other share-holder a debtor; a settled settlement is the
-   * reverse edge. Netted inline here: build debtor/creditor edges, net both
-   * sides per person, then drop the payer persons (the user) and any zeros.
+   * Net who-owes-whom per friend, from the user's viewpoint (+ they owe you).
+   * Delegates the arithmetic to `core.netBalances` — the SINGLE source of balance
+   * truth shared with `@spendlio/ai`'s balancesSummary, so the Split page and the
+   * assistant can't disagree (ADR-039 follow-up). This method only fetches rows
+   * and shapes the result; the self share is skipped inside core.
    */
   async balances(userId: string): Promise<Balance[]> {
+    const selfId = await getSelfPersonId(this.db, userId);
+    if (!selfId) return []; // no self-person ⇒ no splits/settlements to net
+
     const userSplits = await this.db
-      .select({ id: splits.id, payerId: splits.payerId, currency: splits.currency })
+      .select({ id: splits.id, currency: splits.currency })
       .from(splits)
       .where(and(eq(splits.userId, userId), isNull(splits.deletedAt)));
 
-    const splitIds = userSplits.map((s: { id: string }) => s.id);
+    const splitIds = userSplits.map((s) => s.id);
+    const currencyOf = new Map(userSplits.map((s) => [s.id, s.currency]));
     const shareRows = splitIds.length
       ? await this.db
           .select({ splitId: splitShares.splitId, personId: splitShares.personId, amount: splitShares.amount })
@@ -151,32 +140,19 @@ export class SplitsService {
       .from(settlements)
       .where(and(eq(settlements.userId, userId), eq(settlements.status, 'settled')));
 
-    const payerOf = new Map<string, string>(userSplits.map((s: { id: string; payerId: string }) => [s.id, s.payerId]));
-    const currencyOf = new Map<string, string>(userSplits.map((s: { id: string; currency: string }) => [s.id, s.currency]));
-    const personCurrency = new Map<string, string>();
-    const edges: Edge[] = [];
+    const shares: ShareInput[] = shareRows.map((sh) => ({
+      personId: sh.personId,
+      amount: Number(sh.amount),
+      currency: currencyOf.get(sh.splitId) ?? 'USD',
+    }));
+    const settlementInputs: SettlementInput[] = settled.map((st) => ({
+      fromPersonId: st.fromPersonId,
+      toPersonId: st.toPersonId,
+      amount: Number(st.amount),
+      currency: st.currency,
+    }));
 
-    for (const sh of shareRows as { splitId: string; personId: string; amount: number }[]) {
-      const payerId = payerOf.get(sh.splitId);
-      if (!payerId || sh.personId === payerId) continue; // payer doesn't owe themselves
-      edges.push({ debtorId: sh.personId, creditorId: payerId, amount: Number(sh.amount) });
-      const cur = currencyOf.get(sh.splitId);
-      if (cur) personCurrency.set(sh.personId, cur);
-    }
-    for (const st of settled as { fromPersonId: string; toPersonId: string; amount: number; currency: string }[]) {
-      edges.push({ debtorId: st.toPersonId, creditorId: st.fromPersonId, amount: Number(st.amount) });
-      personCurrency.set(st.fromPersonId, st.currency);
-      personCurrency.set(st.toPersonId, st.currency);
-    }
-
-    // Convention B: user is the implicit viewpoint and pays their own splits, so
-    // each split's payer represents "me". Net per person, drop the payers (the
-    // user), and drop zeros — what's left is each counterparty's balance.
-    const net = new Map<string, number>();
-    const bump = (id: string, d: number) => net.set(id, (net.get(id) ?? 0) + d);
-    for (const e of edges) { bump(e.debtorId, e.amount); bump(e.creditorId, -e.amount); }
-    for (const payerId of new Set(userSplits.map((s: { payerId: string }) => s.payerId))) net.delete(payerId as string);
-    for (const [id, v] of net) if (v === 0) net.delete(id);
+    const { net, currency } = netBalances(shares, settlementInputs, selfId);
 
     const personIds = [...net.keys()];
     if (personIds.length === 0) return [];
@@ -184,14 +160,11 @@ export class SplitsService {
       .select({ id: people.id })
       .from(people)
       .where(and(eq(people.userId, userId), inArray(people.id, personIds)));
-    const known = new Set(persons.map((p: { id: string }) => p.id));
+    const known = new Set(persons.map((p) => p.id));
 
-    const out: Balance[] = [];
-    for (const id of personIds) {
-      if (!known.has(id)) continue; // not one of this user's people
-      out.push({ personId: id, currency: personCurrency.get(id) ?? 'USD', amount: net.get(id)! });
-    }
-    return out;
+    return personIds
+      .filter((id) => known.has(id)) // only this user's people
+      .map((id) => ({ personId: id, currency: currency.get(id) ?? 'USD', amount: net.get(id)! }));
   }
 
   private weight(dto: CreateSplitInput, id: string): number {

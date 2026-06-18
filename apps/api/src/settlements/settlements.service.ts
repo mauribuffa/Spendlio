@@ -1,9 +1,10 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { people, settlements } from '@spendlio/db';
 import type { DB as Database } from '@spendlio/db';
 import type { CreateSettlementInput } from '@spendlio/contracts';
 import { DB } from '../db/db.module';
+import { resolveSelfPersonId } from '../common/self-person';
 
 @Injectable()
 export class SettlementsService {
@@ -20,35 +21,32 @@ export class SettlementsService {
   }
 
   /**
-   * Record a completed payment: from one of the user's people to another.
-   * Written as status='settled' (with settledAt) so SplitsService.balances()
-   * — which counts only settled rows — nets it immediately. v1 records full
-   * named payments only; partial/pending settlements are out of scope.
+   * Record a completed payment between the user and one friend (model B —
+   * ADR-028). `direction` is from the user's viewpoint; the self-person is
+   * resolved server-side and placed on the correct side of from/to. Written as
+   * status='settled' (with settledAt) so the balance readers net it immediately.
    */
   async create(userId: string, dto: CreateSettlementInput) {
-    if (dto.fromPersonId === dto.toPersonId) {
-      throw new BadRequestException('A payment must be between two different people.');
-    }
-    if (dto.amount <= 0) {
-      throw new BadRequestException('Amount must be positive.');
-    }
-
-    // Both people must belong to this user (id-only payload, scoped check).
-    const owned = await this.db
+    // The counterparty must be one of the user's friends (never the self-person).
+    const [friend] = await this.db
       .select({ id: people.id })
       .from(people)
-      .where(and(eq(people.userId, userId), inArray(people.id, [dto.fromPersonId, dto.toPersonId])));
-    const ownedIds = new Set(owned.map((p) => p.id));
-    if (!ownedIds.has(dto.fromPersonId) || !ownedIds.has(dto.toPersonId)) {
-      throw new BadRequestException('Both people must belong to you.');
-    }
+      .where(and(eq(people.id, dto.personId), eq(people.userId, userId), eq(people.isSelf, false)))
+      .limit(1);
+    if (!friend) throw new BadRequestException('That person is not one of your people.');
+
+    const selfId = await resolveSelfPersonId(this.db, userId);
+    const [fromPersonId, toPersonId] =
+      dto.direction === 'they_paid_you'
+        ? [dto.personId, selfId] // a friend paid you
+        : [selfId, dto.personId]; // you paid a friend
 
     const [row] = await this.db
       .insert(settlements)
       .values({
         userId,
-        fromPersonId: dto.fromPersonId,
-        toPersonId: dto.toPersonId,
+        fromPersonId,
+        toPersonId,
         amount: dto.amount,
         currency: dto.currency,
         status: 'settled',

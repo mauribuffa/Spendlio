@@ -47,37 +47,40 @@ describe('settlement contract', () => {
   const personA = '33333333-3333-3333-3333-333333333333';
   const personB = '44444444-4444-4444-4444-444444444444';
 
-  it('accepts a full named payment in integer cents', () => {
+  it('accepts a model-B payment: one friend + direction + integer cents', () => {
     const input = CreateSettlementInput.parse({
-      fromPersonId: personA,
-      toPersonId: personB,
+      personId: personA,
+      direction: 'they_paid_you',
       amount: 2500, // $25.00
       currency: 'usd', // CurrencyCode upper-cases
     });
+    expect(input.personId).toBe(personA);
+    expect(input.direction).toBe('they_paid_you');
     expect(input.amount).toBe(2500);
     expect(input.currency).toBe('USD');
   });
 
-  it('rejects a fractional amount (money is integer minor units)', () => {
-    expect(() =>
-      CreateSettlementInput.parse({
-        fromPersonId: personA,
-        toPersonId: personB,
-        amount: 25.5,
-        currency: 'USD',
-      }),
-    ).toThrow();
+  it('rejects a fractional or non-positive amount (money is integer minor units)', () => {
+    const base = { personId: personA, direction: 'you_paid_them' as const, currency: 'USD' };
+    expect(() => CreateSettlementInput.parse({ ...base, amount: 25.5 })).toThrow();
+    expect(() => CreateSettlementInput.parse({ ...base, amount: 0 })).toThrow();
+    expect(() => CreateSettlementInput.parse({ ...base, amount: -100 })).toThrow();
   });
 
-  it('does not accept status/settledAt on the create DTO (server sets them)', () => {
+  it('rejects an unknown direction and strips server-managed keys', () => {
+    expect(() =>
+      CreateSettlementInput.parse({ personId: personA, direction: 'gift', amount: 100, currency: 'USD' }),
+    ).toThrow();
     const parsed = CreateSettlementInput.parse({
-      fromPersonId: personA,
-      toPersonId: personB,
+      personId: personA,
+      direction: 'they_paid_you',
       amount: 100,
       currency: 'USD',
-      status: 'settled', // stripped by .omit()
+      status: 'settled', // unknown key — stripped
+      toPersonId: personB,
     } as Record<string, unknown>);
     expect('status' in parsed).toBe(false);
+    expect('toPersonId' in parsed).toBe(false);
   });
 
   it('SettlementSchema round-trips a settled row', () => {

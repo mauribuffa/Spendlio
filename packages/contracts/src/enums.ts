@@ -29,3 +29,8 @@ export type ReceiptFailureReason = z.infer<typeof ReceiptFailureReason>;
 
 export const SettlementStatus = z.enum(['pending','settled']);
 export type SettlementStatus = z.infer<typeof SettlementStatus>;
+
+// Model B (ADR-028): a settlement is between you and one friend. Direction is
+// from the user's viewpoint — the API resolves it to from/to person ids.
+export const SettlementDirection = z.enum(['they_paid_you', 'you_paid_them']);
+export type SettlementDirection = z.infer<typeof SettlementDirection>;

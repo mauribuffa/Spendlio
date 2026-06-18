@@ -63,6 +63,15 @@ describe('netBalances (model B — ADR-028, exact integer cents)', () => {
     expect(net.get('bob')).toBe(600); // 1000 - 400
   });
 
+  it('"you paid them" credits the friend (the direction the old code missed)', () => {
+    // you paid bob $7 → from=self, to=bob. On top of bob's +1000 share → 1700.
+    const settled: SettlementRow[] = [
+      { fromPersonId: SELF, toPersonId: 'bob', amount: 700, currency: 'USD' },
+    ];
+    const { net } = netBalances(splits, shares, settled, SELF);
+    expect(net.get('bob')).toBe(1700); // 1000 + 700 (old code wrongly left it at 1000)
+  });
+
   it('aggregates a person across multiple splits', () => {
     const twoSplits: SplitRow[] = [
       { id: 's1', currency: 'USD' },

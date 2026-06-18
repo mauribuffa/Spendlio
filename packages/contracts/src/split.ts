@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { baseEntity, ownedEntity } from './common';
 import { CurrencyCode } from './money';
-import { SplitMode, SettlementStatus } from './enums';
+import { SplitMode, SettlementStatus, SettlementDirection } from './enums';
 
 // A person you split with (friend / roommate). Owned by the user who added them.
 export const PersonSchema = z.object({
@@ -105,8 +105,15 @@ export const SettlementSchema = z.object({
 });
 export type Settlement = z.infer<typeof SettlementSchema>;
 
-export const CreateSettlementInput = SettlementSchema.omit({
-  id: true, userId: true, createdAt: true, updatedAt: true, status: true, settledAt: true,
+// Model B (ADR-028): a settlement is between the user and ONE friend, with a
+// direction from the user's viewpoint. The API resolves the self-person and the
+// from/to person ids server-side — the client never sends them (mirrors how
+// CreateSplitInput drops payerId).
+export const CreateSettlementInput = z.object({
+  personId: z.string().uuid(),            // the friend
+  direction: SettlementDirection,
+  amount: z.number().int().positive(),    // minor units
+  currency: CurrencyCode,
 });
 export type CreateSettlementInput = z.infer<typeof CreateSettlementInput>;
 

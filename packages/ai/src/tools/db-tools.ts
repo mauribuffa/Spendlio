@@ -9,6 +9,7 @@ import {
   type DB,
 } from '@spendlio/db';
 import { CategoryKey } from '@spendlio/contracts';
+import { netBalances as coreNetBalances } from '@spendlio/core';
 import type {
   AssistantTools,
   BalanceLine,
@@ -54,16 +55,12 @@ export interface SettlementRow {
 }
 
 /**
- * Net per-person balances (exact integer cents) from the user's viewpoint
- * (model B — ADR-028: the user is the implicit payer/creditor, represented by
- * their self-person `selfId`, who also holds a share row). Pure — the SQL layer
- * just feeds it rows. Direct per-person aggregation:
- *   - each split_share `personId` (except the self share) owes you their `amount` (+)
- *   - a person who has SETTLED a settlement reduces their debt by `amount`  (−)
- * The self share is skipped and `selfId` is dropped from the output, mirroring
- * SplitsService.balances() exactly — otherwise the assistant reports a phantom
- * "You" balance. Returns Map<personId, netCents> (positive = they owe you,
- * negative = you owe them), zero balances dropped, plus the per-person currency.
+ * Net per-person balances (exact integer cents) from the user's viewpoint.
+ * Thin adapter over `@spendlio/core`'s `netBalances` — the SINGLE source of
+ * balance truth shared with `SplitsService.balances()`, so the assistant and the
+ * Split page can never disagree. Maps each share to its split's currency and
+ * forwards self-relative settlements (model B — ADR-028/039); a null `selfId`
+ * (no self-person yet) yields empty maps.
  *
  * `splitRows` carries each split's currency so shares inherit it.
  */
@@ -73,28 +70,14 @@ export function netBalances(
   settlementRows: SettlementRow[],
   selfId: string | null,
 ): { net: Map<string, number>; currency: Map<string, string> } {
+  if (!selfId) return { net: new Map(), currency: new Map() };
   const currencyOf = new Map(splitRows.map((s) => [s.id, s.currency]));
-  const net = new Map<string, number>();
-  const personCurrency = new Map<string, string>();
-  const bump = (id: string, d: number) => net.set(id, (net.get(id) ?? 0) + d);
-
-  // Each share is a person owing the user their portion — skip the user's own share.
-  for (const sh of shareRows) {
-    if (sh.personId === selfId) continue;
-    bump(sh.personId, sh.amount);
-    const cur = currencyOf.get(sh.splitId);
-    if (cur) personCurrency.set(sh.personId, cur);
-  }
-  // A settled settlement: the person who paid it (fromPersonId) reduces their debt.
-  for (const st of settlementRows) {
-    bump(st.fromPersonId, -st.amount);
-    if (!personCurrency.has(st.fromPersonId)) personCurrency.set(st.fromPersonId, st.currency);
-  }
-
-  // Drop the self-person (the viewpoint) and zero balances.
-  if (selfId) net.delete(selfId);
-  for (const [id, v] of net) if (v === 0) net.delete(id);
-  return { net, currency: personCurrency };
+  const shares = shareRows.map((sh) => ({
+    personId: sh.personId,
+    amount: sh.amount,
+    currency: currencyOf.get(sh.splitId) ?? 'USD',
+  }));
+  return coreNetBalances(shares, settlementRows, selfId);
 }
 
 /**
