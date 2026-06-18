@@ -155,6 +155,22 @@ describe('toMonthlyRecap', () => {
   });
 });
 
+import { matchPerson } from './tools/db-tools';
+
+describe('matchPerson', () => {
+  const people = [{ id: '1', name: 'Alex Rivera' }, { id: '2', name: 'Sam Lee' }];
+  it('matches case-insensitive substring', () => {
+    expect(matchPerson(people, 'alex')?.id).toBe('1');
+  });
+  it('prefers an exact (case-insensitive) name match', () => {
+    const dup = [{ id: '1', name: 'Sam' }, { id: '2', name: 'Samuel' }];
+    expect(matchPerson(dup, 'sam')?.id).toBe('1');
+  });
+  it('returns null on no match', () => {
+    expect(matchPerson(people, 'taylor')).toBeNull();
+  });
+});
+
 import { subtotalByCurrency } from './tools/db-tools';
 
 describe('subtotalByCurrency', () => {

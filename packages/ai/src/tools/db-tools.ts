@@ -20,6 +20,7 @@ import type {
   CategorySpend,
   MonthlyRecap,
   MonthSpend,
+  PersonBalanceDetail,
   RecentTransaction,
 } from '../provider';
 
@@ -160,6 +161,51 @@ export function netBalances(
   return coreNetBalances(shares, settlementRows, selfId);
 }
 
+/** Resolve a free-text name to one of the user's people: exact (ci) wins, else first substring hit. */
+export function matchPerson<T extends { name: string }>(people: T[], query: string): T | null {
+  const q = query.trim().toLowerCase();
+  if (!q) return null;
+  const exact = people.find((p) => p.name.toLowerCase() === q);
+  if (exact) return exact;
+  return people.find((p) => p.name.toLowerCase().includes(q)) ?? null;
+}
+
+/** Load everything netBalances needs for a user: selfId, splits, shares, settled settlements. */
+async function loadBalanceInputs(db: DB, userId: string) {
+  const [self] = await db
+    .select({ id: people.id })
+    .from(people)
+    .where(and(eq(people.userId, userId), eq(people.isSelf, true)))
+    .limit(1);
+  const selfId = self?.id ?? null;
+
+  const userSplits = await db
+    .select({ id: splits.id, currency: splits.currency })
+    .from(splits)
+    .where(and(eq(splits.userId, userId), isNull(splits.deletedAt)));
+  const splitIds = userSplits.map((s) => s.id);
+
+  const shares = splitIds.length
+    ? await db
+        .select({ splitId: splitShares.splitId, personId: splitShares.personId, amount: splitShares.amount })
+        .from(splitShares)
+        .where(inArray(splitShares.splitId, splitIds))
+    : [];
+
+  const settled = await db
+    .select({
+      fromPersonId: settlements.fromPersonId,
+      toPersonId: settlements.toPersonId,
+      amount: settlements.amount,
+      currency: settlements.currency,
+      settledAt: settlements.settledAt,
+    })
+    .from(settlements)
+    .where(and(eq(settlements.userId, userId), eq(settlements.status, 'settled')));
+
+  return { selfId, userSplits, shares, settled };
+}
+
 /**
  * Build the assistant's typed tools backed by the live DB. EVERY query is scoped
  * to `userId` (Golden Rule 4), and EVERY money value returned is an exact integer
@@ -242,41 +288,7 @@ export function createDbTools(db: DB, userId: string): AssistantTools {
     },
 
     async balancesSummary(): Promise<BalanceLine[]> {
-      // The self-person (model B viewpoint) is skipped in netting — resolve it up front.
-      const [self] = await db
-        .select({ id: people.id })
-        .from(people)
-        .where(and(eq(people.userId, userId), eq(people.isSelf, true)))
-        .limit(1);
-      const selfId = self?.id ?? null;
-
-      // Pull this user's splits, their per-person shares, and settled settlements.
-      const userSplits = await db
-        .select({ id: splits.id, currency: splits.currency })
-        .from(splits)
-        .where(and(eq(splits.userId, userId), isNull(splits.deletedAt)));
-
-      const splitIds = userSplits.map((s) => s.id);
-      const shares = splitIds.length
-        ? await db
-            .select({
-              splitId: splitShares.splitId,
-              personId: splitShares.personId,
-              amount: splitShares.amount,
-            })
-            .from(splitShares)
-            .where(inArray(splitShares.splitId, splitIds))
-        : [];
-
-      const settled = await db
-        .select({
-          fromPersonId: settlements.fromPersonId,
-          toPersonId: settlements.toPersonId,
-          amount: settlements.amount,
-          currency: settlements.currency,
-        })
-        .from(settlements)
-        .where(and(eq(settlements.userId, userId), eq(settlements.status, 'settled')));
+      const { selfId, userSplits, shares, settled } = await loadBalanceInputs(db, userId);
 
       // Net per person (pure, exact integer cents).
       const { net, currency: personCurrency } = netBalances(
@@ -311,6 +323,52 @@ export function createDbTools(db: DB, userId: string): AssistantTools {
         });
       }
       return result;
+    },
+
+    async balanceWithPerson(query): Promise<PersonBalanceDetail | null> {
+      const userPeople = await db
+        .select({ id: people.id, name: people.name, isSelf: people.isSelf })
+        .from(people)
+        .where(and(eq(people.userId, userId), eq(people.isSelf, false)));
+      const match = matchPerson(userPeople, query);
+      if (!match) return null;
+
+      const { selfId, userSplits, shares, settled } = await loadBalanceInputs(db, userId);
+      const { net, currency } = netBalances(
+        userSplits.map((s) => ({ id: s.id, currency: s.currency })),
+        shares.map((sh) => ({ splitId: sh.splitId, personId: sh.personId, amount: Number(sh.amount) })),
+        settled.map((st) => ({
+          fromPersonId: st.fromPersonId,
+          toPersonId: st.toPersonId,
+          amount: Number(st.amount),
+          currency: st.currency,
+        })),
+        selfId,
+      );
+
+      const currencyOf = new Map(userSplits.map((s) => [s.id, s.currency]));
+      const personShares = shares
+        .filter((sh) => sh.personId === match.id)
+        .map((sh) => ({ amountCents: Number(sh.amount), currency: currencyOf.get(sh.splitId) ?? 'USD' }));
+      const personSettlements = settled
+        .filter((st) => st.fromPersonId === match.id || st.toPersonId === match.id)
+        .map((st) => ({
+          amountCents: Number(st.amount),
+          // from=match → the friend paid you; to=match → you paid them.
+          direction: (st.fromPersonId === match.id ? 'they_paid_you' : 'you_paid_them') as
+            | 'they_paid_you'
+            | 'you_paid_them',
+          currency: st.currency,
+          settledAt: st.settledAt ? st.settledAt.toISOString() : null,
+        }));
+
+      return {
+        personName: match.name,
+        netCents: net.get(match.id) ?? 0,
+        currency: currency.get(match.id) ?? 'USD',
+        shares: personShares,
+        settlements: personSettlements,
+      };
     },
 
     async searchTransactions(filter): Promise<RecentTransaction[]> {

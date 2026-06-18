@@ -101,6 +101,15 @@ export interface BalanceLine {
   currency: string;
 }
 
+/** Detailed balance with one person (exact integer cents). */
+export interface PersonBalanceDetail {
+  personName: string;
+  netCents: number; // positive = they owe you, negative = you owe them
+  currency: string;
+  shares: { amountCents: number; currency: string }[];
+  settlements: { amountCents: number; direction: 'they_paid_you' | 'you_paid_them'; currency: string; settledAt: string | null }[];
+}
+
 /** A single account's net balance (exact integer cents, the account's own currency). */
 export interface AccountBalanceLine {
   accountName: string;
@@ -135,6 +144,8 @@ export interface AssistantTools {
   recentTransactions(limit: number): Promise<RecentTransaction[]>;
   /** Net balances with each person you share expenses with. */
   balancesSummary(): Promise<BalanceLine[]>;
+  /** Balance + contributing shares + settlement history for one person, matched by name. Null if no match. */
+  balanceWithPerson(query: string): Promise<PersonBalanceDetail | null>;
   /** Search/filter transactions. Lexical `text` over title/merchant/note + structured filters. Newest first, capped. */
   searchTransactions(filter: TransactionFilter): Promise<RecentTransaction[]>;
   /** Per-month expense totals across an inclusive month range (capped at 24 months). */

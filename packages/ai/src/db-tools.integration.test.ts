@@ -120,6 +120,14 @@ describe.skipIf(!RUN)('createDbTools (live DB)', () => {
     expect(balances.some((b) => b.personName === 'You')).toBe(false); // self share skipped
   });
 
+  it('balanceWithPerson returns one person\'s net + matches by name', async () => {
+    const tools = createDbTools(db, UA);
+    const carol = await tools.balanceWithPerson('carol');
+    expect(carol?.personName).toBe('Carol');
+    expect(carol?.netCents).toBe(1500);
+    expect(await tools.balanceWithPerson('nobody')).toBeNull();
+  });
+
   it('searchTransactions matches text case-insensitively and is user-scoped', async () => {
     const tools = createDbTools(db, UA);
     const hits = await tools.searchTransactions({ text: 'market' });

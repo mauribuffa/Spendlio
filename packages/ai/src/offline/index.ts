@@ -102,6 +102,13 @@ export class OfflineProvider implements LLMProvider {
         );
         return { answer: `${parts.join('; ')}.`, usedTools };
       }
+      case 'balanceWithPerson': {
+        usedTools.push('balanceWithPerson');
+        const d = await args.tools.balanceWithPerson(intent.person);
+        if (!d) return { answer: `I couldn't find anyone named "${intent.person}".`, usedTools };
+        const verb = d.netCents >= 0 ? 'owes you' : 'you owe';
+        return { answer: `${d.personName} ${verb} ${money(Math.abs(d.netCents), d.currency)}.`, usedTools };
+      }
       case 'search': {
         usedTools.push('searchTransactions');
         const rows = await args.tools.searchTransactions({ text: intent.text, limit: 5 });

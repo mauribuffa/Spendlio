@@ -54,6 +54,7 @@ describe('OfflineProvider.chat', () => {
     async balancesSummary() {
       return [];
     },
+    async balanceWithPerson() { return null; },
     async searchTransactions() { return []; },
     async spendingTrend() { return []; },
     async monthlyRecap(month) { return { month, incomeCents: 0, expenseCents: 0, netCents: 0, byCategory: [], topMerchant: null }; },

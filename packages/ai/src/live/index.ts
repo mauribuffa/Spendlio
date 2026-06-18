@@ -198,6 +198,27 @@ function buildTools(t: AssistantTools) {
         }));
       },
     }),
+    balanceWithPerson: tool({
+      description:
+        'The balance with ONE person (matched by name): the net, the shares that make it up, and settlement history. Use for "what\'s my balance with X" / "what did I split with X". Returns exact amounts. Null-equivalent (empty) if the name matches no one.',
+      inputSchema: z.object({ person: z.string().describe('the person\'s name or part of it') }),
+      execute: async ({ person }) => {
+        const d = await t.balanceWithPerson(person);
+        if (!d) return { found: false as const, person };
+        return {
+          found: true as const,
+          person: d.personName,
+          net: money(d.netCents, d.currency),
+          direction: d.netCents >= 0 ? 'they owe you' : 'you owe them',
+          shares: d.shares.map((s) => money(s.amountCents, s.currency)),
+          settlements: d.settlements.map((s) => ({
+            amount: money(s.amountCents, s.currency),
+            direction: s.direction,
+            settledAt: s.settledAt,
+          })),
+        };
+      },
+    }),
     searchTransactions: tool({
       description:
         'Search and filter the user\'s transactions. Use `text` for merchant/title/note keywords — to answer a CONCEPT (e.g. "coffee", "rideshare") expand it into likely merchant/keyword terms yourself and search those. Amounts are in the major currency unit (dollars). Returns matching transactions, newest first.',

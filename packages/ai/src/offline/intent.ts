@@ -24,6 +24,7 @@ export type Intent =
   | { kind: 'budgetStatus' }
   | { kind: 'recentTransactions' }
   | { kind: 'balancesSummary' }
+  | { kind: 'balanceWithPerson'; person: string }
   | { kind: 'search'; text: string }
   | { kind: 'trend'; category: CategoryKey | null }
   | { kind: 'recap'; month: string; monthName: string }
@@ -55,6 +56,10 @@ export function parseIntent(question: string, now: Date = new Date()): Intent {
   const text = question.toLowerCase();
   const year = now.getUTCFullYear();
 
+  const withPerson = text.match(/\b(?:balance with|owe|do i owe|owes me)\s+([a-z][a-z .'-]*)/);
+  if (/\bbalance with\b/.test(text) && withPerson && withPerson[1]) {
+    return { kind: 'balanceWithPerson', person: withPerson[1].replace(/[?.!]+$/, '').trim() };
+  }
   if (/\b(balance|owe|owes|owed|settle|settl)\w*/.test(text)) {
     return { kind: 'balancesSummary' };
   }
