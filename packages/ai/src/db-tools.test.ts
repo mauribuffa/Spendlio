@@ -93,3 +93,14 @@ describe('netBalances (model B — ADR-028, exact integer cents)', () => {
     expect(currency.get('pia')).toBe('EUR');
   });
 });
+
+import { dayStartUTC, dayAfterUTC } from './tools/db-tools';
+
+describe('date-range helpers', () => {
+  it('dayStartUTC is midnight UTC of the given day', () => {
+    expect(dayStartUTC('2026-05-10').toISOString()).toBe('2026-05-10T00:00:00.000Z');
+  });
+  it('dayAfterUTC is midnight UTC of the next day (for inclusive `to`)', () => {
+    expect(dayAfterUTC('2026-05-10').toISOString()).toBe('2026-05-11T00:00:00.000Z');
+  });
+});

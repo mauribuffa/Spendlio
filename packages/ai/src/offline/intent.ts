@@ -24,6 +24,7 @@ export type Intent =
   | { kind: 'budgetStatus' }
   | { kind: 'recentTransactions' }
   | { kind: 'balancesSummary' }
+  | { kind: 'search'; text: string }
   | { kind: 'unknown' };
 
 /** Find the first category keyword mentioned in the text. */
@@ -67,6 +68,11 @@ export function parseIntent(question: string, now: Date = new Date()): Intent {
 
   if (/\b(recent|latest|last)\b.*\b(transaction|transactions|purchase|purchases)\b/.test(text)) {
     return { kind: 'recentTransactions' };
+  }
+
+  const searchMatch = text.match(/\b(find|search|look up|transactions? (?:at|from|for))\b\s+(.*)/);
+  if (searchMatch && searchMatch[2]) {
+    return { kind: 'search', text: searchMatch[2].replace(/[?.!]+$/, '').trim() };
   }
 
   return { kind: 'unknown' };

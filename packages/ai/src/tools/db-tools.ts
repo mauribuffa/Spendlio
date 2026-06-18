@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, inArray, isNull, lt, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, ilike, inArray, isNull, lt, lte, or, sql } from 'drizzle-orm';
 import {
   budgets,
   people,
@@ -34,6 +34,31 @@ export function monthBounds(month: string): { start: Date; end: Date } {
 /** The `YYYY-MM` of a date, in UTC. */
 export function monthOf(date: Date): string {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+/** Midnight UTC of a YYYY-MM-DD day. */
+export function dayStartUTC(date: string): Date {
+  return new Date(`${date}T00:00:00.000Z`);
+}
+/** Midnight UTC of the day AFTER a YYYY-MM-DD day — the end-exclusive bound for an inclusive `to`. */
+export function dayAfterUTC(date: string): Date {
+  return new Date(dayStartUTC(date).getTime() + 86_400_000);
+}
+
+/** Map a transactions row to the RecentTransaction contract shape. */
+function toRecentTransaction(r: {
+  id: string; title: string; merchant: string | null; amount: number | string;
+  currency: string; category: string; occurredAt: Date;
+}): RecentTransaction {
+  return {
+    id: r.id,
+    title: r.title,
+    merchant: r.merchant ?? undefined,
+    amountCents: Number(r.amount),
+    currency: r.currency,
+    category: r.category as CategoryKey,
+    occurredAt: r.occurredAt.toISOString(),
+  };
 }
 
 // ---- Pure helpers (unit-tested offline; the Drizzle glue below is thin) ----
@@ -158,15 +183,7 @@ export function createDbTools(db: DB, userId: string): AssistantTools {
         .orderBy(desc(transactions.occurredAt))
         .limit(Math.max(1, Math.min(50, limit)));
 
-      return rows.map((r) => ({
-        id: r.id,
-        title: r.title,
-        merchant: r.merchant ?? undefined,
-        amountCents: Number(r.amount),
-        currency: r.currency,
-        category: r.category as CategoryKey,
-        occurredAt: r.occurredAt.toISOString(),
-      }));
+      return rows.map(toRecentTransaction);
     },
 
     async balancesSummary(): Promise<BalanceLine[]> {
@@ -239,6 +256,40 @@ export function createDbTools(db: DB, userId: string): AssistantTools {
         });
       }
       return result;
+    },
+
+    async searchTransactions(filter): Promise<RecentTransaction[]> {
+      const conds = [eq(transactions.userId, userId), isNull(transactions.deletedAt)];
+      if (filter.text) {
+        const q = `%${filter.text}%`;
+        conds.push(
+          or(ilike(transactions.title, q), ilike(transactions.merchant, q), ilike(transactions.note, q))!,
+        );
+      }
+      if (filter.categories?.length) conds.push(inArray(transactions.category, filter.categories));
+      if (filter.minCents != null) conds.push(gte(sql`abs(${transactions.amount})`, filter.minCents));
+      if (filter.maxCents != null) conds.push(lte(sql`abs(${transactions.amount})`, filter.maxCents));
+      if (filter.from) conds.push(gte(transactions.occurredAt, dayStartUTC(filter.from)));
+      if (filter.to) conds.push(lt(transactions.occurredAt, dayAfterUTC(filter.to)));
+      if (filter.status) conds.push(eq(transactions.status, filter.status));
+
+      const limit = Math.max(1, Math.min(50, filter.limit ?? 20));
+      const rows = await db
+        .select({
+          id: transactions.id,
+          title: transactions.title,
+          merchant: transactions.merchant,
+          amount: transactions.amount,
+          currency: transactions.currency,
+          category: transactions.category,
+          occurredAt: transactions.occurredAt,
+        })
+        .from(transactions)
+        .where(and(...conds))
+        .orderBy(desc(transactions.occurredAt))
+        .limit(limit);
+
+      return rows.map(toRecentTransaction);
     },
   };
 }

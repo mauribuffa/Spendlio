@@ -198,5 +198,39 @@ function buildTools(t: AssistantTools) {
         }));
       },
     }),
+    searchTransactions: tool({
+      description:
+        'Search and filter the user\'s transactions. Use `text` for merchant/title/note keywords — to answer a CONCEPT (e.g. "coffee", "rideshare") expand it into likely merchant/keyword terms yourself and search those. Amounts are in the major currency unit (dollars). Returns matching transactions, newest first.',
+      inputSchema: z.object({
+        text: z.string().optional().describe('keyword(s) to match in merchant/title/note'),
+        categories: z.array(CategoryKey).optional(),
+        minAmount: z.number().optional().describe('minimum absolute amount, in dollars'),
+        maxAmount: z.number().optional().describe('maximum absolute amount, in dollars'),
+        from: z.string().optional().describe('start date inclusive, YYYY-MM-DD'),
+        to: z.string().optional().describe('end date inclusive, YYYY-MM-DD'),
+        status: z.string().optional().describe('e.g. cleared or pending'),
+        limit: z.number().int().min(1).max(50).default(20),
+      }),
+      execute: async (a) => {
+        // 2-dp major->minor, consistent with the app's other manual-entry paths.
+        const rows = await t.searchTransactions({
+          text: a.text,
+          categories: a.categories,
+          minCents: a.minAmount != null ? Math.round(a.minAmount * 100) : undefined,
+          maxCents: a.maxAmount != null ? Math.round(a.maxAmount * 100) : undefined,
+          from: a.from,
+          to: a.to,
+          status: a.status,
+          limit: a.limit,
+        });
+        return rows.map((x) => ({
+          title: x.title,
+          merchant: x.merchant,
+          amount: money(x.amountCents, x.currency),
+          category: x.category,
+          occurredAt: x.occurredAt,
+        }));
+      },
+    }),
   };
 }

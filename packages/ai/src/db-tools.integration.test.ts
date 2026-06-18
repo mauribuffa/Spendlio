@@ -45,8 +45,9 @@ describe.skipIf(!RUN)('createDbTools (live DB)', () => {
 
     // A: $123.45 dining + $50 groceries in May; B: $999 dining (must NOT leak into A).
     await db.insert(schema.transactions).values([
-      { userId: UA, title: 'Dinner', amount: 12345, currency: 'USD', category: 'dining', occurredAt: new Date('2026-05-10T12:00:00Z'), status: 'cleared', source: 'manual' },
-      { userId: UA, title: 'Market', amount: 5000, currency: 'USD', category: 'groceries', occurredAt: new Date('2026-05-12T12:00:00Z'), status: 'cleared', source: 'manual' },
+      // expenses are negative (matches the seed convention); income stays positive
+      { userId: UA, title: 'Dinner', amount: -12345, currency: 'USD', category: 'dining', occurredAt: new Date('2026-05-10T12:00:00Z'), status: 'cleared', source: 'manual' },
+      { userId: UA, title: 'Market', amount: -5000, currency: 'USD', category: 'groceries', occurredAt: new Date('2026-05-12T12:00:00Z'), status: 'cleared', source: 'manual' },
       { userId: UA, title: 'Salary', amount: 300000, currency: 'USD', category: 'income', occurredAt: new Date('2026-05-01T12:00:00Z'), status: 'income', source: 'manual' },
       { userId: UB, title: 'Bs dinner', amount: 99900, currency: 'USD', category: 'dining', occurredAt: new Date('2026-05-10T12:00:00Z'), status: 'cleared', source: 'manual' },
     ]);
@@ -117,5 +118,22 @@ describe.skipIf(!RUN)('createDbTools (live DB)', () => {
     const carol = balances.find((b) => b.personName === 'Carol');
     expect(carol?.netCents).toBe(1500); // carol owes (via the split A owns)
     expect(balances.some((b) => b.personName === 'You')).toBe(false); // self share skipped
+  });
+
+  it('searchTransactions matches text case-insensitively and is user-scoped', async () => {
+    const tools = createDbTools(db, UA);
+    const hits = await tools.searchTransactions({ text: 'market' });
+    expect(hits.some((h) => h.title === 'Market')).toBe(true);
+    expect(hits.some((h) => h.title === 'Bs dinner')).toBe(false); // B's row never leaks
+  });
+
+  it('searchTransactions honors category + amount filters', async () => {
+    const tools = createDbTools(db, UA);
+    const dining = await tools.searchTransactions({ categories: ['dining'], minCents: 10000 });
+    expect(dining.every((d) => d.category === 'dining')).toBe(true);
+    // amount is SIGNED (expense negative); minCents compares abs(), so abs(-12345) >= 10000 still matches.
+    expect(dining.some((d) => d.amountCents === -12345)).toBe(true);
+    const tooBig = await tools.searchTransactions({ minCents: 1_000_000 });
+    expect(tooBig.length).toBe(0);
   });
 });

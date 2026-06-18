@@ -54,6 +54,7 @@ describe('OfflineProvider.chat', () => {
     async balancesSummary() {
       return [];
     },
+    async searchTransactions() { return []; },
   };
 
   it('answers "how much on dining in May?" with the exact formatted figure', async () => {

@@ -84,6 +84,18 @@ export interface BalanceLine {
   currency: string;
 }
 
+/** Filters for transaction search. All optional; combined with AND. `text` is matched case-insensitively across title/merchant/note. */
+export interface TransactionFilter {
+  text?: string;
+  categories?: CategoryKey[];
+  minCents?: number; // absolute magnitude, minor units
+  maxCents?: number;
+  from?: string; // YYYY-MM-DD inclusive
+  to?: string; // YYYY-MM-DD inclusive
+  status?: string; // e.g. 'cleared' | 'pending'
+  limit?: number; // default 20, clamped to [1, 50]
+}
+
 /**
  * The typed tool surface the assistant orchestrates over. Every method returns
  * EXACT integer cents computed by the data layer — the model only selects which
@@ -99,6 +111,8 @@ export interface AssistantTools {
   recentTransactions(limit: number): Promise<RecentTransaction[]>;
   /** Net balances with each person you share expenses with. */
   balancesSummary(): Promise<BalanceLine[]>;
+  /** Search/filter transactions. Lexical `text` over title/merchant/note + structured filters. Newest first, capped. */
+  searchTransactions(filter: TransactionFilter): Promise<RecentTransaction[]>;
 }
 
 /** A single turn in the assistant conversation. */
