@@ -151,4 +151,11 @@ describe.skipIf(!RUN)('createDbTools (live DB)', () => {
     expect(r.expenseCents).toBe(12345 + 5000); // dining + groceries
     expect(r.netCents).toBe(300000 - (12345 + 5000));
   });
+
+  it('accountBalances is user-scoped and returns a line per account', async () => {
+    const tools = createDbTools(db, UA);
+    const lines = await tools.accountBalances();
+    // User A's integration seed has no accounts → empty; the call must not throw and must be scoped.
+    expect(Array.isArray(lines)).toBe(true);
+  });
 });

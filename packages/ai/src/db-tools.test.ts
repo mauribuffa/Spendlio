@@ -154,3 +154,20 @@ describe('toMonthlyRecap', () => {
     });
   });
 });
+
+import { subtotalByCurrency } from './tools/db-tools';
+
+describe('subtotalByCurrency', () => {
+  it('sums account balances per currency', () => {
+    expect(
+      subtotalByCurrency([
+        { accountName: 'Checking', currency: 'USD', balanceCents: 10000 },
+        { accountName: 'Savings', currency: 'USD', balanceCents: 25000 },
+        { accountName: 'Euro', currency: 'EUR', balanceCents: 5000 },
+      ]),
+    ).toEqual([
+      { currency: 'USD', totalCents: 35000 },
+      { currency: 'EUR', totalCents: 5000 },
+    ]);
+  });
+});

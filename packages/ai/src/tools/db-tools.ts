@@ -1,5 +1,6 @@
 import { and, desc, eq, gte, ilike, inArray, isNull, lt, lte, or, sql } from 'drizzle-orm';
 import {
+  accounts,
   budgets,
   people,
   settlements,
@@ -12,6 +13,7 @@ import {
 import { CategoryKey } from '@spendlio/contracts';
 import { netBalances as coreNetBalances, computeRecap, type RecapResult } from '@spendlio/core';
 import type {
+  AccountBalanceLine,
   AssistantTools,
   BalanceLine,
   BudgetLine,
@@ -89,6 +91,13 @@ export function toMonthlyRecap(month: string, r: RecapResult): MonthlyRecap {
     byCategory: r.byCategory.map((c) => ({ category: c.category, amountCents: c.amount })),
     topMerchant: r.topMerchant,
   };
+}
+
+/** Group account lines into per-currency subtotals (insertion order preserved). */
+export function subtotalByCurrency(lines: AccountBalanceLine[]): { currency: string; totalCents: number }[] {
+  const totals = new Map<string, number>();
+  for (const l of lines) totals.set(l.currency, (totals.get(l.currency) ?? 0) + l.balanceCents);
+  return [...totals.entries()].map(([currency, totalCents]) => ({ currency, totalCents }));
 }
 
 /** Map a transactions row to the RecentTransaction contract shape. */
@@ -404,6 +413,30 @@ export function createDbTools(db: DB, userId: string): AssistantTools {
         fxBaseAmount: r.fxBaseAmount == null ? null : Number(r.fxBaseAmount),
       }));
       return toMonthlyRecap(month, computeRecap(recapTxns, baseCurrency));
+    },
+
+    async accountBalances(): Promise<AccountBalanceLine[]> {
+      const accts = await db
+        .select({ id: accounts.id, name: accounts.name, currency: accounts.currency })
+        .from(accounts)
+        .where(eq(accounts.userId, userId));
+      if (accts.length === 0) return [];
+
+      const sums = await db
+        .select({
+          accountId: transactions.accountId,
+          total: sql<number>`coalesce(sum(${transactions.amount}), 0)::bigint`,
+        })
+        .from(transactions)
+        .where(and(eq(transactions.userId, userId), isNull(transactions.deletedAt)))
+        .groupBy(transactions.accountId);
+      const totalOf = new Map(sums.map((s) => [s.accountId, Number(s.total)]));
+
+      return accts.map((a) => ({
+        accountName: a.name,
+        currency: a.currency,
+        balanceCents: totalOf.get(a.id) ?? 0,
+      }));
     },
   };
 }

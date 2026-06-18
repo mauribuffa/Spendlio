@@ -101,6 +101,13 @@ export interface BalanceLine {
   currency: string;
 }
 
+/** A single account's net balance (exact integer cents, the account's own currency). */
+export interface AccountBalanceLine {
+  accountName: string;
+  currency: string;
+  balanceCents: number;
+}
+
 /** Filters for transaction search. All optional; combined with AND. `text` is matched case-insensitively across title/merchant/note. */
 export interface TransactionFilter {
   text?: string;
@@ -134,6 +141,8 @@ export interface AssistantTools {
   spendingTrend(args: { categories?: CategoryKey[]; fromMonth: string; toMonth: string }): Promise<MonthSpend[]>;
   /** Income/expense/net + category breakdown + top merchant for a month (YYYY-MM). */
   monthlyRecap(month: string): Promise<MonthlyRecap>;
+  /** Net balance per account (sum of its transactions), in each account's own currency. */
+  accountBalances(): Promise<AccountBalanceLine[]>;
 }
 
 /** A single turn in the assistant conversation. */

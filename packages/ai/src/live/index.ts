@@ -265,5 +265,14 @@ function buildTools(t: AssistantTools) {
         };
       },
     }),
+    accountBalances: tool({
+      description:
+        'The net balance of each account, in that account\'s own currency. Do NOT sum across different currencies; report each, and a per-currency subtotal at most. Returns exact amounts.',
+      inputSchema: z.object({}),
+      execute: async () => {
+        const lines = await t.accountBalances();
+        return lines.map((l) => ({ account: l.accountName, balance: money(l.balanceCents, l.currency) }));
+      },
+    }),
   };
 }
