@@ -1,5 +1,6 @@
 import { API_BASE } from '@/lib/config';
 import { getApiToken } from '@/lib/auth-token';
+import { normalizeAssistantBody } from '@/lib/assistant-request';
 
 // Same-origin proxy for the assistant chat. The browser's useChat hook POSTs
 // here; this handler runs server-side, attaches the signed-in user's Bearer
@@ -12,7 +13,10 @@ export async function POST(req: Request): Promise<Response> {
     return Response.json({ error: 'unauthorized' }, { status: 401 });
   }
 
-  const body = await req.text();
+  // useChat (AI SDK v6) POSTs UIMessages with `parts`; the API contract wants
+  // `{ messages: [{ role, content }] }`. Flatten parts → content at this edge.
+  const raw = await req.json().catch(() => ({}));
+  const body = JSON.stringify(normalizeAssistantBody(raw));
 
   let upstream: Response;
   try {
