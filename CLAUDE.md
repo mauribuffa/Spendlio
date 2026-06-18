@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 > Place this file at the **root of the Spendlio monorepo**. Claude Code loads it automatically as project context. Keep it current as the project evolves.
 
 ## Current state (read this first)
-The **Repo structure** section below describes the target layout, and as of the last update the repo now matches it: all three apps (`apps/web`, `apps/api`, `apps/worker`) and all eight packages (`contracts`, `core`, `db`, `queue`, `storage`, `ui`, `ai`, `config`) exist. Phases 1–5 are complete and proven end-to-end; **Phase 5 (Auth.js) shipped (ADR-033)** — email-OTP + a short-lived Bearer JWT to the API replaced the dev `x-user-id` `AuthGuard` (now removed), so every request is authenticated and the API derives `user_id` from the verified JWT `sub`. **`PROGRESS.md` is the single source of truth for what's built and what's deferred**; check it before assuming current behavior. Work proceeds step-by-step through `docs/build/` (in order); run each step's acceptance check, then tick `PROGRESS.md`.
+The **Repo structure** section below describes the target layout, and as of the last update the repo now matches it: all three apps (`apps/web`, `apps/api`, `apps/worker`) and all eight packages (`contracts`, `core`, `db`, `queue`, `storage`, `ui`, `ai`, `config`) exist. Phases 1–5 are complete and proven end-to-end; **Phase 5 (Auth.js) shipped (ADR-033)** — email-OTP + a short-lived Bearer JWT to the API replaced the dev `x-user-id` `AuthGuard` (now removed), so every request is authenticated and the API derives `user_id` from the verified JWT `sub`. **`PROGRESS.md` is the single source of truth for what's built and what's deferred**; check it before assuming current behavior. The foundational phased build in `docs/build/` (steps 01–07 + acceptance) is **complete**; ongoing feature work now proceeds via a **brainstorm → spec → plan → execute** flow (`docs/superpowers/specs/` + `/plans/`), ticking `PROGRESS.md` after each change.
 
 ## What Spendlio is
 A personal-finance + expense-splitting product: track spending/income, budgets, split bills with people, settle debts, scan receipts (OCR), AI categorization, an AI assistant over your data, recurring transactions, and monthly recaps. Two clients (web now, mobile later), one API, one database, background workers.
@@ -22,7 +22,7 @@ A personal-finance + expense-splitting product: track spending/income, budgets, 
 - **Local infra:** Docker Compose (Postgres + Redis + MinIO) — $0
 - **Language:** TypeScript everywhere, `strict: true`
 
-Open (don't block the foundation): AI/OCR provider + privacy posture; final hosting target. Decide via an ADR when you reach them.
+Open (decide via an ADR when you reach them): the final **hosting target** (ADR-013) and the prod **privacy/data-retention posture** for the live AI provider. The AI/OCR **provider** itself is decided — Vercel AI SDK, offline default + live Anthropic/OpenAI (ADR-011/019).
 
 ## Repo structure
 ```
@@ -80,9 +80,9 @@ pnpm --filter @spendlio/contracts test -- -t "rejects float"      # one test by 
 Tests use **Vitest**. Packages are consumed straight from TypeScript source (`main`/`types` → `src/index.ts`), so there is no build step for libraries — `typecheck`/`test` run against source directly.
 
 ## How to work
-1. Read `docs/build/` and follow the steps **in order**; run each step's acceptance check before moving on.
+1. The foundational phased build (`docs/build/`, steps 01–07 + acceptance) is **complete**. New features follow a **brainstorm → spec → plan → execute** flow: the spec lands in `docs/superpowers/specs/`, the plan in `docs/superpowers/plans/`; run each plan task's acceptance check before moving on.
 2. **After every completed step, update `PROGRESS.md`** — tick the box, set the status line + date, and add a Build-Log row. It is the single source of truth for where we are.
 3. `docs/learning/` explains the *why* — consult it when a decision isn't obvious. `docs/learning/decisions.md` is the ADR log; **append a new ADR for any non-trivial decision.**
-3. The design system (`packages/ui`) is the visual source of truth — reuse its components and tokens; don't re-style from scratch. See `DESIGN_REFERENCE.md`.
-4. Prefer small, pure functions in `core` with unit tests; keep controllers/services thin.
-5. Don't introduce a new dependency or pattern that contradicts the Golden Rules without an ADR.
+4. The design system (`packages/ui`) is the visual source of truth — reuse its components and tokens; don't re-style from scratch. See `DESIGN_REFERENCE.md`.
+5. Prefer small, pure functions in `core` with unit tests; keep controllers/services thin.
+6. Don't introduce a new dependency or pattern that contradicts the Golden Rules without an ADR.
