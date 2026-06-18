@@ -5,8 +5,9 @@ import { ZodPipe } from '../common/zod.pipe';
 import { AuthGuard } from '../common/auth.guard';
 import { CurrentUser } from '../common/current-user.decorator';
 import { AssistantService } from './assistant.service';
+import { RateLimitGuard } from './rate-limit.guard';
 
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, RateLimitGuard)
 @Controller('assistant')
 export class AssistantController {
   constructor(private svc: AssistantService) {}
