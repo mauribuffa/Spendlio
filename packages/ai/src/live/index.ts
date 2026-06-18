@@ -106,7 +106,7 @@ export class LiveProvider implements LLMProvider {
       system: CHAT_SYSTEM,
       messages: toModelMessages(args.messages),
       tools: buildTools(args.tools),
-      stopWhen: stepCountIs(6),
+      stopWhen: stepCountIs(8),
       abortSignal: AbortSignal.timeout(CHAT_TIMEOUT_MS),
     });
     return { answer: result.text, usedTools: toolNames(result.steps) };
@@ -123,7 +123,7 @@ export class LiveProvider implements LLMProvider {
       system: CHAT_SYSTEM,
       messages: toModelMessages(args.messages),
       tools: buildTools(args.tools),
-      stopWhen: stepCountIs(6),
+      stopWhen: stepCountIs(8),
       abortSignal: AbortSignal.timeout(CHAT_TIMEOUT_MS),
     });
     return {
