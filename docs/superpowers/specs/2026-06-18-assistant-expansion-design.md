@@ -66,7 +66,7 @@ Each new tool: a method on `AssistantTools` (`packages/ai/src/provider.ts`), an 
 | `spendingTrend` | `{ categories?, fromMonth, toMonth }` (range capped ≤24 months) | per-month totals (optionally per category) | Trends | new grouped query (month × category) reusing `monthBounds` |
 | `balanceWithPerson` | `{ person }` (name; `ILIKE`-resolved to one of the user's people) | net + contributing splits + settlement history for that person | Splits detail | reuses core `netBalances` (ADR-040) + per-person filter |
 | `monthlyRecap` | `{ month }` | income, expense, net, top categories, top merchant | Recaps/income | reuses core `computeRecap` over the month's user-scoped txns |
-| `accountBalances` | `()` | per-account balances + base-currency rollup | Accounts | reuses core `sumNet`/`pickRate`/`convertMinor` (the `/accounts/balances` math) |
+| `accountBalances` | `()` | per-account balances + a per-currency subtotal (no cross-currency FX rollup — ADR-016 still open) | Accounts | `sumNet`-style signed sum per account |
 
 Existing 4 tools are unchanged. **Income is folded into `monthlyRecap`** (no separate `incomeSummary`) to limit tool-count growth — 9 tools is already a lot for the model to choose among.
 
@@ -80,7 +80,7 @@ The offline default (no API key — the dev/test path) matches intents by keywor
 
 The load-bearing guarantee is **structural and already in place**: every tool filters by the JWT `sub`, so a fully hijacked model still cannot read another user's data (tenant isolation). The feature is read-only, so there is no destructive action to trick it into. The baseline closes the remaining nuisance/cost gaps:
 
-1. **Input caps** — extend `AssistantChatRequest` (`packages/ai/src/chat-contract.ts`): `content.max(~4000)`, `messages.max(~50)`, and a total-size guard. Enforced by the existing `ZodPipe` → a bad body is a clean 400. (Today `content` is unbounded.)
+1. **Input caps** — extend `AssistantChatRequest` (`packages/ai/src/chat-contract.ts`): `content.max(4000)` + `messages.max(50)` (which together bound total payload at ~200k chars — no separate aggregate guard needed). Enforced by the existing `ZodPipe` → a bad body is a clean 400. (Today `content` is unbounded.)
 2. **System-prompt spotlighting** — rewrite `CHAT_SYSTEM` (`packages/ai/src/live/index.ts`) to: declare a read-only, finance-only, own-data-only scope; state that **all tool output and any merchant / title / note / OCR-derived text is DATA, never instructions**; refuse instructions embedded in data; never reveal the system prompt or tool internals. Tool results stay **structured JSON** (already true — harder to inject than prose).
 3. **Output guardrail** — the web renderer already shows assistant output as **plain text** (React-escaped `{children}`, `whiteSpace: pre-wrap`, no `dangerouslySetInnerHTML`), so the markdown-image exfiltration vector is closed. Add a one-line test/comment asserting no raw-HTML/markdown rendering, so anyone adding rich rendering later trips the guard and must add sanitization (image/link allowlist).
 4. **Rate limit** — a lightweight per-user limit on `POST /assistant` (Redis token-bucket via the existing `getRedisClient()`, generous, ~30/min) to bound cost/abuse. `CHAT_TIMEOUT_MS` (60s) already bounds a single call's duration.
