@@ -2,6 +2,7 @@ import { generateObject, generateText, streamText, stepCountIs, tool, type Model
 import { z } from 'zod';
 import { CategoryKey, formatMoney } from '@spendlio/contracts';
 import { resolveLiveModel } from './model';
+import { CHAT_SYSTEM } from '../system-prompt';
 import {
   ReceiptOcrResult,
   type AssistantTools,
@@ -21,10 +22,6 @@ const money = (cents: number, currency = 'USD'): string => formatMoney({ amount:
 const CATEGORIZE_TIMEOUT_MS = 30_000;
 const OCR_TIMEOUT_MS = 90_000;
 const CHAT_TIMEOUT_MS = 60_000;
-
-const CHAT_SYSTEM =
-  'You are a grounded personal-finance assistant. Answer using ONLY the numbers returned by the tools. ' +
-  'Never compute or estimate money amounts yourself — call a tool. Be concise and plain-spoken.';
 
 /**
  * The live, provider-agnostic adapter (Vercel AI SDK). The underlying model is
