@@ -31,7 +31,7 @@ const toneStyle: Record<BadgeTone, CSSProperties> = {
   negative: { background: 'var(--negative-50)', color: 'var(--negative-700)' },
   warning: { background: 'var(--warning-50)', color: 'var(--warning-700)' },
   info: { background: 'var(--info-50)', color: 'var(--info-700)' },
-  solid: { background: 'var(--action-primary)', color: '#fff' },
+  solid: { background: 'var(--action-primary)', color: 'var(--text-on-brand)' },
   outline: { background: 'transparent', color: 'var(--text-muted)', border: '1px solid var(--border-default)' },
   // aliases
   primary: { background: 'var(--surface-brand-sub)', color: 'var(--green-700)' },
@@ -39,8 +39,8 @@ const toneStyle: Record<BadgeTone, CSSProperties> = {
 };
 
 const sizeStyle: Record<BadgeSize, CSSProperties> = {
-  sm: { fontSize: 11, padding: '3px 7px' },
-  md: { fontSize: 12, padding: '4px 9px' },
+  sm: { fontSize: 'var(--text-2xs)', padding: '3px 7px' },
+  md: { fontSize: 'var(--text-xs)', padding: '4px 9px' },
 };
 
 /**

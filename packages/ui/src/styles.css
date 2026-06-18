@@ -467,7 +467,7 @@
 .spl-switch { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-family: var(--font-sans); font-size: var(--text-sm); color: var(--text-strong); user-select: none; }
 .spl-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
 .spl-switch__track { width: 44px; height: 26px; border-radius: var(--radius-pill); background: var(--neutral-300); position: relative; flex: none; transition: background var(--dur-fast) var(--ease-standard); }
-.spl-switch__thumb { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: var(--shadow-sm); transition: transform var(--dur-fast) var(--ease-standard); }
+.spl-switch__thumb { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--neutral-0); box-shadow: var(--shadow-sm); transition: transform var(--dur-fast) var(--ease-standard); }
 .spl-switch input:checked + .spl-switch__track { background: var(--action-primary); }
 .spl-switch input:checked + .spl-switch__track .spl-switch__thumb { transform: translateX(18px); }
 .spl-switch input:focus-visible + .spl-switch__track { outline: none; box-shadow: var(--focus-ring); }
@@ -476,7 +476,7 @@
 /* ---- Checkbox ---- */
 .spl-check { display: inline-flex; align-items: flex-start; gap: 10px; cursor: pointer; font-family: var(--font-sans); font-size: var(--text-sm); color: var(--text-strong); user-select: none; line-height: 1.4; }
 .spl-check input { position: absolute; opacity: 0; width: 0; height: 0; }
-.spl-check__box { width: 20px; height: 20px; border-radius: var(--radius-xs); border: 1.5px solid var(--border-strong); background: var(--surface-card); flex: none; display: inline-flex; align-items: center; justify-content: center; transition: background var(--dur-fast) var(--ease-standard); margin-top: 1px; color: #fff; }
+.spl-check__box { width: 20px; height: 20px; border-radius: var(--radius-xs); border: 1.5px solid var(--border-strong); background: var(--surface-card); flex: none; display: inline-flex; align-items: center; justify-content: center; transition: background var(--dur-fast) var(--ease-standard); margin-top: 1px; color: var(--neutral-0); }
 .spl-check__box svg { opacity: 0; transform: scale(0.6); transition: opacity var(--dur-fast) var(--ease-standard), transform var(--dur-fast) var(--ease-standard); }
 .spl-check input:checked + .spl-check__box { background: var(--action-primary); border-color: var(--action-primary); }
 .spl-check input:checked + .spl-check__box svg { opacity: 1; transform: scale(1); }

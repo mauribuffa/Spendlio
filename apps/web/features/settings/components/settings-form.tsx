@@ -158,19 +158,19 @@ export function SettingsForm({ user }: { user: User }) {
       <Section title="Profile">
         <Row
           icon={<Mail size={18} aria-hidden="true" />}
-          color="#3A6BAB"
+          color="var(--cat-3)"
           label="Email"
           value={user.email}
         />
         <Row
           icon={<Languages size={18} aria-hidden="true" />}
-          color="#1B6E4F"
+          color="var(--cat-1)"
           label="Locale"
           value={user.locale}
         />
         <Row
           icon={<Clock size={18} aria-hidden="true" />}
-          color="#BE8A30"
+          color="var(--cat-2)"
           label="Time zone"
           value={user.timezone}
           last

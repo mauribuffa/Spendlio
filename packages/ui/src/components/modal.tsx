@@ -135,7 +135,7 @@ export function Modal({ open, onClose, title, ariaLabel, children, width = 480, 
               style={{
                 fontFamily: 'var(--font-display)',
                 fontWeight: 'var(--weight-bold)',
-                fontSize: 20,
+                fontSize: 'var(--text-lg)',
                 letterSpacing: '-0.01em',
                 color: 'var(--text-strong)',
               }}

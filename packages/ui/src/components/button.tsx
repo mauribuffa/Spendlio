@@ -42,12 +42,12 @@ const variantStyle: Record<ButtonVariant, CSSProperties> = {
   },
   accent: {
     background: 'var(--action-accent)',
-    color: '#fff',
+    color: 'var(--text-on-brand)',
     border: '1px solid transparent',
   },
   danger: {
     background: 'var(--negative-500)',
-    color: '#fff',
+    color: 'var(--text-on-brand)',
     border: '1px solid transparent',
   },
   quiet: {
@@ -59,9 +59,9 @@ const variantStyle: Record<ButtonVariant, CSSProperties> = {
 
 // Fixed heights / padding / gap per the canonical size scale.
 const sizeStyle: Record<ButtonSize, CSSProperties> = {
-  sm: { height: 32, padding: '0 14px', fontSize: 13, gap: 6 },
+  sm: { height: 32, padding: '0 14px', fontSize: 'var(--text-sm)', gap: 6 },
   md: { height: 40, padding: '0 18px', fontSize: 14, gap: 7 },
-  lg: { height: 48, padding: '0 24px', fontSize: 15, gap: 8 },
+  lg: { height: 48, padding: '0 24px', fontSize: 'var(--text-base)', gap: 8 },
 };
 
 /**

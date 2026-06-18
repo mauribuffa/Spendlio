@@ -37,10 +37,10 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
               {placeholder}
             </option>
           )}
-          {options.map((o, i) => {
+          {options.map((o) => {
             const opt = typeof o === 'string' ? { value: o, label: o } : o;
             return (
-              <option key={i} value={opt.value}>
+              <option key={opt.value} value={opt.value}>
                 {opt.label ?? opt.value}
               </option>
             );

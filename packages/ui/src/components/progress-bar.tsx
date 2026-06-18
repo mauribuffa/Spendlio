@@ -29,6 +29,7 @@ export function ProgressBar({ value, max, label, className, style, ...rest }: Pr
       aria-valuenow={value}
       aria-valuemin={0}
       aria-valuemax={safeMax}
+      aria-valuetext={over ? `${value} of ${safeMax} — over budget` : undefined}
       data-over={over || undefined}
       style={{
         width: '100%',

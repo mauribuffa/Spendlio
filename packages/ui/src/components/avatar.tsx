@@ -16,8 +16,8 @@ export interface AvatarProps extends HTMLAttributes<HTMLSpanElement> {
 const sizePx: Record<AvatarSize, number> = { xs: 24, sm: 32, md: 40, lg: 56, xl: 72 };
 const fontPx: Record<AvatarSize, number> = { xs: 10, sm: 12, md: 15, lg: 20, xl: 26 };
 
-// The categorical ramp, as concrete hex so avatars read consistently anywhere.
-const PALETTE = ['#1B6E4F', '#BE8A30', '#3A6BAB', '#C24A3E', '#7C5CBF', '#2E9D9A', '#D2864B', '#8B8576'];
+// The categorical ramp, driven by the --cat-1..8 tokens (one source of truth).
+const PALETTE = ['var(--cat-1)', 'var(--cat-2)', 'var(--cat-3)', 'var(--cat-4)', 'var(--cat-5)', 'var(--cat-6)', 'var(--cat-7)', 'var(--cat-8)'];
 
 /** First letter of the first two words, e.g. "Ana Ruiz" -> "AR". */
 function initials(name: string): string {
@@ -55,7 +55,7 @@ export function Avatar({ name, src, size = 'md', color, className, style, ...res
         fontFamily: 'var(--font-sans)',
         fontWeight: 'var(--weight-semibold)',
         fontSize: fontPx[size],
-        color: '#fff',
+        color: 'var(--text-on-brand)',
         background: src ? undefined : (color ?? colorFor(name)),
         boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.06)',
         userSelect: 'none',
@@ -87,6 +87,8 @@ export function AvatarGroup({ people, max = 4, size = 'md' }: AvatarGroupProps) 
     <span style={{ display: 'inline-flex' }}>
       {shown.map((p, i) => (
         <span
+          // Index key: this is a static, presentational list and `people` carries
+          // no stable id (names can collide), so the index is the safe choice.
           key={i}
           style={{ marginLeft: i === 0 ? 0 : -10, borderRadius: '50%', boxShadow: '0 0 0 2px var(--surface-card)' }}
         >
