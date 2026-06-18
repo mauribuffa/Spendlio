@@ -8,3 +8,12 @@ coverage
 
 # local Claude Code agent state
 .claude
+
+# local AI/code-tooling state (machine-local, not project source)
+.agents
+.codegraph
+.cursor
+skills-lock.json
+
+# TS incremental build cache
+*.tsbuildinfo
