@@ -200,6 +200,15 @@ Format: `ADR-NNN · status · title` — context → decision → alternatives.
 - **Verification:** TDD core (both directions, non-vacuous); typecheck 10/10 + all suites green; live e2e (even split → friend owes 5000; they_paid_you 5000 → cleared; you_paid_them 3000 → +3000; old `{from,to}` shape → 400). Adversarially reviewed (3 lenses, all clean).
 - **Note:** pre-existing friend↔friend settlement rows (written under the old contract) become no-ops under the new core fn. Pre-deploy there is no such data and the seed is already self↔friend, so this is moot; flag it if a real DB ever predates this change.
 
+### ADR-041 · ✅ · Assistant capability expansion + injection posture
+- **Context:** The read-only tool-calling assistant had 4 tools and a thin system prompt. We wanted broader coverage, free-text search, and a hardening pass — without over-investing in infra.
+- **Decision:**
+  - **Search is lexical (`ILIKE` over title/merchant/note) + LLM query-expansion** — NOT pgvector/embeddings, NOT BM25/ParadeDB, NOT Postgres FTS. Per-user corpus is tiny (already `user_id`-narrowed) and the model supplies semantics/relevance, so there is nothing to rank at scale. `pg_trgm` is a documented follow-up if fuzzy/typo matching proves necessary.
+  - **5 new tools** (`searchTransactions`, `spendingTrend`, `balanceWithPerson`, `monthlyRecap`, `accountBalances`) → 9 total. Every tool stays `user_id`-scoped and returns exact integer cents (model never does money math). `accountBalances` reports per-account + per-currency only — no cross-currency FX total (ADR-016 still open).
+  - **Read-only is a security boundary**: no mutations, so injection cannot trigger destructive actions; combined with structural tenant isolation (every tool filters by the JWT `sub`), a hijacked model still cannot read another user's data.
+  - **Injection hardening (pragmatic baseline):** input caps on the chat contract; system-prompt spotlighting (tool output + stored text is DATA, not instructions); plain-text web rendering locked by a guard test; per-user Redis rate limit (30/min). Defense-in-depth (classifier pass, audit log, render allowlist) deferred.
+- **Consequences:** No new tables/migration. New search angles work without an embedding pipeline or re-embed-on-edit. If shared/multi-tenant data later flows into the assistant, revisit the deferred defense-in-depth layer.
+
 ---
 
 ## Open questions parked for you
