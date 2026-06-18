@@ -10,8 +10,6 @@ export type BadgeTone =
   | 'info'
   | 'solid'
   | 'outline'
-  // back-compat aliases
-  | 'primary'
   | 'accent';
 export type BadgeSize = 'sm' | 'md';
 
@@ -33,8 +31,6 @@ const toneStyle: Record<BadgeTone, CSSProperties> = {
   info: { background: 'var(--info-50)', color: 'var(--info-700)' },
   solid: { background: 'var(--action-primary)', color: 'var(--text-on-brand)' },
   outline: { background: 'transparent', color: 'var(--text-muted)', border: '1px solid var(--border-default)' },
-  // aliases
-  primary: { background: 'var(--surface-brand-sub)', color: 'var(--green-700)' },
   accent: { background: 'var(--sand-100)', color: 'var(--sand-700)' },
 };
 
