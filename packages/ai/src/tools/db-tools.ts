@@ -474,6 +474,8 @@ export function createDbTools(db: DB, userId: string): AssistantTools {
     },
 
     async accountBalances(): Promise<AccountBalanceLine[]> {
+      // An account balance is the signed sum of ALL its postings (transfers included) —
+      // intentionally unlike the spend tools, which exclude income/transfer.
       const accts = await db
         .select({ id: accounts.id, name: accounts.name, currency: accounts.currency })
         .from(accounts)

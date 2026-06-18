@@ -2,6 +2,7 @@ import { generateObject, generateText, streamText, stepCountIs, tool, type Model
 import { z } from 'zod';
 import { CategoryKey, formatMoney } from '@spendlio/contracts';
 import { resolveLiveModel } from './model';
+import { subtotalByCurrency } from '../tools/db-tools';
 import { CHAT_SYSTEM } from '../system-prompt';
 import {
   ReceiptOcrResult,
@@ -292,7 +293,10 @@ function buildTools(t: AssistantTools) {
       inputSchema: z.object({}),
       execute: async () => {
         const lines = await t.accountBalances();
-        return lines.map((l) => ({ account: l.accountName, balance: money(l.balanceCents, l.currency) }));
+        return {
+          accounts: lines.map((l) => ({ account: l.accountName, balance: money(l.balanceCents, l.currency) })),
+          byCurrency: subtotalByCurrency(lines).map((s) => ({ currency: s.currency, total: money(s.totalCents, s.currency) })),
+        };
       },
     }),
   };

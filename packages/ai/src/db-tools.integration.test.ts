@@ -13,12 +13,14 @@ describe.skipIf(!RUN)('createDbTools (live DB)', () => {
   const CAROL = '0000a100-0000-0000-0000-0000000ca201';
   const SELF_A = '0000a100-0000-0000-0000-000000005e1f'; // A's self-person (model B)
   const SPLIT_A = '0000a100-0000-0000-0000-00000005111a';
+  const ACC_A = '0000a100-0000-0000-0000-000000acc0a1'; // A's account (USD)
 
   // Lazy imports so the module (which opens a pg Pool) only loads when RUN.
   let db: typeof import('@spendlio/db').db;
   let pool: typeof import('@spendlio/db').pool;
   let schema: typeof import('@spendlio/db');
   let createDbTools: typeof import('./index').createDbTools;
+  let subtotalByCurrency: typeof import('./tools/db-tools').subtotalByCurrency;
 
   beforeAll(async () => {
     const dbmod = await import('@spendlio/db');
@@ -26,6 +28,7 @@ describe.skipIf(!RUN)('createDbTools (live DB)', () => {
     pool = dbmod.pool;
     schema = dbmod;
     ({ createDbTools } = await import('./index'));
+    ({ subtotalByCurrency } = await import('./tools/db-tools'));
 
     // Idempotent pre-clean: remove any leftovers from a prior crashed run so sums
     // can't be inflated by duplicates.
@@ -34,7 +37,9 @@ describe.skipIf(!RUN)('createDbTools (live DB)', () => {
     await db.delete(schema.splits).where(inArray(schema.splits.id, [SPLIT_A]));
     await db.delete(schema.people).where(inArray(schema.people.userId, [UA, UB]));
     await db.delete(schema.budgets).where(inArray(schema.budgets.userId, [UA, UB]));
+    // Transactions reference accounts (onDelete RESTRICT) — delete txns first, then accounts.
     await db.delete(schema.transactions).where(inArray(schema.transactions.userId, [UA, UB]));
+    await db.delete(schema.accounts).where(inArray(schema.accounts.userId, [UA, UB]));
     await db.delete(schema.users).where(inArray(schema.users.id, [UA, UB]));
 
     // Users A and B.
@@ -43,12 +48,19 @@ describe.skipIf(!RUN)('createDbTools (live DB)', () => {
       { id: UB, name: 'B', email: `b-${UB}@t.dev`, defaultCurrency: 'USD' },
     ]).onConflictDoNothing();
 
+    // A's account (USD) — transactions below reference it (FK), so insert it first.
+    await db.insert(schema.accounts).values([
+      { id: ACC_A, userId: UA, name: 'Checking', type: 'checking', currency: 'USD' },
+    ]);
+
     // A: $123.45 dining + $50 groceries in May; B: $999 dining (must NOT leak into A).
     await db.insert(schema.transactions).values([
       // expenses are negative (matches the seed convention); income stays positive
-      { userId: UA, title: 'Dinner', amount: -12345, currency: 'USD', category: 'dining', occurredAt: new Date('2026-05-10T12:00:00Z'), status: 'cleared', source: 'manual' },
-      { userId: UA, title: 'Market', amount: -5000, currency: 'USD', category: 'groceries', occurredAt: new Date('2026-05-12T12:00:00Z'), status: 'cleared', source: 'manual' },
-      { userId: UA, title: 'Salary', amount: 300000, currency: 'USD', category: 'income', occurredAt: new Date('2026-05-01T12:00:00Z'), status: 'income', source: 'manual' },
+      { userId: UA, title: 'Dinner', amount: -12345, currency: 'USD', category: 'dining', occurredAt: new Date('2026-05-10T12:00:00Z'), status: 'cleared', source: 'manual', accountId: ACC_A },
+      { userId: UA, title: 'Market', amount: -5000, currency: 'USD', category: 'groceries', occurredAt: new Date('2026-05-12T12:00:00Z'), status: 'cleared', source: 'manual', accountId: ACC_A },
+      { userId: UA, title: 'Salary', amount: 300000, currency: 'USD', category: 'income', occurredAt: new Date('2026-05-01T12:00:00Z'), status: 'income', source: 'manual', accountId: ACC_A },
+      // A transfer on this account: excluded from spend tools, but counts toward the account balance.
+      { userId: UA, title: 'Transfer', amount: -2000, currency: 'USD', category: 'transfer', occurredAt: new Date('2026-05-05T12:00:00Z'), status: 'cleared', source: 'manual', accountId: ACC_A },
       { userId: UB, title: 'Bs dinner', amount: 99900, currency: 'USD', category: 'dining', occurredAt: new Date('2026-05-10T12:00:00Z'), status: 'cleared', source: 'manual' },
     ]);
 
@@ -81,7 +93,9 @@ describe.skipIf(!RUN)('createDbTools (live DB)', () => {
     await db.delete(schema.splits).where(inArray(schema.splits.id, [SPLIT_A]));
     await db.delete(schema.people).where(inArray(schema.people.userId, [UA, UB]));
     await db.delete(schema.budgets).where(inArray(schema.budgets.userId, [UA, UB]));
+    // Transactions reference accounts (onDelete RESTRICT) — delete txns first, then accounts.
     await db.delete(schema.transactions).where(inArray(schema.transactions.userId, [UA, UB]));
+    await db.delete(schema.accounts).where(inArray(schema.accounts.userId, [UA, UB]));
     await db.delete(schema.users).where(inArray(schema.users.id, [UA, UB]));
     await pool.end();
   });
@@ -156,14 +170,18 @@ describe.skipIf(!RUN)('createDbTools (live DB)', () => {
     const tools = createDbTools(db, UA);
     const r = await tools.monthlyRecap('2026-05');
     expect(r.incomeCents).toBe(300000); // Salary
-    expect(r.expenseCents).toBe(12345 + 5000); // dining + groceries
-    expect(r.netCents).toBe(300000 - (12345 + 5000));
+    // computeRecap classifies by SIGN (not category), so the -2000 transfer counts as expense here.
+    expect(r.expenseCents).toBe(12345 + 5000 + 2000); // dining + groceries + transfer
+    expect(r.netCents).toBe(300000 - (12345 + 5000 + 2000));
   });
 
-  it('accountBalances is user-scoped and returns a line per account', async () => {
+  it('accountBalances sums ALL postings (transfer included) + subtotals by currency', async () => {
     const tools = createDbTools(db, UA);
     const lines = await tools.accountBalances();
-    // User A's integration seed has no accounts → empty; the call must not throw and must be scoped.
-    expect(Array.isArray(lines)).toBe(true);
+    expect(lines.length).toBe(1); // exactly A's one account
+    // Signed sum of every posting on ACC_A: -12345 - 5000 + 300000 - 2000 = 280655.
+    // The transfer (-2000) is excluded from spend tools but DOES count here.
+    expect(lines[0]!.balanceCents).toBe(282655 - 2000); // 280655
+    expect(subtotalByCurrency(lines)).toEqual([{ currency: 'USD', totalCents: 280655 }]);
   });
 });
