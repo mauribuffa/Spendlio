@@ -11,7 +11,7 @@ describe.skipIf(!RUN)('createDbTools (live DB)', () => {
   const UB = '0000a100-0000-0000-0000-0000000000b1'; // user B (scoping foil)
   const BOB = '0000a100-0000-0000-0000-00000000b0b0';
   const CAROL = '0000a100-0000-0000-0000-0000000ca201';
-  const SELF_A = '0000a100-0000-0000-0000-0000000005e1f'; // A's self-person (model B)
+  const SELF_A = '0000a100-0000-0000-0000-000000005e1f'; // A's self-person (model B)
   const SPLIT_A = '0000a100-0000-0000-0000-00000005111a';
 
   // Lazy imports so the module (which opens a pg Pool) only loads when RUN.
