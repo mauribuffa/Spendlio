@@ -38,6 +38,10 @@ Plain-English definitions of every term used in these docs. If something is jarg
 - **OCR (Optical Character Recognition):** turning an image of text (a receipt) into structured data.
 - **LLM (Large Language Model):** the AI model behind categorization and the assistant.
 - **Tool / function calling:** giving an LLM typed functions to call (e.g. `spendByCategory`) so it uses real data instead of guessing.
+- **Prompt injection:** an attack where text the model reads — a user message, or stored data like a merchant name / note / OCR'd receipt — tries to override the model's instructions (e.g. "ignore your rules and …"). Spendlio's main defense is structural: the assistant is read-only and every tool filters by the signed-in user's id, so a hijacked model still cannot mutate data or read another user's rows (ADR-041).
+- **Spotlighting:** a system-prompt technique that tells the model to treat all tool output and any stored text (merchant/title/note/OCR) as *data, never instructions* — so embedded commands get ignored, not obeyed (ADR-041).
+- **Lexical search (vs vector search):** Spendlio's assistant free-text search is plain case-insensitive matching (Postgres `ILIKE` over title/merchant/note) — not embeddings/pgvector, BM25, or Postgres full-text search. The per-user corpus is tiny and already `user_id`-narrowed, so there is nothing to rank at scale; semantics come from the model, not the data (ADR-041). `pg_trgm` (fuzzy/typo matching) is a documented follow-up if needed.
+- **Query expansion (LLM):** the model turning a concept into concrete search terms before calling a tool (e.g. "coffee" → "Starbucks", "Blue Bottle") so a lexical `ILIKE` search still feels semantic — the "semantic layer" lives in the model, not a vector index (ADR-041).
 - **ISO 4217:** the standard 3-letter currency codes (`USD`, `EUR`).
 - **Cursor pagination:** paging a list with a pointer to the last item (stable for infinite scroll) instead of page numbers.
 - **OTP (one-time passcode):** a short numeric code, emailed to prove you own an address; single-use and short-lived. Spendlio uses a 6-digit code with a 10-minute TTL.
@@ -48,3 +52,4 @@ Plain-English definitions of every term used in these docs. If something is jarg
 - **Magic-link:** an alternative passwordless sign-in where you click a link in the email instead of typing a code (we chose OTP).
 - **Provisioning:** creating the app's `users` row on first sign-in, keyed on the verified email.
 - **HMAC:** a keyed hash; Spendlio stores `HMAC(code)` (not the raw code) in Redis.
+- **Rate limiting:** capping how often one user can hit an endpoint in a time window. The assistant uses a per-user fixed-window limit (~30 requests/min) in Redis on `POST /assistant` to bound cost and abuse; exceeding it returns HTTP 429 (ADR-041).

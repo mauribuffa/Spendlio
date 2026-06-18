@@ -36,7 +36,7 @@ Understanding this split explains most of the architecture:
 | Record a settlement | Send a reminder/notification |
 | Ask the AI a question* | Run due recurring transactions |
 
-\* The chat *call* is sync, but it reads pre-computed summaries the workers build.
+\* The chat *call* is sync: the model orchestrates a set of read-only, `user_id`-scoped **tools** that query the DB on demand and return exact integer cents (the LLM never does money math) — see [`09-ai-ocr.md`](./09-ai-ocr.md). One of those tools (the monthly recap) reads the worker-built summaries; the rest query live aggregates.
 
 **Why:** OCR and LLM calls take seconds and can fail/retry. If they ran inside an HTTP handler, the user would stare at a spinner and a timeout could lose data. Queues make slow work reliable and the UI snappy. → [`07-queues-jobs.md`](./07-queues-jobs.md)
 
