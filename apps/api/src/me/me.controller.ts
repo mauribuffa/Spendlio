@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
-import { UpdateUserInput } from '@spendlio/contracts';
+import { Body, Controller, Get, HttpCode, Patch, Post, UseGuards } from '@nestjs/common';
+import { CompleteOnboardingInput, UpdateUserInput } from '@spendlio/contracts';
 import { AuthGuard } from '../common/auth.guard';
 import { CurrentUser } from '../common/current-user.decorator';
 import { ZodPipe } from '../common/zod.pipe';
@@ -21,5 +21,14 @@ export class MeController {
     @Body(new ZodPipe(UpdateUserInput)) dto: UpdateUserInput,
   ) {
     return this.svc.update(u.id, dto);
+  }
+
+  @Post('onboarding')
+  @HttpCode(200)
+  completeOnboarding(
+    @CurrentUser() u: { id: string },
+    @Body(new ZodPipe(CompleteOnboardingInput)) dto: CompleteOnboardingInput,
+  ) {
+    return this.svc.completeOnboarding(u.id, dto);
   }
 }

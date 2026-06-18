@@ -43,6 +43,13 @@
       "when": 1781710032380,
       "tag": "0005_black_puppet_master",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1781791277710,
+      "tag": "0006_brainy_newton_destine",
+      "breakpoints": true
     }
   ]
 }

@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { CheckCircle2, Circle, ChevronLeft } from 'lucide-react';
 import { Button } from '@spendlio/ui';
+import { completeOnboardingAction } from '@/features/onboarding/lib/actions';
 
-// Presentational pre-app flow. There is no auth/onboarding backend yet
-// (Phase 5, deferred), so the final step simply enters the app at "/".
+// Post-auth onboarding interstitial (ADR-038). Rendered by the root layout when
+// the signed-in user has no onboardedAt; the final step persists currency +
+// language, then router.refresh() re-runs the layout gate so the app shell shows.
 const CURRENCIES = [
   { code: 'USD', name: 'US Dollar', symbol: '$' },
   { code: 'EUR', name: 'Euro', symbol: '€' },
@@ -124,12 +126,22 @@ function Dots({ step, total }: { step: number; total: number }) {
   );
 }
 
-export default function OnboardingPage() {
+export function OnboardingFlow() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [currency, setCurrency] = useState('USD');
   const [locale, setLocale] = useState('en-US');
-  const enter = () => router.push('/');
+  const [error, setError] = useState<string | null>(null);
+  const [saving, startSaving] = useTransition();
+
+  const finish = () => {
+    setError(null);
+    startSaving(async () => {
+      const res = await completeOnboardingAction({ defaultCurrency: currency, locale });
+      if (res.ok) router.refresh(); // re-runs the layout gate → app shell
+      else setError(res.error ?? 'Something went wrong.');
+    });
+  };
 
   if (step === 0) {
     return (
@@ -145,16 +157,10 @@ export default function OnboardingPage() {
               Spend with clarity. Split without the awkward.
             </div>
           </div>
-          <div style={{ width: '100%', maxWidth: 360, display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>
+          <div style={{ width: '100%', maxWidth: 360, marginTop: 8 }}>
             <Button variant="primary" size="lg" fullWidth onClick={() => setStep(1)}>
               Get started
             </Button>
-            <button
-              onClick={enter}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 14.5, fontWeight: 600, color: 'var(--text-brand)', padding: 8 }}
-            >
-              I already have an account
-            </button>
           </div>
         </div>
       </Shell>
@@ -182,12 +188,17 @@ export default function OnboardingPage() {
               <SelectRow key={l.code} selected={locale === l.code} onClick={() => setLocale(l.code)} lead={l.code.slice(0, 2).toUpperCase()} title={l.name} sub={l.region} />
             ))}
       </div>
+      {error && (
+        <div role="alert" style={{ fontSize: 13.5, color: 'var(--negative-500)', textAlign: 'center', marginBottom: 12 }}>
+          {error}
+        </div>
+      )}
       <div style={{ display: 'flex', gap: 12 }}>
-        <Button variant="secondary" size="lg" onClick={() => setStep(step - 1)} leadingIcon={<ChevronLeft size={18} strokeWidth={2} aria-hidden="true" />}>
+        <Button variant="secondary" size="lg" onClick={() => setStep(step - 1)} disabled={saving} leadingIcon={<ChevronLeft size={18} strokeWidth={2} aria-hidden="true" />}>
           Back
         </Button>
-        <Button variant="primary" size="lg" fullWidth onClick={() => (isCurrency ? setStep(2) : enter())}>
-          {isCurrency ? 'Continue' : 'Start tracking'}
+        <Button variant="primary" size="lg" fullWidth disabled={saving} onClick={() => (isCurrency ? setStep(2) : finish())}>
+          {isCurrency ? 'Continue' : saving ? 'Setting up…' : 'Start tracking'}
         </Button>
       </div>
     </Shell>

@@ -6,7 +6,10 @@ import '@spendlio/ui/styles.css';
 import './globals.css';
 import { AppShell } from '@/components/layout/app-shell';
 import { ToastProvider } from '@/components/feedback/toast-provider';
+import { OnboardingFlow } from '@/features/onboarding/components/onboarding-flow';
 import { auth } from '@/auth';
+import { getMe, type User } from '@/lib/resources';
+import { safe } from '@/lib/safe';
 
 // The three families the design system references. next/font self-hosts them
 // and exposes a CSS variable per family; globals.css aliases those variables to
@@ -42,11 +45,23 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     ? { name: session.user.name ?? 'You', email: session.user.email ?? '' }
     : null;
 
+  // Onboarding gate (ADR-038): a signed-in user with no onboardedAt must finish
+  // the one-time flow before the app shell renders, on any route. If /me is
+  // unreachable we don't trap them in onboarding — fall through to the shell.
+  const me = user ? (await safe<User | null>(() => getMe(), null)).data : null;
+  const needsOnboarding = !!me && !me.onboardedAt;
+
   return (
     <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
       <body>
         <ToastProvider>
-          {user ? <AppShell user={user}>{children}</AppShell> : children}
+          {!user ? (
+            children
+          ) : needsOnboarding ? (
+            <OnboardingFlow />
+          ) : (
+            <AppShell user={user}>{children}</AppShell>
+          )}
         </ToastProvider>
       </body>
     </html>

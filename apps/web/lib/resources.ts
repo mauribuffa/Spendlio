@@ -32,6 +32,7 @@ import {
   UserSchema,
   type User,
   type UpdateUserInput,
+  type CompleteOnboardingInput,
   ReceiptSchema,
   type Receipt,
   type CreateReceiptInput,
@@ -170,6 +171,10 @@ export function getMe(): Promise<User> {
 
 export function updateMe(input: UpdateUserInput): Promise<User> {
   return api.patch(`/me`, input, UserSchema);
+}
+
+export function completeOnboarding(input: CompleteOnboardingInput): Promise<User> {
+  return api.post(`/me/onboarding`, input, UserSchema);
 }
 
 // ---- Receipts (OCR) ----

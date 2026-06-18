@@ -9,6 +9,9 @@ export const users = pgTable('users', {
   // ADR-017: locale/timezone are stored separately from defaultCurrency.
   locale: varchar('locale', { length: 16 }).notNull().default('en-US'),
   timezone: varchar('timezone', { length: 64 }).notNull().default('UTC'),
+  // Null until the user finishes the onboarding flow (currency + language).
+  // The web app gates on this; new users provision with null. (ADR-038)
+  onboardedAt: timestamp('onboarded_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });

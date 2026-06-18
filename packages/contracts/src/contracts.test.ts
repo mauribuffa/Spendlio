@@ -7,6 +7,7 @@ import {
   CreateSettlementInput,
   SettlementSchema,
   UpdateUserInput,
+  CompleteOnboardingInput,
 } from './index';
 
 const sampleTransaction = {
@@ -115,5 +116,29 @@ describe('UpdateUserInput (settings)', () => {
   it('does not carry email/locale/timezone through', () => {
     const r = UpdateUserInput.parse({ name: 'X', email: 'a@b.com', locale: 'es-AR' } as any);
     expect(r).toEqual({ name: 'X' }); // unknown keys are stripped, not editable
+  });
+});
+
+describe('CompleteOnboardingInput', () => {
+  it('accepts currency + locale and upper-cases the currency', () => {
+    const r = CompleteOnboardingInput.parse({ defaultCurrency: 'ars', locale: 'es-AR' });
+    expect(r).toEqual({ defaultCurrency: 'ARS', locale: 'es-AR' });
+  });
+
+  it('defaults locale to en-US when omitted', () => {
+    const r = CompleteOnboardingInput.parse({ defaultCurrency: 'USD' });
+    expect(r.locale).toBe('en-US');
+  });
+
+  it('rejects a missing currency', () => {
+    expect(() => CompleteOnboardingInput.parse({ locale: 'en-US' } as any)).toThrow();
+  });
+
+  it('does not let the client set onboardedAt', () => {
+    const r = CompleteOnboardingInput.parse({
+      defaultCurrency: 'USD',
+      onboardedAt: new Date(),
+    } as any);
+    expect('onboardedAt' in r).toBe(false); // server-managed; stripped here
   });
 });

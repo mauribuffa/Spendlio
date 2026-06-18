@@ -166,6 +166,8 @@ async function seed() {
       name: 'Demo',
       email: 'demo@spendlio.app',
       defaultCurrency: 'USD',
+      // Pre-onboarded so the seeded demo experience skips the onboarding gate.
+      onboardedAt: new Date(),
     })
     .onConflictDoNothing();
 
