@@ -39,6 +39,15 @@ export function splitEven(totalCents: number, personIds: string[], payerId: stri
 
 /** Exact amounts must sum to the total. */
 export function splitExact(totalCents: number, shares: Share[]): Share[] {
+  // Defense in depth: core is the last gate, called with id-only shares that may
+  // not have passed the contract's superRefine (internal/future callers). A
+  // negative or duplicated share can sum to the total yet be nonsense.
+  if (shares.some((x) => x.amount < 0)) throw new Error('exact shares cannot be negative');
+  const seen = new Set<string>();
+  for (const x of shares) {
+    if (seen.has(x.personId)) throw new Error(`duplicate share for person ${x.personId}`);
+    seen.add(x.personId);
+  }
   const sum = shares.reduce((s, x) => s + x.amount, 0);
   if (sum !== totalCents) throw new Error(`exact shares (${sum}) must equal total (${totalCents})`);
   return shares;
@@ -48,6 +57,12 @@ export function splitExact(totalCents: number, shares: Share[]): Share[] {
 export function splitPercent(
   totalCents: number, percents: { personId: string; pct: number }[], payerId: string,
 ): Share[] {
+  if (percents.some((p) => p.pct < 0)) throw new Error('percentages cannot be negative');
+  const seen = new Set<string>();
+  for (const p of percents) {
+    if (seen.has(p.personId)) throw new Error(`duplicate share for person ${p.personId}`);
+    seen.add(p.personId);
+  }
   const pctSum = percents.reduce((s, p) => s + p.pct, 0);
   if (Math.abs(pctSum - 100) > 0.01) throw new Error('percentages must sum to 100');
   const raw = percents.map((p) => ({ personId: p.personId, amount: Math.floor((totalCents * p.pct) / 100) }));

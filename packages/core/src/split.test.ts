@@ -78,6 +78,17 @@ describe('splitExact', () => {
   it('throws when shares overshoot the total', () => {
     expect(() => splitExact(1000, [{ personId: 'a', amount: 1001 }])).toThrow();
   });
+
+  it('rejects a negative share even if the shares sum to the total', () => {
+    // 1100 + (-100) = 1000, but a negative share is nonsense the sum check misses.
+    const shares: Share[] = [{ personId: 'a', amount: 1100 }, { personId: 'b', amount: -100 }];
+    expect(() => splitExact(1000, shares)).toThrow(/negative/);
+  });
+
+  it('rejects a duplicated person in the shares', () => {
+    const shares: Share[] = [{ personId: 'a', amount: 600 }, { personId: 'a', amount: 400 }];
+    expect(() => splitExact(1000, shares)).toThrow(/duplicate/);
+  });
 });
 
 describe('splitPercent', () => {
@@ -107,6 +118,20 @@ describe('splitPercent', () => {
 
   it('throws when percentages exceed 100', () => {
     expect(() => splitPercent(1000, [{ personId: 'a', pct: 70 }, { personId: 'b', pct: 40 }], 'a')).toThrow();
+  });
+
+  it('rejects a negative percentage even if the percentages sum to 100', () => {
+    // 130 + (-30) = 100, but a negative pct would mint a negative share.
+    expect(() =>
+      splitPercent(1000, [{ personId: 'a', pct: 130 }, { personId: 'b', pct: -30 }], 'a'),
+    ).toThrow(/negative/);
+  });
+
+  it('rejects a duplicated person (symmetric with splitExact)', () => {
+    // Without the guard the Map would silently dedupe to a single 100% share.
+    expect(() =>
+      splitPercent(1000, [{ personId: 'a', pct: 50 }, { personId: 'a', pct: 50 }], 'a'),
+    ).toThrow(/duplicate/);
   });
 
   it('accepts a sum within epsilon of 100 (floating-point tolerance)', () => {

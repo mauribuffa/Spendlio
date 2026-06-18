@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, timestamp, index, unique } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, timestamp, unique } from 'drizzle-orm/pg-core';
 
 // Daily FX rates pulled from a feed (ADR-016). Global (not user-owned).
 // `rate` is stored as an exact decimal STRING to avoid float drift — all FX
@@ -13,6 +13,7 @@ export const fxRates = pgTable('fx_rates', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (t) => ({
+  // The unique index on (base, quote, date) already serves the pair+date lookup;
+  // a separate same-columns index would be redundant.
   uniqRate: unique('fx_rates_base_quote_date_uniq').on(t.base, t.quote, t.date),
-  byPairDate: index('fx_rates_pair_date_idx').on(t.base, t.quote, t.date),
 }));

@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, bigint, timestamp, jsonb, index, unique } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, bigint, timestamp, jsonb, unique } from 'drizzle-orm/pg-core';
 import { users } from './users';
 
 // The monthly recap payload, built by the recap worker; one row per user+month.
@@ -15,6 +15,7 @@ export const monthlySummaries = pgTable('monthly_summaries', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (t) => ({
+  // The unique index on (user_id, month) also serves (user_id) prefix lookups,
+  // so a separate same-columns index would be redundant.
   uniqUserMonth: unique('monthly_summaries_user_month_uniq').on(t.userId, t.month),
-  byUser: index('monthly_summaries_user_idx').on(t.userId, t.month),
 }));
