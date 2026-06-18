@@ -29,7 +29,7 @@ Every user-owned row has a `user_id`. **Every query filters by the authenticated
 - **API trust:** the web **mints a short-lived HS256 JWT per request** (`jose`, `{ sub: user_id, iss, aud, exp:+5m }`, shared `API_JWT_SECRET`) from the Auth.js session and sends it as `Authorization: Bearer`; the API verifies signature + claims → `req.user.id`. Re-minting per render means **no web refresh tokens**.
 - **OTP authority = the API:** public `POST /api/auth/otp/{request,verify}`. Codes are **HMAC-hashed in Redis** with a 10-min TTL, **5 attempts**, **single-use**, **60s resend cooldown**, and **no email enumeration** (`/request` always returns 200).
 - **Provisioning:** first verify **upserts `users` by `email`** (already unique) — no migration, no adapter tables. The seeded demo user maps to itself.
-- **Email:** an **`EmailSender` interface** (house rule: target interfaces, not vendors); dev logs the code to the console; the prod vendor is a later ADR (open question #2). Local dev uses a **dev-only Credentials provider** that signs in as the seeded demo user, so OTP email need not work locally.
+- **Email:** an **`EmailSender` interface** (house rule: target interfaces, not vendors); dev logs the code to the console; **real delivery is a vendor-neutral SMTP sender (ADR-036)** — `SmtpEmailSender` (nodemailer), selected when `SMTP_HOST` is set, local dev catches mail in a **Mailpit** container, prod just supplies `SMTP_*` creds (SES/Mailgun/Resend-SMTP). Local dev also has a **dev-only Credentials provider** that signs in as the seeded demo user, so OTP email need not work locally.
 
 ## Deferred (revisit when needed)
 - Refresh tokens + how the mobile app stores them (secure storage).

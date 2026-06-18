@@ -1,4 +1,10 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { createHmac, randomInt, timingSafeEqual } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { users } from '@spendlio/db';
@@ -28,6 +34,7 @@ function cooldownKey(email: string): string {
 
 @Injectable()
 export class OtpService {
+  private readonly log = new Logger('OtpService');
   constructor(
     @Inject(DB) private db: any,
     @Inject(EMAIL_SENDER) private email: EmailSender,
@@ -47,8 +54,22 @@ export class OtpService {
       TTL_SECONDS,
     );
     await redis.set(cooldownKey(email), '1', 'EX', COOLDOWN_SECONDS);
-    await this.email.sendOtpCode(email, code);
-    return process.env.NODE_ENV !== 'production' ? { devCode: code } : {};
+    try {
+      await this.email.sendOtpCode(email, code);
+    } catch (err) {
+      // Transport failure: roll back both keys so the user can retry immediately
+      // with a fresh code. A send error is unrelated to whether the account
+      // exists, so surfacing it doesn't leak enumeration.
+      await redis.del(key(email));
+      await redis.del(cooldownKey(email));
+      this.log.error(`OTP send failed for ${email}`, err as Error);
+      throw new ServiceUnavailableException('Could not send your code. Please try again.');
+    }
+    // Echo the code only when the transport doesn't actually deliver it (console
+    // sender) AND we're non-prod — a real SMTP send must never leak it, even in dev.
+    return this.email.exposesCode && process.env.NODE_ENV !== 'production'
+      ? { devCode: code }
+      : {};
   }
 
   /** Verify a code; on success provision the user and return it. */

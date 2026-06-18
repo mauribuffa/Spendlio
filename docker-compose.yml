@@ -38,6 +38,11 @@ services:
       mc anonymous set none local/receipts;
       exit 0;"
 
+  # local SMTP sink: catches all OTP email; read it at http://localhost:8025
+  mailpit:
+    image: axllent/mailpit
+    ports: ["1025:1025", "8025:8025"]   # 1025 SMTP, 8025 web inbox
+
 volumes:
   pgdata: {}
   redisdata: {}

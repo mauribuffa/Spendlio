@@ -5,9 +5,10 @@ export const OtpRequestInput = z.object({ email: z.string().email() });
 export type OtpRequestInput = z.infer<typeof OtpRequestInput>;
 
 /**
- * Response of step 1. `devCode` is echoed back ONLY when the API runs with
- * NODE_ENV !== 'production', so local dev + the live contract test can complete
- * the flow without reading email. Never present in production.
+ * Response of step 1. `devCode` is echoed back ONLY when the API uses the dev
+ * console transport (no real email delivered) AND NODE_ENV !== 'production', so
+ * local dev + the live contract test can complete the flow without reading email.
+ * Never present in production, and never when a real SMTP transport is active.
  */
 export const OtpRequestResult = z.object({
   ok: z.literal(true),
