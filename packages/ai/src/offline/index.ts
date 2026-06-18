@@ -102,6 +102,44 @@ export class OfflineProvider implements LLMProvider {
         );
         return { answer: `${parts.join('; ')}.`, usedTools };
       }
+      case 'balanceWithPerson': {
+        usedTools.push('balanceWithPerson');
+        const d = await args.tools.balanceWithPerson(intent.person);
+        if (!d) return { answer: `I couldn't find anyone named "${intent.person}".`, usedTools };
+        const verb = d.netCents >= 0 ? 'owes you' : 'you owe';
+        return { answer: `${d.personName} ${verb} ${money(Math.abs(d.netCents), d.currency)}.`, usedTools };
+      }
+      case 'search': {
+        usedTools.push('searchTransactions');
+        const rows = await args.tools.searchTransactions({ text: intent.text, limit: 5 });
+        if (rows.length === 0) {
+          return { answer: `I found no transactions matching "${intent.text}".`, usedTools };
+        }
+        const parts = rows.map((r) => `${r.title} ${money(r.amountCents, r.currency)}`);
+        return { answer: `Matches for "${intent.text}": ${parts.join(', ')}.`, usedTools };
+      }
+      case 'trend': {
+        usedTools.push('spendingTrend');
+        const now = new Date();
+        const toMonth = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+        const fromD = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 2, 1));
+        const fromMonth = `${fromD.getUTCFullYear()}-${String(fromD.getUTCMonth() + 1).padStart(2, '0')}`;
+        const months = await args.tools.spendingTrend({
+          fromMonth,
+          toMonth,
+          categories: intent.category ? [intent.category] : undefined,
+        });
+        const parts = months.map((m) => `${m.month}: ${money(m.totalCents)}`);
+        return { answer: `Spending by month — ${parts.join(', ')}.`, usedTools };
+      }
+      case 'recap': {
+        usedTools.push('monthlyRecap');
+        const r = await args.tools.monthlyRecap(intent.month);
+        return {
+          answer: `In ${intent.monthName} you earned ${money(r.incomeCents)} and spent ${money(r.expenseCents)} (net ${money(r.netCents)}).`,
+          usedTools,
+        };
+      }
       default:
         return {
           answer:

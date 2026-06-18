@@ -3,6 +3,8 @@ import {
   netBalances,
   monthBounds,
   monthOf,
+  monthsInRange,
+  shapeTrend,
   type SplitRow,
   type ShareRow,
   type SettlementRow,
@@ -91,5 +93,97 @@ describe('netBalances (model B — ADR-028, exact integer cents)', () => {
     const { net, currency } = netBalances(eurSplits, eurShares, [], SELF);
     expect(net.get('pia')).toBe(250);
     expect(currency.get('pia')).toBe('EUR');
+  });
+});
+
+import { dayStartUTC, dayAfterUTC } from './tools/db-tools';
+
+describe('date-range helpers', () => {
+  it('dayStartUTC is midnight UTC of the given day', () => {
+    expect(dayStartUTC('2026-05-10').toISOString()).toBe('2026-05-10T00:00:00.000Z');
+  });
+  it('dayAfterUTC is midnight UTC of the next day (for inclusive `to`)', () => {
+    expect(dayAfterUTC('2026-05-10').toISOString()).toBe('2026-05-11T00:00:00.000Z');
+  });
+});
+
+describe('monthsInRange', () => {
+  it('lists inclusive months, rolling over the year', () => {
+    expect(monthsInRange('2025-11', '2026-02')).toEqual(['2025-11', '2025-12', '2026-01', '2026-02']);
+  });
+  it('caps the range length', () => {
+    expect(monthsInRange('2020-01', '2030-01').length).toBe(24);
+  });
+  it('returns a single month when from === to', () => {
+    expect(monthsInRange('2026-05', '2026-05')).toEqual(['2026-05']);
+  });
+});
+
+describe('shapeTrend', () => {
+  it('buckets rows by month and fills empty months with zero', () => {
+    const out = shapeTrend(
+      ['2026-04', '2026-05'],
+      [{ month: '2026-05', category: 'dining', amountCents: 12345 }],
+    );
+    expect(out).toEqual([
+      { month: '2026-04', totalCents: 0, byCategory: [] },
+      { month: '2026-05', totalCents: 12345, byCategory: [{ category: 'dining', amountCents: 12345 }] },
+    ]);
+  });
+});
+
+import { toMonthlyRecap } from './tools/db-tools';
+
+describe('toMonthlyRecap', () => {
+  it('maps a core RecapResult to the tool shape', () => {
+    const out = toMonthlyRecap('2026-05', {
+      totalIncome: 300000,
+      totalExpense: 17345,
+      net: 282655,
+      byCategory: [{ category: 'dining', amount: 12345 }, { category: 'groceries', amount: 5000 }],
+      topMerchant: 'Market',
+      skipped: 0,
+    });
+    expect(out).toEqual({
+      month: '2026-05',
+      incomeCents: 300000,
+      expenseCents: 17345,
+      netCents: 282655,
+      byCategory: [{ category: 'dining', amountCents: 12345 }, { category: 'groceries', amountCents: 5000 }],
+      topMerchant: 'Market',
+    });
+  });
+});
+
+import { matchPerson } from './tools/db-tools';
+
+describe('matchPerson', () => {
+  const people = [{ id: '1', name: 'Alex Rivera' }, { id: '2', name: 'Sam Lee' }];
+  it('matches case-insensitive substring', () => {
+    expect(matchPerson(people, 'alex')?.id).toBe('1');
+  });
+  it('prefers an exact (case-insensitive) name match', () => {
+    const dup = [{ id: '1', name: 'Sam' }, { id: '2', name: 'Samuel' }];
+    expect(matchPerson(dup, 'sam')?.id).toBe('1');
+  });
+  it('returns null on no match', () => {
+    expect(matchPerson(people, 'taylor')).toBeNull();
+  });
+});
+
+import { subtotalByCurrency } from './tools/db-tools';
+
+describe('subtotalByCurrency', () => {
+  it('sums account balances per currency', () => {
+    expect(
+      subtotalByCurrency([
+        { accountName: 'Checking', currency: 'USD', balanceCents: 10000 },
+        { accountName: 'Savings', currency: 'USD', balanceCents: 25000 },
+        { accountName: 'Euro', currency: 'EUR', balanceCents: 5000 },
+      ]),
+    ).toEqual([
+      { currency: 'USD', totalCents: 35000 },
+      { currency: 'EUR', totalCents: 5000 },
+    ]);
   });
 });

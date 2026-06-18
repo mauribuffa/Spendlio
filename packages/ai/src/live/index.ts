@@ -2,6 +2,8 @@ import { generateObject, generateText, streamText, stepCountIs, tool, type Model
 import { z } from 'zod';
 import { CategoryKey, formatMoney } from '@spendlio/contracts';
 import { resolveLiveModel } from './model';
+import { subtotalByCurrency } from '../tools/db-tools';
+import { CHAT_SYSTEM } from '../system-prompt';
 import {
   ReceiptOcrResult,
   type AssistantTools,
@@ -21,10 +23,6 @@ const money = (cents: number, currency = 'USD'): string => formatMoney({ amount:
 const CATEGORIZE_TIMEOUT_MS = 30_000;
 const OCR_TIMEOUT_MS = 90_000;
 const CHAT_TIMEOUT_MS = 60_000;
-
-const CHAT_SYSTEM =
-  'You are a grounded personal-finance assistant. Answer using ONLY the numbers returned by the tools. ' +
-  'Never compute or estimate money amounts yourself — call a tool. Be concise and plain-spoken.';
 
 /**
  * The live, provider-agnostic adapter (Vercel AI SDK). The underlying model is
@@ -109,7 +107,7 @@ export class LiveProvider implements LLMProvider {
       system: CHAT_SYSTEM,
       messages: toModelMessages(args.messages),
       tools: buildTools(args.tools),
-      stopWhen: stepCountIs(6),
+      stopWhen: stepCountIs(8),
       abortSignal: AbortSignal.timeout(CHAT_TIMEOUT_MS),
     });
     return { answer: result.text, usedTools: toolNames(result.steps) };
@@ -126,7 +124,7 @@ export class LiveProvider implements LLMProvider {
       system: CHAT_SYSTEM,
       messages: toModelMessages(args.messages),
       tools: buildTools(args.tools),
-      stopWhen: stepCountIs(6),
+      stopWhen: stepCountIs(8),
       abortSignal: AbortSignal.timeout(CHAT_TIMEOUT_MS),
     });
     return {
@@ -199,6 +197,106 @@ function buildTools(t: AssistantTools) {
           net: money(b.netCents, b.currency),
           direction: b.netCents >= 0 ? 'they owe you' : 'you owe them',
         }));
+      },
+    }),
+    balanceWithPerson: tool({
+      description:
+        'The balance with ONE person (matched by name): the net, the shares that make it up, and settlement history. Use for "what\'s my balance with X" / "what did I split with X". Returns exact amounts. Null-equivalent (empty) if the name matches no one.',
+      inputSchema: z.object({ person: z.string().describe('the person\'s name or part of it') }),
+      execute: async ({ person }) => {
+        const d = await t.balanceWithPerson(person);
+        if (!d) return { found: false as const, person };
+        return {
+          found: true as const,
+          person: d.personName,
+          net: money(d.netCents, d.currency),
+          direction: d.netCents >= 0 ? 'they owe you' : 'you owe them',
+          shares: d.shares.map((s) => money(s.amountCents, s.currency)),
+          settlements: d.settlements.map((s) => ({
+            amount: money(s.amountCents, s.currency),
+            direction: s.direction,
+            settledAt: s.settledAt,
+          })),
+        };
+      },
+    }),
+    searchTransactions: tool({
+      description:
+        'Search and filter the user\'s transactions. Use `text` for merchant/title/note keywords — to answer a CONCEPT (e.g. "coffee", "rideshare") expand it into likely merchant/keyword terms yourself and search those. Amounts are in the major currency unit (dollars). Returns matching transactions, newest first.',
+      inputSchema: z.object({
+        text: z.string().optional().describe('keyword(s) to match in merchant/title/note'),
+        categories: z.array(CategoryKey).optional(),
+        minAmount: z.number().optional().describe('minimum absolute amount, in dollars'),
+        maxAmount: z.number().optional().describe('maximum absolute amount, in dollars'),
+        from: z.string().optional().describe('start date inclusive, YYYY-MM-DD'),
+        to: z.string().optional().describe('end date inclusive, YYYY-MM-DD'),
+        status: z.string().optional().describe('e.g. cleared or pending'),
+        limit: z.number().int().min(1).max(50).default(20),
+      }),
+      execute: async (a) => {
+        // 2-dp major->minor, consistent with the app's other manual-entry paths.
+        const rows = await t.searchTransactions({
+          text: a.text,
+          categories: a.categories,
+          minCents: a.minAmount != null ? Math.round(a.minAmount * 100) : undefined,
+          maxCents: a.maxAmount != null ? Math.round(a.maxAmount * 100) : undefined,
+          from: a.from,
+          to: a.to,
+          status: a.status,
+          limit: a.limit,
+        });
+        return rows.map((x) => ({
+          title: x.title,
+          merchant: x.merchant,
+          amount: money(x.amountCents, x.currency),
+          category: x.category,
+          occurredAt: x.occurredAt,
+        }));
+      },
+    }),
+    spendingTrend: tool({
+      description:
+        'Expense totals per month across a range (inclusive, max 24 months), optionally filtered to categories. Use to compare months or describe a trend. Returns exact amounts.',
+      inputSchema: z.object({
+        fromMonth: z.string().describe('start month inclusive, YYYY-MM'),
+        toMonth: z.string().describe('end month inclusive, YYYY-MM'),
+        categories: z.array(CategoryKey).optional(),
+      }),
+      execute: async ({ fromMonth, toMonth, categories }) => {
+        const months = await t.spendingTrend({ fromMonth, toMonth, categories });
+        return months.map((m) => ({
+          month: m.month,
+          total: money(m.totalCents),
+          byCategory: m.byCategory.map((c) => ({ category: c.category, amount: money(c.amountCents) })),
+        }));
+      },
+    }),
+    monthlyRecap: tool({
+      description:
+        'Summarize a single month (YYYY-MM): total income, total expense, net, spending by category, and the top merchant. Returns exact amounts.',
+      inputSchema: z.object({ month: z.string().describe('Calendar month, e.g. 2026-05') }),
+      execute: async ({ month }) => {
+        const r = await t.monthlyRecap(month);
+        return {
+          month: r.month,
+          income: money(r.incomeCents),
+          expense: money(r.expenseCents),
+          net: money(r.netCents),
+          byCategory: r.byCategory.map((c) => ({ category: c.category, amount: money(c.amountCents) })),
+          topMerchant: r.topMerchant,
+        };
+      },
+    }),
+    accountBalances: tool({
+      description:
+        'The net balance of each account, in that account\'s own currency. Do NOT sum across different currencies; report each, and a per-currency subtotal at most. Returns exact amounts.',
+      inputSchema: z.object({}),
+      execute: async () => {
+        const lines = await t.accountBalances();
+        return {
+          accounts: lines.map((l) => ({ account: l.accountName, balance: money(l.balanceCents, l.currency) })),
+          byCurrency: subtotalByCurrency(lines).map((s) => ({ currency: s.currency, total: money(s.totalCents, s.currency) })),
+        };
       },
     }),
   };

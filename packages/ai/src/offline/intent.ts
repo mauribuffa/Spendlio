@@ -24,6 +24,10 @@ export type Intent =
   | { kind: 'budgetStatus' }
   | { kind: 'recentTransactions' }
   | { kind: 'balancesSummary' }
+  | { kind: 'balanceWithPerson'; person: string }
+  | { kind: 'search'; text: string }
+  | { kind: 'trend'; category: CategoryKey | null }
+  | { kind: 'recap'; month: string; monthName: string }
   | { kind: 'unknown' };
 
 /** Find the first category keyword mentioned in the text. */
@@ -52,6 +56,10 @@ export function parseIntent(question: string, now: Date = new Date()): Intent {
   const text = question.toLowerCase();
   const year = now.getUTCFullYear();
 
+  const withPerson = text.match(/\b(?:balance with|owe|do i owe|owes me)\s+([a-z][a-z .'-]*)/);
+  if (/\bbalance with\b/.test(text) && withPerson && withPerson[1]) {
+    return { kind: 'balanceWithPerson', person: withPerson[1].replace(/[?.!]+$/, '').trim() };
+  }
   if (/\b(balance|owe|owes|owed|settle|settl)\w*/.test(text)) {
     return { kind: 'balancesSummary' };
   }
@@ -65,8 +73,23 @@ export function parseIntent(question: string, now: Date = new Date()): Intent {
     return { kind: 'spendByCategory', category, monthName: month.name, month: month.month };
   }
 
+  if (/\b(trend|over time|compare|comparison|each month|month over month|monthly)\b/.test(text)) {
+    return { kind: 'trend', category: findCategory(text) };
+  }
+
+  if (/\b(recap|summary|summarize|overview)\b/.test(text)) {
+    const m = findMonth(text, year);
+    const fallback = `${year}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+    return { kind: 'recap', month: m?.month ?? fallback, monthName: m?.name ?? 'this month' };
+  }
+
   if (/\b(recent|latest|last)\b.*\b(transaction|transactions|purchase|purchases)\b/.test(text)) {
     return { kind: 'recentTransactions' };
+  }
+
+  const searchMatch = text.match(/\b(find|search|look up|transactions? (?:at|from|for))\b\s+(.*)/);
+  if (searchMatch && searchMatch[2]) {
+    return { kind: 'search', text: searchMatch[2].replace(/[?.!]+$/, '').trim() };
   }
 
   return { kind: 'unknown' };

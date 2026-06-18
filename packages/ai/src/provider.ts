@@ -59,6 +59,23 @@ export interface CategorySpend {
   amountCents: number;
 }
 
+/** Total expense for one month, with an optional per-category breakdown. */
+export interface MonthSpend {
+  month: string; // YYYY-MM
+  totalCents: number;
+  byCategory: CategorySpend[];
+}
+
+/** Monthly recap, all exact integer cents (base currency). */
+export interface MonthlyRecap {
+  month: string;
+  incomeCents: number;
+  expenseCents: number;
+  netCents: number;
+  byCategory: CategorySpend[];
+  topMerchant: string | null;
+}
+
 export interface BudgetLine {
   category: CategoryKey;
   limitCents: number;
@@ -84,6 +101,34 @@ export interface BalanceLine {
   currency: string;
 }
 
+/** Detailed balance with one person (exact integer cents). */
+export interface PersonBalanceDetail {
+  personName: string;
+  netCents: number; // positive = they owe you, negative = you owe them
+  currency: string;
+  shares: { amountCents: number; currency: string }[];
+  settlements: { amountCents: number; direction: 'they_paid_you' | 'you_paid_them'; currency: string; settledAt: string | null }[];
+}
+
+/** A single account's net balance (exact integer cents, the account's own currency). */
+export interface AccountBalanceLine {
+  accountName: string;
+  currency: string;
+  balanceCents: number;
+}
+
+/** Filters for transaction search. All optional; combined with AND. `text` is matched case-insensitively across title/merchant/note. */
+export interface TransactionFilter {
+  text?: string;
+  categories?: CategoryKey[];
+  minCents?: number; // absolute magnitude, minor units
+  maxCents?: number;
+  from?: string; // YYYY-MM-DD inclusive
+  to?: string; // YYYY-MM-DD inclusive
+  status?: string; // e.g. 'cleared' | 'pending'
+  limit?: number; // default 20, clamped to [1, 50]
+}
+
 /**
  * The typed tool surface the assistant orchestrates over. Every method returns
  * EXACT integer cents computed by the data layer — the model only selects which
@@ -99,6 +144,16 @@ export interface AssistantTools {
   recentTransactions(limit: number): Promise<RecentTransaction[]>;
   /** Net balances with each person you share expenses with. */
   balancesSummary(): Promise<BalanceLine[]>;
+  /** Balance + contributing shares + settlement history for one person, matched by name. Null if no match. */
+  balanceWithPerson(query: string): Promise<PersonBalanceDetail | null>;
+  /** Search/filter transactions. Lexical `text` over title/merchant/note + structured filters. Newest first, capped. */
+  searchTransactions(filter: TransactionFilter): Promise<RecentTransaction[]>;
+  /** Per-month expense totals across an inclusive month range (capped at 24 months). */
+  spendingTrend(args: { categories?: CategoryKey[]; fromMonth: string; toMonth: string }): Promise<MonthSpend[]>;
+  /** Income/expense/net + category breakdown + top merchant for a month (YYYY-MM). */
+  monthlyRecap(month: string): Promise<MonthlyRecap>;
+  /** Net balance per account (sum of its transactions), in each account's own currency. */
+  accountBalances(): Promise<AccountBalanceLine[]>;
 }
 
 /** A single turn in the assistant conversation. */

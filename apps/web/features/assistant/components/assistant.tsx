@@ -15,9 +15,9 @@ function textOf(message: UIMessage): string {
 }
 
 const SUGGESTIONS = [
-  'How much did I spend on dining last month?',
-  'What is my biggest expense category?',
-  'Am I over budget anywhere?',
+  'How does my dining spending compare to last month?',
+  'Find my transactions at Amazon over $50',
+  'What\'s my balance with Alex?',
 ];
 
 const GREETING =
@@ -73,6 +73,10 @@ function Bubble({ role, children, userName }: { role: 'ai' | 'me'; children: Rea
           whiteSpace: 'pre-wrap',
         }}
       >
+        {/* SECURITY: assistant output is rendered as PLAIN TEXT (React-escaped).
+            Do NOT switch to a markdown/HTML renderer without sanitizing
+            auto-loading images + links — that would open a prompt-injection
+            data-exfiltration vector. See ADR-041 (assistant injection posture). */}
         {children}
       </div>
       {!ai ? <Avatar name={userName} size="sm" /> : null}
