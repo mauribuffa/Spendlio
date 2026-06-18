@@ -25,6 +25,17 @@ const OCR_TIMEOUT_MS = 90_000;
 const CHAT_TIMEOUT_MS = 60_000;
 
 /**
+ * `CHAT_SYSTEM` plus today's date. The model's training cutoff makes it assume a
+ * stale "now" (e.g. it resolves "this year" to 2023), so relative-time questions
+ * ("this month", "recently", "last year") would build wrong date filters and
+ * silently return nothing. Anchoring the date here fixes every time-relative tool call.
+ */
+function chatSystem(): string {
+  const today = new Date().toISOString().slice(0, 10);
+  return `${CHAT_SYSTEM}\n\nToday's date is ${today} (UTC). Resolve every relative time reference ("this month", "last year", "recently", a bare month name, etc.) against that date — never assume a different current date.`;
+}
+
+/**
  * The live, provider-agnostic adapter (Vercel AI SDK). The underlying model is
  * Claude when ANTHROPIC_API_KEY is set, else OpenAI when AI_PROVIDER=openai +
  * OPENAI_API_KEY (see resolveLiveModel). Every model output is re-validated
@@ -104,7 +115,7 @@ export class LiveProvider implements LLMProvider {
   async chat(args: ChatArgs): Promise<ChatResult> {
     const result = await generateText({
       model: this.model,
-      system: CHAT_SYSTEM,
+      system: chatSystem(),
       messages: toModelMessages(args.messages),
       tools: buildTools(args.tools),
       stopWhen: stepCountIs(8),
@@ -121,7 +132,7 @@ export class LiveProvider implements LLMProvider {
   streamChat(args: ChatArgs): ChatStream {
     const result = streamText({
       model: this.model,
-      system: CHAT_SYSTEM,
+      system: chatSystem(),
       messages: toModelMessages(args.messages),
       tools: buildTools(args.tools),
       stopWhen: stepCountIs(8),
@@ -222,7 +233,7 @@ function buildTools(t: AssistantTools) {
     }),
     searchTransactions: tool({
       description:
-        'Search and filter the user\'s transactions. Use `text` for merchant/title/note keywords — to answer a CONCEPT (e.g. "coffee", "rideshare") expand it into likely merchant/keyword terms yourself and search those. Amounts are in the major currency unit (dollars). Returns matching transactions, newest first.',
+        'Search and filter the user\'s transactions. Use `text` for merchant/title/note keywords — to answer a CONCEPT (e.g. "coffee", "rideshare") expand it into likely merchant/keyword terms yourself and search those. Amounts are in the major currency unit (dollars). Returns matching transactions, newest first. Set ONLY the filters the user explicitly asked for and leave the rest unset — do NOT default `status`, dates, or amounts, or you will hide matching rows (e.g. pending transactions).',
       inputSchema: z.object({
         text: z.string().optional().describe('keyword(s) to match in merchant/title/note'),
         categories: z.array(CategoryKey).optional(),
@@ -230,7 +241,7 @@ function buildTools(t: AssistantTools) {
         maxAmount: z.number().optional().describe('maximum absolute amount, in dollars'),
         from: z.string().optional().describe('start date inclusive, YYYY-MM-DD'),
         to: z.string().optional().describe('end date inclusive, YYYY-MM-DD'),
-        status: z.string().optional().describe('e.g. cleared or pending'),
+        status: z.string().optional().describe('ONLY set if the user asks for a specific status (e.g. "pending"); otherwise omit to search all statuses'),
         limit: z.number().int().min(1).max(50).default(20),
       }),
       execute: async (a) => {
