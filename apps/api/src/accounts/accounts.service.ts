@@ -1,13 +1,15 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { and, desc, eq, isNull } from 'drizzle-orm';
 import { accounts, transactions, users, fxRates } from '@spendlio/db';
+import type { DB as Database } from '@spendlio/db';
 import { sumNet, convertMinor, type RateRow } from '@spendlio/core';
-import type { CreateAccountInput, UpdateAccountInput, AccountBalance } from '@spendlio/contracts';
+import type { CreateAccountInput, UpdateAccountInput, AccountBalance, AccountType } from '@spendlio/contracts';
 import { DB } from '../db/db.module';
+import { or404 } from '../common/or404';
 
 @Injectable()
 export class AccountsService {
-  constructor(@Inject(DB) private db: any) {}
+  constructor(@Inject(DB) private db: Database) {}
 
   async list(userId: string) {
     const items = await this.db.select().from(accounts)
@@ -55,13 +57,13 @@ export class AccountsService {
       netByAccount.set(t.accountId, arr);
     }
 
-    return accountRows.map((a: any): AccountBalance => {
+    return accountRows.map((a): AccountBalance => {
       const balance = sumNet(netByAccount.get(a.id) ?? []);
       const converted = convertMinor(balance, a.currency, baseCurrency, rateRows);
       return {
         accountId: a.id,
         name: a.name,
-        type: a.type,
+        type: a.type as AccountType,
         last4: a.last4 ?? null,
         currency: a.currency,
         balance,
@@ -80,8 +82,7 @@ export class AccountsService {
   async get(userId: string, id: string) {
     const [row] = await this.db.select().from(accounts)
       .where(and(eq(accounts.id, id), eq(accounts.userId, userId)));
-    if (!row) throw new NotFoundException();
-    return row;
+    return or404(row);
   }
 
   async update(userId: string, id: string, dto: UpdateAccountInput) {

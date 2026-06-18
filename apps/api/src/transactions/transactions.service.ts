@@ -1,13 +1,15 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { and, desc, eq, isNull, lt } from 'drizzle-orm';
 import { accounts, transactions } from '@spendlio/db';
+import type { DB as Database } from '@spendlio/db';
 import type { CreateTransactionInput, UpdateTransactionInput } from '@spendlio/contracts';
 import { DB } from '../db/db.module';
 import { decodeCursor, encodeCursor } from '../common/pagination';
+import { or404 } from '../common/or404';
 
 @Injectable()
 export class TransactionsService {
-  constructor(@Inject(DB) private db: any) {}
+  constructor(@Inject(DB) private db: Database) {}
 
   /** IDOR guard: a supplied accountId must belong to this user before we link it. */
   private async assertAccountOwned(userId: string, accountId?: string | null) {
@@ -51,8 +53,7 @@ export class TransactionsService {
   async get(userId: string, id: string) {
     const [row] = await this.db.select().from(transactions)
       .where(and(eq(transactions.id, id), eq(transactions.userId, userId), isNull(transactions.deletedAt)));
-    if (!row) throw new NotFoundException();
-    return row;
+    return or404(row);
   }
 
   async update(userId: string, id: string, dto: UpdateTransactionInput) {

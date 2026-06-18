@@ -1,11 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { asc, eq, isNull, or } from 'drizzle-orm';
 import { categories } from '@spendlio/db';
+import type { DB as Database } from '@spendlio/db';
 import { DB } from '../db/db.module';
 
 @Injectable()
 export class CategoriesService {
-  constructor(@Inject(DB) private db: any) {}
+  constructor(@Inject(DB) private db: Database) {}
 
   /** Built-in defaults (userId IS NULL, shared by all) plus this user's own categories. */
   async list(userId: string) {

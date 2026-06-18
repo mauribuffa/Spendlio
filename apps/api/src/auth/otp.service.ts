@@ -8,6 +8,7 @@ import {
 import { createHmac, randomInt, timingSafeEqual } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { users } from '@spendlio/db';
+import type { DB as Database } from '@spendlio/db';
 import { getRedisClient } from '@spendlio/queue';
 import type { AuthUser } from '@spendlio/contracts';
 import { DB } from '../db/db.module';
@@ -36,7 +37,7 @@ function cooldownKey(email: string): string {
 export class OtpService {
   private readonly log = new Logger('OtpService');
   constructor(
-    @Inject(DB) private db: any,
+    @Inject(DB) private db: Database,
     @Inject(EMAIL_SENDER) private email: EmailSender,
   ) {}
 
@@ -103,7 +104,7 @@ export class OtpService {
   /** Upsert a user keyed on the unique email (first sign-in = account creation). */
   private async provision(email: string): Promise<AuthUser> {
     const lower = email.toLowerCase();
-    const name = lower.split('@')[0];
+    const name = lower.split('@')[0]!;
     await this.db
       .insert(users)
       .values({ email: lower, name })

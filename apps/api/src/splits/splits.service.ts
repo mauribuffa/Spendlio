@@ -1,13 +1,15 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { and, desc, eq, inArray, isNull } from 'drizzle-orm';
 import { people, settlements, splits, splitShares } from '@spendlio/db';
-import { computeSplit, netForUser, type Edge, type Share } from '@spendlio/core';
+import type { DB as Database } from '@spendlio/db';
+import { computeSplit, type Edge, type Share } from '@spendlio/core';
 import type { Balance, CreateSplitInput } from '@spendlio/contracts';
 import { DB } from '../db/db.module';
+import { or404 } from '../common/or404';
 
 @Injectable()
 export class SplitsService {
-  constructor(@Inject(DB) private db: any) {}
+  constructor(@Inject(DB) private db: Database) {}
 
   async list(userId: string) {
     const items = await this.db.select().from(splits)
@@ -35,7 +37,7 @@ export class SplitsService {
       .select({ id: people.id })
       .from(people)
       .where(and(eq(people.userId, userId), eq(people.isSelf, false), inArray(people.id, dto.participantIds)));
-    const ownedIds = new Set(owned.map((p: { id: string }) => p.id));
+    const ownedIds = new Set(owned.map((p) => p.id));
     if (dto.participantIds.some((id) => !ownedIds.has(id))) {
       throw new BadRequestException('Every participant must be one of your people.');
     }
@@ -73,11 +75,11 @@ export class SplitsService {
     }).returning();
 
     const sharesRows = await this.db.insert(splitShares).values(
-      shares.map((s) => ({ splitId: split.id, personId: s.personId, amount: s.amount })),
+      shares.map((s) => ({ splitId: split!.id, personId: s.personId, amount: s.amount })),
     ).returning();
 
     // Hide the self share from the client (presentation): friends only.
-    return { ...split, shares: sharesRows.filter((s: { personId: string }) => s.personId !== selfId) };
+    return { ...split, shares: sharesRows.filter((s) => s.personId !== selfId) };
   }
 
   /**
@@ -99,16 +101,16 @@ export class SplitsService {
       .from(people)
       .where(and(eq(people.userId, userId), eq(people.isSelf, true)))
       .limit(1);
-    return self.id;
+    return self!.id;
   }
 
   async get(userId: string, id: string) {
-    const [split] = await this.db.select().from(splits)
+    const [row] = await this.db.select().from(splits)
       .where(and(eq(splits.id, id), eq(splits.userId, userId), isNull(splits.deletedAt)));
-    if (!split) throw new NotFoundException();
+    const split = or404(row);
     const shares = await this.db.select().from(splitShares).where(eq(splitShares.splitId, id));
     // The self share (split.payerId) is internal bookkeeping; the client sees friends only.
-    return { ...split, shares: shares.filter((s: { personId: string }) => s.personId !== split.payerId) };
+    return { ...split, shares: shares.filter((s) => s.personId !== split.payerId) };
   }
 
   async remove(userId: string, id: string) {
@@ -122,7 +124,8 @@ export class SplitsService {
    * Net who-owes-whom per person, from the user's viewpoint (+ they owe you).
    * Same edge model as @spendlio/ai's balancesSummary: the payer is the
    * creditor, each other share-holder a debtor; a settled settlement is the
-   * reverse edge. Netted via core.netForUser.
+   * reverse edge. Netted inline here: build debtor/creditor edges, net both
+   * sides per person, then drop the payer persons (the user) and any zeros.
    */
   async balances(userId: string): Promise<Balance[]> {
     const userSplits = await this.db

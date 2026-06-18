@@ -1,10 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { createDbTools, streamAssistant, type ChatMessage } from '@spendlio/ai';
+import type { DB as Database } from '@spendlio/db';
 import { DB } from '../db/db.module';
 
 @Injectable()
 export class AssistantService {
-  constructor(@Inject(DB) private db: any) {}
+  constructor(@Inject(DB) private db: Database) {}
 
   /**
    * One assistant turn, streamed. The tools are built server-side, scoped to the

@@ -1,13 +1,15 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { and, desc, eq, gte, isNull, lt, sql } from 'drizzle-orm';
+import { Inject, Injectable } from '@nestjs/common';
+import { and, desc, eq, gte, isNull, lt } from 'drizzle-orm';
 import { budgets, transactions } from '@spendlio/db';
-import type { BudgetStatus, CreateBudgetInput, UpdateBudgetInput } from '@spendlio/contracts';
+import type { DB as Database } from '@spendlio/db';
+import type { BudgetStatus, BudgetPeriod, CategoryKey, CreateBudgetInput, UpdateBudgetInput } from '@spendlio/contracts';
 import { DB } from '../db/db.module';
 import { periodBounds } from './period';
+import { or404 } from '../common/or404';
 
 @Injectable()
 export class BudgetsService {
-  constructor(@Inject(DB) private db: any) {}
+  constructor(@Inject(DB) private db: Database) {}
 
   async list(userId: string) {
     const items = await this.db.select().from(budgets)
@@ -24,8 +26,7 @@ export class BudgetsService {
   async get(userId: string, id: string) {
     const [row] = await this.db.select().from(budgets)
       .where(and(eq(budgets.id, id), eq(budgets.userId, userId)));
-    if (!row) throw new NotFoundException();
-    return row;
+    return or404(row);
   }
 
   async update(userId: string, id: string, dto: UpdateBudgetInput) {
@@ -50,34 +51,53 @@ export class BudgetsService {
    */
   async status(userId: string): Promise<BudgetStatus[]> {
     const rows = await this.db.select().from(budgets).where(eq(budgets.userId, userId));
-    const out: BudgetStatus[] = [];
-    for (const b of rows) {
-      const { start, end } = periodBounds(b.period);
+    if (rows.length === 0) return [];
+
+    // Per-budget period window, then the union [minStart, maxEnd) covering them all.
+    const windows = rows.map((b) => ({ b, ...periodBounds(b.period as BudgetPeriod) }));
+    let minStart = windows[0]!.start;
+    let maxEnd = windows[0]!.end;
+    for (const w of windows) {
+      if (w.start < minStart) minStart = w.start;
+      if (w.end > maxEnd) maxEnd = w.end;
+    }
+
+    // One query: this user's expenses (amount < 0) across the union window.
+    const txns = await this.db
+      .select({
+        category: transactions.category,
+        amount: transactions.amount,
+        occurredAt: transactions.occurredAt,
+      })
+      .from(transactions)
+      .where(and(
+        eq(transactions.userId, userId),
+        isNull(transactions.deletedAt),
+        gte(transactions.occurredAt, minStart),
+        lt(transactions.occurredAt, maxEnd),
+        lt(transactions.amount, 0),
+      ));
+
+    return windows.map(({ b, start, end }): BudgetStatus => {
       // sum of expense magnitudes (amount < 0) for this category in the window
-      const [agg] = await this.db
-        .select({ spent: sql<number>`coalesce(-sum(${transactions.amount}), 0)` })
-        .from(transactions)
-        .where(and(
-          eq(transactions.userId, userId),
-          eq(transactions.category, b.category),
-          isNull(transactions.deletedAt),
-          gte(transactions.occurredAt, start),
-          lt(transactions.occurredAt, end),
-          lt(transactions.amount, 0),
-        ));
-      const spent = Number(agg?.spent ?? 0);
+      let sum = 0;
+      for (const t of txns) {
+        if (t.category === b.category && t.occurredAt >= start && t.occurredAt < end) {
+          sum += t.amount;
+        }
+      }
+      const spent = -sum;
       const remaining = b.limit - spent;
       const pct = b.limit === 0 ? 0 : spent / b.limit;
-      out.push({
-        category: b.category,
-        period: b.period,
+      return {
+        category: b.category as CategoryKey,
+        period: b.period as BudgetPeriod,
         currency: b.currency,
         limit: b.limit,
         spent,
         remaining,
         pct,
-      });
-    }
-    return out;
+      };
+    });
   }
 }

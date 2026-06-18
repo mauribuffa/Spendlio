@@ -1,12 +1,13 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { and, desc, eq, inArray } from 'drizzle-orm';
 import { people, settlements } from '@spendlio/db';
+import type { DB as Database } from '@spendlio/db';
 import type { CreateSettlementInput } from '@spendlio/contracts';
 import { DB } from '../db/db.module';
 
 @Injectable()
 export class SettlementsService {
-  constructor(@Inject(DB) private db: any) {}
+  constructor(@Inject(DB) private db: Database) {}
 
   /** List the user's settlements, newest first. */
   async list(userId: string) {
@@ -37,7 +38,7 @@ export class SettlementsService {
       .select({ id: people.id })
       .from(people)
       .where(and(eq(people.userId, userId), inArray(people.id, [dto.fromPersonId, dto.toPersonId])));
-    const ownedIds = new Set(owned.map((p: { id: string }) => p.id));
+    const ownedIds = new Set(owned.map((p) => p.id));
     if (!ownedIds.has(dto.fromPersonId) || !ownedIds.has(dto.toPersonId)) {
       throw new BadRequestException('Both people must belong to you.');
     }

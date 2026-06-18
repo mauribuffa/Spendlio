@@ -1,11 +1,13 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { and, eq } from 'drizzle-orm';
 import { monthlySummaries } from '@spendlio/db';
+import type { DB as Database } from '@spendlio/db';
 import { DB } from '../db/db.module';
+import { or404 } from '../common/or404';
 
 @Injectable()
 export class RecapsService {
-  constructor(@Inject(DB) private db: any) {}
+  constructor(@Inject(DB) private db: Database) {}
 
   /** The user's monthly_summaries row for a YYYY-MM month; 404 if not built yet. */
   async get(userId: string, month: string) {
@@ -13,7 +15,6 @@ export class RecapsService {
       .select()
       .from(monthlySummaries)
       .where(and(eq(monthlySummaries.userId, userId), eq(monthlySummaries.month, month)));
-    if (!row) throw new NotFoundException();
-    return row;
+    return or404(row);
   }
 }

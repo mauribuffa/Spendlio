@@ -1,12 +1,14 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { and, desc, eq } from 'drizzle-orm';
 import { people, notifications } from '@spendlio/db';
+import type { DB as Database } from '@spendlio/db';
 import type { CreatePersonInput } from '@spendlio/contracts';
 import { DB } from '../db/db.module';
+import { or404 } from '../common/or404';
 
 @Injectable()
 export class PeopleService {
-  constructor(@Inject(DB) private db: any) {}
+  constructor(@Inject(DB) private db: Database) {}
 
   /** Friends the user splits with. The implicit "you" person (isSelf, the
    *  model-B split payer/viewpoint — ADR-021) is never listed. */
@@ -29,11 +31,11 @@ export class PeopleService {
    * not background work. Delivery to the person lands when that infra exists.
    */
   async remind(userId: string, personId: string) {
-    const [person] = await this.db
+    const [row] = await this.db
       .select({ id: people.id, name: people.name })
       .from(people)
       .where(and(eq(people.id, personId), eq(people.userId, userId), eq(people.isSelf, false)));
-    if (!person) throw new NotFoundException();
+    const person = or404(row);
 
     await this.db.insert(notifications).values({
       userId,

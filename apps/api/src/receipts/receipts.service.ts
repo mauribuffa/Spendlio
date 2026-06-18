@@ -1,17 +1,19 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { and, desc, eq, isNull } from 'drizzle-orm';
 import { receipts, transactions } from '@spendlio/db';
+import type { DB as Database } from '@spendlio/db';
 // (sha256 is validated at the API edge by CreateReceiptInput / the presign query.)
 import { getBlobStore, receiptKey, isOwnReceiptKey } from '@spendlio/storage';
 import { enqueue, requeue } from '@spendlio/queue';
 import type { CreateReceiptInput, ConfirmReceiptInput } from '@spendlio/contracts';
 import { DB } from '../db/db.module';
+import { or404 } from '../common/or404';
 
 @Injectable()
 export class ReceiptsService {
   private blob = getBlobStore();
 
-  constructor(@Inject(DB) private db: any) {}
+  constructor(@Inject(DB) private db: Database) {}
 
   /**
    * A short-lived URL the client PUTs the image to directly; bytes skip our API.
@@ -51,7 +53,7 @@ export class ReceiptsService {
       .values({ userId, imageKey: dto.imageKey, sha256: dto.sha256 ?? null, status: 'processing' })
       .returning();
     // jobId auto-derives to `ocr-<receiptId>` (idempotent; BullMQ forbids ':').
-    await enqueue('ocr', { receiptId: row.id });
+    await enqueue('ocr', { receiptId: row!.id });
     return this.toReceipt(row);
   }
 
@@ -59,14 +61,13 @@ export class ReceiptsService {
     const rows = await this.db.select().from(receipts)
       .where(and(eq(receipts.userId, userId), isNull(receipts.deletedAt)))
       .orderBy(desc(receipts.createdAt));
-    return { items: rows.map((r: any) => this.toReceipt(r)), nextCursor: null };
+    return { items: rows.map((r) => this.toReceipt(r)), nextCursor: null };
   }
 
   async get(userId: string, id: string) {
     const [row] = await this.db.select().from(receipts)
       .where(and(eq(receipts.id, id), eq(receipts.userId, userId), isNull(receipts.deletedAt)));
-    if (!row) throw new NotFoundException();
-    return this.toReceipt(row);
+    return this.toReceipt(or404(row));
   }
 
   /**
@@ -77,9 +78,9 @@ export class ReceiptsService {
    * expense amount.
    */
   async confirm(userId: string, id: string, dto: ConfirmReceiptInput) {
-    const [row] = await this.db.select().from(receipts)
+    const [found] = await this.db.select().from(receipts)
       .where(and(eq(receipts.id, id), eq(receipts.userId, userId), isNull(receipts.deletedAt)));
-    if (!row) throw new NotFoundException();
+    const row = or404(found);
     if (row.status !== 'parsed') {
       throw new BadRequestException('Receipt is still being read — try again once it has been scanned.');
     }
@@ -107,7 +108,7 @@ export class ReceiptsService {
       currency: dto.currency,
       purchasedAt: dto.occurredAt,
       ocr,
-      transactionId: txn.id,
+      transactionId: txn!.id,
       updatedAt: new Date(),
     }).where(and(eq(receipts.id, id), eq(receipts.userId, userId)));
 
@@ -124,9 +125,9 @@ export class ReceiptsService {
    * is a no-op. Rejects anything not currently 'failed'.
    */
   async retry(userId: string, id: string) {
-    const [row] = await this.db.select().from(receipts)
+    const [found] = await this.db.select().from(receipts)
       .where(and(eq(receipts.id, id), eq(receipts.userId, userId), isNull(receipts.deletedAt)));
-    if (!row) throw new NotFoundException();
+    const row = or404(found);
     if (row.status !== 'failed') {
       throw new BadRequestException("This receipt isn't in a failed state.");
     }
@@ -139,15 +140,14 @@ export class ReceiptsService {
 
     const [updated] = await this.db.select().from(receipts)
       .where(and(eq(receipts.id, id), eq(receipts.userId, userId), isNull(receipts.deletedAt)));
-    return this.toReceipt(updated);
+    return this.toReceipt(or404(updated));
   }
 
   /** A short-lived URL to view the receipt's image (user-scoped). */
   async imageUrl(userId: string, id: string) {
     const [row] = await this.db.select({ imageKey: receipts.imageKey }).from(receipts)
       .where(and(eq(receipts.id, id), eq(receipts.userId, userId), isNull(receipts.deletedAt)));
-    if (!row) throw new NotFoundException();
-    const url = await this.blob.presignDownload({ key: row.imageKey });
+    const url = await this.blob.presignDownload({ key: or404(row).imageKey });
     return { url };
   }
 
