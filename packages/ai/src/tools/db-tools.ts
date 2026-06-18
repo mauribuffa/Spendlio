@@ -15,6 +15,7 @@ import type {
   BalanceLine,
   BudgetLine,
   CategorySpend,
+  MonthSpend,
   RecentTransaction,
 } from '../provider';
 
@@ -43,6 +44,37 @@ export function dayStartUTC(date: string): Date {
 /** Midnight UTC of the day AFTER a YYYY-MM-DD day — the end-exclusive bound for an inclusive `to`. */
 export function dayAfterUTC(date: string): Date {
   return new Date(dayStartUTC(date).getTime() + 86_400_000);
+}
+
+/** Inclusive list of YYYY-MM between two months, capped. */
+export function monthsInRange(fromMonth: string, toMonth: string, cap = 24): string[] {
+  const [fy, fm] = fromMonth.split('-').map(Number);
+  const [ty, tm] = toMonth.split('-').map(Number);
+  const out: string[] = [];
+  let y = fy!;
+  let m = fm!;
+  while ((y < ty! || (y === ty! && m <= tm!)) && out.length < cap) {
+    out.push(`${y}-${String(m).padStart(2, '0')}`);
+    m += 1;
+    if (m > 12) { m = 1; y += 1; }
+  }
+  return out;
+}
+
+/** Bucket flat (month, category, amount) rows into MonthSpend[], one entry per month in `months`. */
+export function shapeTrend(
+  months: string[],
+  rows: { month: string; category: string; amountCents: number }[],
+): MonthSpend[] {
+  const byMonth = new Map<string, CategorySpend[]>(months.map((m) => [m, []]));
+  for (const r of rows) {
+    const list = byMonth.get(r.month);
+    if (list) list.push({ category: r.category as CategoryKey, amountCents: r.amountCents });
+  }
+  return months.map((month) => {
+    const byCategory = (byMonth.get(month) ?? []).sort((a, b) => b.amountCents - a.amountCents);
+    return { month, totalCents: byCategory.reduce((s, c) => s + c.amountCents, 0), byCategory };
+  });
 }
 
 /** Map a transactions row to the RecentTransaction contract shape. */
@@ -290,6 +322,37 @@ export function createDbTools(db: DB, userId: string): AssistantTools {
         .limit(limit);
 
       return rows.map(toRecentTransaction);
+    },
+
+    async spendingTrend({ categories, fromMonth, toMonth }): Promise<MonthSpend[]> {
+      const months = monthsInRange(fromMonth, toMonth);
+      if (months.length === 0) return [];
+      const start = monthBounds(months[0]!).start;
+      const end = monthBounds(months[months.length - 1]!).end;
+      const cats = categories?.length ? categories : EXPENSE_CATEGORIES;
+      const monthExpr = sql<string>`to_char(${transactions.occurredAt} at time zone 'UTC', 'YYYY-MM')`;
+      const rows = await db
+        .select({
+          month: monthExpr,
+          category: transactions.category,
+          amountCents: sql<number>`coalesce(sum(abs(${transactions.amount})), 0)::bigint`,
+        })
+        .from(transactions)
+        .where(
+          and(
+            eq(transactions.userId, userId),
+            isNull(transactions.deletedAt),
+            inArray(transactions.category, cats),
+            gte(transactions.occurredAt, start),
+            lt(transactions.occurredAt, end),
+          ),
+        )
+        .groupBy(monthExpr, transactions.category);
+
+      return shapeTrend(
+        months,
+        rows.map((r) => ({ month: r.month, category: r.category, amountCents: Number(r.amountCents) })),
+      );
     },
   };
 }

@@ -59,6 +59,13 @@ export interface CategorySpend {
   amountCents: number;
 }
 
+/** Total expense for one month, with an optional per-category breakdown. */
+export interface MonthSpend {
+  month: string; // YYYY-MM
+  totalCents: number;
+  byCategory: CategorySpend[];
+}
+
 export interface BudgetLine {
   category: CategoryKey;
   limitCents: number;
@@ -113,6 +120,8 @@ export interface AssistantTools {
   balancesSummary(): Promise<BalanceLine[]>;
   /** Search/filter transactions. Lexical `text` over title/merchant/note + structured filters. Newest first, capped. */
   searchTransactions(filter: TransactionFilter): Promise<RecentTransaction[]>;
+  /** Per-month expense totals across an inclusive month range (capped at 24 months). */
+  spendingTrend(args: { categories?: CategoryKey[]; fromMonth: string; toMonth: string }): Promise<MonthSpend[]>;
 }
 
 /** A single turn in the assistant conversation. */

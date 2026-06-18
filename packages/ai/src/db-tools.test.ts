@@ -3,6 +3,8 @@ import {
   netBalances,
   monthBounds,
   monthOf,
+  monthsInRange,
+  shapeTrend,
   type SplitRow,
   type ShareRow,
   type SettlementRow,
@@ -102,5 +104,30 @@ describe('date-range helpers', () => {
   });
   it('dayAfterUTC is midnight UTC of the next day (for inclusive `to`)', () => {
     expect(dayAfterUTC('2026-05-10').toISOString()).toBe('2026-05-11T00:00:00.000Z');
+  });
+});
+
+describe('monthsInRange', () => {
+  it('lists inclusive months, rolling over the year', () => {
+    expect(monthsInRange('2025-11', '2026-02')).toEqual(['2025-11', '2025-12', '2026-01', '2026-02']);
+  });
+  it('caps the range length', () => {
+    expect(monthsInRange('2020-01', '2030-01').length).toBe(24);
+  });
+  it('returns a single month when from === to', () => {
+    expect(monthsInRange('2026-05', '2026-05')).toEqual(['2026-05']);
+  });
+});
+
+describe('shapeTrend', () => {
+  it('buckets rows by month and fills empty months with zero', () => {
+    const out = shapeTrend(
+      ['2026-04', '2026-05'],
+      [{ month: '2026-05', category: 'dining', amountCents: 12345 }],
+    );
+    expect(out).toEqual([
+      { month: '2026-04', totalCents: 0, byCategory: [] },
+      { month: '2026-05', totalCents: 12345, byCategory: [{ category: 'dining', amountCents: 12345 }] },
+    ]);
   });
 });

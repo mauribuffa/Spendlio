@@ -111,6 +111,20 @@ export class OfflineProvider implements LLMProvider {
         const parts = rows.map((r) => `${r.title} ${money(r.amountCents, r.currency)}`);
         return { answer: `Matches for "${intent.text}": ${parts.join(', ')}.`, usedTools };
       }
+      case 'trend': {
+        usedTools.push('spendingTrend');
+        const now = new Date();
+        const toMonth = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+        const fromD = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 2, 1));
+        const fromMonth = `${fromD.getUTCFullYear()}-${String(fromD.getUTCMonth() + 1).padStart(2, '0')}`;
+        const months = await args.tools.spendingTrend({
+          fromMonth,
+          toMonth,
+          categories: intent.category ? [intent.category] : undefined,
+        });
+        const parts = months.map((m) => `${m.month}: ${money(m.totalCents)}`);
+        return { answer: `Spending by month — ${parts.join(', ')}.`, usedTools };
+      }
       default:
         return {
           answer:

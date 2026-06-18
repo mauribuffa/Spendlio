@@ -232,5 +232,22 @@ function buildTools(t: AssistantTools) {
         }));
       },
     }),
+    spendingTrend: tool({
+      description:
+        'Expense totals per month across a range (inclusive, max 24 months), optionally filtered to categories. Use to compare months or describe a trend. Returns exact amounts.',
+      inputSchema: z.object({
+        fromMonth: z.string().describe('start month inclusive, YYYY-MM'),
+        toMonth: z.string().describe('end month inclusive, YYYY-MM'),
+        categories: z.array(CategoryKey).optional(),
+      }),
+      execute: async ({ fromMonth, toMonth, categories }) => {
+        const months = await t.spendingTrend({ fromMonth, toMonth, categories });
+        return months.map((m) => ({
+          month: m.month,
+          total: money(m.totalCents),
+          byCategory: m.byCategory.map((c) => ({ category: c.category, amount: money(c.amountCents) })),
+        }));
+      },
+    }),
   };
 }

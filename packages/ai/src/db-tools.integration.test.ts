@@ -136,4 +136,11 @@ describe.skipIf(!RUN)('createDbTools (live DB)', () => {
     const tooBig = await tools.searchTransactions({ minCents: 1_000_000 });
     expect(tooBig.length).toBe(0);
   });
+
+  it('spendingTrend buckets expense by month, user-scoped', async () => {
+    const tools = createDbTools(db, UA);
+    const trend = await tools.spendingTrend({ fromMonth: '2026-05', toMonth: '2026-05' });
+    const may = trend.find((m) => m.month === '2026-05');
+    expect(may?.totalCents).toBe(12345 + 5000); // dining + groceries; income excluded; B excluded
+  });
 });
