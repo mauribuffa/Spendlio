@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { loadStorageConfig } from './config';
-import { receiptKey } from './keys';
+import { receiptKey, isOwnReceiptKey } from './keys';
 import { S3BlobStore } from './s3-blob-store';
 
 describe('loadStorageConfig', () => {
@@ -63,6 +63,42 @@ describe('receiptKey', () => {
     const b = receiptKey(u, 'jpg', h);
     expect(a).toBe(`receipts/${u}/${h}.jpg`);
     expect(a).toBe(b); // same content -> same key (dedup)
+  });
+});
+
+describe('isOwnReceiptKey (register-time guard against cross-tenant keys)', () => {
+  const u = '00000000-0000-0000-0000-000000000001';
+  const other = '11111111-1111-1111-1111-111111111111';
+  const h = 'a'.repeat(64);
+
+  it('accepts a key the server built for this user (uuid fallback)', () => {
+    expect(isOwnReceiptKey(receiptKey(u, 'jpg'), u)).toBe(true);
+  });
+
+  it('accepts a content-addressed key whose basename matches the declared sha256', () => {
+    expect(isOwnReceiptKey(receiptKey(u, 'jpg', h), u, h)).toBe(true);
+  });
+
+  it("rejects another user's prefix (the IDOR vector)", () => {
+    expect(isOwnReceiptKey(`receipts/${other}/${h}.jpg`, u)).toBe(false);
+  });
+
+  it('rejects nested paths / traversal under the prefix', () => {
+    expect(isOwnReceiptKey(`receipts/${u}/../${other}/x.jpg`, u)).toBe(false);
+    expect(isOwnReceiptKey(`receipts/${u}/..`, u)).toBe(false);
+    expect(isOwnReceiptKey(`receipts/${u}/sub/x.jpg`, u)).toBe(false);
+  });
+
+  it('rejects a key outside the receipts/ root', () => {
+    expect(isOwnReceiptKey(`evil/${u}/x.jpg`, u)).toBe(false);
+  });
+
+  it('rejects a sha256 mismatch on the content-addressed path', () => {
+    expect(isOwnReceiptKey(`receipts/${u}/${'b'.repeat(64)}.jpg`, u, h)).toBe(false);
+  });
+
+  it('rejects an empty basename', () => {
+    expect(isOwnReceiptKey(`receipts/${u}/`, u)).toBe(false);
   });
 });
 

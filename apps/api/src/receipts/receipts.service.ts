@@ -2,7 +2,7 @@ import { BadRequestException, Inject, Injectable, NotFoundException } from '@nes
 import { and, desc, eq, isNull } from 'drizzle-orm';
 import { receipts, transactions } from '@spendlio/db';
 // (sha256 is validated at the API edge by CreateReceiptInput / the presign query.)
-import { getBlobStore, receiptKey } from '@spendlio/storage';
+import { getBlobStore, receiptKey, isOwnReceiptKey } from '@spendlio/storage';
 import { enqueue, requeue } from '@spendlio/queue';
 import type { CreateReceiptInput, ConfirmReceiptInput } from '@spendlio/contracts';
 import { DB } from '../db/db.module';
@@ -32,6 +32,12 @@ export class ReceiptsService {
    * content hash, return it instead of creating a duplicate row + re-running OCR.
    */
   async create(userId: string, dto: CreateReceiptInput) {
+    // The client re-asserts imageKey here; reject anything outside this user's
+    // namespace so a crafted key can't point a row at another user's blob
+    // (read back via GET /receipts/:id/image-url). Throws before any DB write.
+    if (!isOwnReceiptKey(dto.imageKey, userId, dto.sha256)) {
+      throw new BadRequestException('imageKey is not in your namespace');
+    }
     if (dto.sha256) {
       const [existing] = await this.db
         .select()

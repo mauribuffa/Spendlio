@@ -1,7 +1,7 @@
 export type { BlobStore, PresignedUpload, PutObjectInput } from './blob-store';
 export { S3BlobStore } from './s3-blob-store';
 export { loadStorageConfig, type StorageConfig } from './config';
-export { receiptKey } from './keys';
+export { receiptKey, isOwnReceiptKey } from './keys';
 
 import type { BlobStore } from './blob-store';
 import { S3BlobStore } from './s3-blob-store';
