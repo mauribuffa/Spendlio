@@ -26,6 +26,7 @@ export type Intent =
   | { kind: 'balancesSummary' }
   | { kind: 'search'; text: string }
   | { kind: 'trend'; category: CategoryKey | null }
+  | { kind: 'recap'; month: string; monthName: string }
   | { kind: 'unknown' };
 
 /** Find the first category keyword mentioned in the text. */
@@ -69,6 +70,12 @@ export function parseIntent(question: string, now: Date = new Date()): Intent {
 
   if (/\b(trend|over time|compare|comparison|each month|month over month|monthly)\b/.test(text)) {
     return { kind: 'trend', category: findCategory(text) };
+  }
+
+  if (/\b(recap|summary|summarize|overview)\b/.test(text)) {
+    const m = findMonth(text, year);
+    const fallback = `${year}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+    return { kind: 'recap', month: m?.month ?? fallback, monthName: m?.name ?? 'this month' };
   }
 
   if (/\b(recent|latest|last)\b.*\b(transaction|transactions|purchase|purchases)\b/.test(text)) {

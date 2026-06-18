@@ -125,6 +125,14 @@ export class OfflineProvider implements LLMProvider {
         const parts = months.map((m) => `${m.month}: ${money(m.totalCents)}`);
         return { answer: `Spending by month — ${parts.join(', ')}.`, usedTools };
       }
+      case 'recap': {
+        usedTools.push('monthlyRecap');
+        const r = await args.tools.monthlyRecap(intent.month);
+        return {
+          answer: `In ${intent.monthName} you earned ${money(r.incomeCents)} and spent ${money(r.expenseCents)} (net ${money(r.netCents)}).`,
+          usedTools,
+        };
+      }
       default:
         return {
           answer:

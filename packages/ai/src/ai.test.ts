@@ -56,6 +56,7 @@ describe('OfflineProvider.chat', () => {
     },
     async searchTransactions() { return []; },
     async spendingTrend() { return []; },
+    async monthlyRecap(month) { return { month, incomeCents: 0, expenseCents: 0, netCents: 0, byCategory: [], topMerchant: null }; },
   };
 
   it('answers "how much on dining in May?" with the exact formatted figure', async () => {

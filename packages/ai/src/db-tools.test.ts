@@ -131,3 +131,26 @@ describe('shapeTrend', () => {
     ]);
   });
 });
+
+import { toMonthlyRecap } from './tools/db-tools';
+
+describe('toMonthlyRecap', () => {
+  it('maps a core RecapResult to the tool shape', () => {
+    const out = toMonthlyRecap('2026-05', {
+      totalIncome: 300000,
+      totalExpense: 17345,
+      net: 282655,
+      byCategory: [{ category: 'dining', amount: 12345 }, { category: 'groceries', amount: 5000 }],
+      topMerchant: 'Market',
+      skipped: 0,
+    });
+    expect(out).toEqual({
+      month: '2026-05',
+      incomeCents: 300000,
+      expenseCents: 17345,
+      netCents: 282655,
+      byCategory: [{ category: 'dining', amountCents: 12345 }, { category: 'groceries', amountCents: 5000 }],
+      topMerchant: 'Market',
+    });
+  });
+});

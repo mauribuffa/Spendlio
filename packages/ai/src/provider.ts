@@ -66,6 +66,16 @@ export interface MonthSpend {
   byCategory: CategorySpend[];
 }
 
+/** Monthly recap, all exact integer cents (base currency). */
+export interface MonthlyRecap {
+  month: string;
+  incomeCents: number;
+  expenseCents: number;
+  netCents: number;
+  byCategory: CategorySpend[];
+  topMerchant: string | null;
+}
+
 export interface BudgetLine {
   category: CategoryKey;
   limitCents: number;
@@ -122,6 +132,8 @@ export interface AssistantTools {
   searchTransactions(filter: TransactionFilter): Promise<RecentTransaction[]>;
   /** Per-month expense totals across an inclusive month range (capped at 24 months). */
   spendingTrend(args: { categories?: CategoryKey[]; fromMonth: string; toMonth: string }): Promise<MonthSpend[]>;
+  /** Income/expense/net + category breakdown + top merchant for a month (YYYY-MM). */
+  monthlyRecap(month: string): Promise<MonthlyRecap>;
 }
 
 /** A single turn in the assistant conversation. */

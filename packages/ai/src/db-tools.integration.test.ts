@@ -143,4 +143,12 @@ describe.skipIf(!RUN)('createDbTools (live DB)', () => {
     const may = trend.find((m) => m.month === '2026-05');
     expect(may?.totalCents).toBe(12345 + 5000); // dining + groceries; income excluded; B excluded
   });
+
+  it('monthlyRecap totals income and expense in exact cents, user-scoped', async () => {
+    const tools = createDbTools(db, UA);
+    const r = await tools.monthlyRecap('2026-05');
+    expect(r.incomeCents).toBe(300000); // Salary
+    expect(r.expenseCents).toBe(12345 + 5000); // dining + groceries
+    expect(r.netCents).toBe(300000 - (12345 + 5000));
+  });
 });

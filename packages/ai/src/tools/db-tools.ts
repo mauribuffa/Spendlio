@@ -6,15 +6,17 @@ import {
   splits,
   splitShares,
   transactions,
+  users,
   type DB,
 } from '@spendlio/db';
 import { CategoryKey } from '@spendlio/contracts';
-import { netBalances as coreNetBalances } from '@spendlio/core';
+import { netBalances as coreNetBalances, computeRecap, type RecapResult } from '@spendlio/core';
 import type {
   AssistantTools,
   BalanceLine,
   BudgetLine,
   CategorySpend,
+  MonthlyRecap,
   MonthSpend,
   RecentTransaction,
 } from '../provider';
@@ -75,6 +77,18 @@ export function shapeTrend(
     const byCategory = (byMonth.get(month) ?? []).sort((a, b) => b.amountCents - a.amountCents);
     return { month, totalCents: byCategory.reduce((s, c) => s + c.amountCents, 0), byCategory };
   });
+}
+
+/** Map a core RecapResult to the MonthlyRecap tool shape. */
+export function toMonthlyRecap(month: string, r: RecapResult): MonthlyRecap {
+  return {
+    month,
+    incomeCents: r.totalIncome,
+    expenseCents: r.totalExpense,
+    netCents: r.net,
+    byCategory: r.byCategory.map((c) => ({ category: c.category, amountCents: c.amount })),
+    topMerchant: r.topMerchant,
+  };
 }
 
 /** Map a transactions row to the RecentTransaction contract shape. */
@@ -353,6 +367,43 @@ export function createDbTools(db: DB, userId: string): AssistantTools {
         months,
         rows.map((r) => ({ month: r.month, category: r.category, amountCents: Number(r.amountCents) })),
       );
+    },
+
+    async monthlyRecap(month): Promise<MonthlyRecap> {
+      const { start, end } = monthBounds(month);
+      const [user] = await db
+        .select({ baseCurrency: users.defaultCurrency })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+      const baseCurrency = user?.baseCurrency ?? 'USD';
+
+      const rows = await db
+        .select({
+          amount: transactions.amount,
+          currency: transactions.currency,
+          category: transactions.category,
+          merchant: transactions.merchant,
+          fxBaseAmount: transactions.fxBaseAmount,
+        })
+        .from(transactions)
+        .where(
+          and(
+            eq(transactions.userId, userId),
+            isNull(transactions.deletedAt),
+            gte(transactions.occurredAt, start),
+            lt(transactions.occurredAt, end),
+          ),
+        );
+
+      const recapTxns = rows.map((r) => ({
+        amount: Number(r.amount),
+        currency: r.currency,
+        category: r.category as CategoryKey,
+        merchant: r.merchant,
+        fxBaseAmount: r.fxBaseAmount == null ? null : Number(r.fxBaseAmount),
+      }));
+      return toMonthlyRecap(month, computeRecap(recapTxns, baseCurrency));
     },
   };
 }

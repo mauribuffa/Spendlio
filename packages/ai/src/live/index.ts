@@ -249,5 +249,21 @@ function buildTools(t: AssistantTools) {
         }));
       },
     }),
+    monthlyRecap: tool({
+      description:
+        'Summarize a single month (YYYY-MM): total income, total expense, net, spending by category, and the top merchant. Returns exact amounts.',
+      inputSchema: z.object({ month: z.string().describe('Calendar month, e.g. 2026-05') }),
+      execute: async ({ month }) => {
+        const r = await t.monthlyRecap(month);
+        return {
+          month: r.month,
+          income: money(r.incomeCents),
+          expense: money(r.expenseCents),
+          net: money(r.netCents),
+          byCategory: r.byCategory.map((c) => ({ category: c.category, amount: money(c.amountCents) })),
+          topMerchant: r.topMerchant,
+        };
+      },
+    }),
   };
 }
