@@ -12,6 +12,7 @@ import {
   splits,
   splitShares,
   settlements,
+  fxRates,
 } from './schema';
 
 // The demo user's UUID is FIXED — the API dev AuthGuard defaults to it.
@@ -51,13 +52,16 @@ const DEFAULT_CATEGORIES: SeedCategory[] = [
   { id: '00000000-0000-0000-0001-00000000000c', key: 'transfer',      label: 'Transfer',      kind: 'transfer', icon: 'arrow-left-right', color: '#5B6770' },
 ];
 
-// ---- Accounts (all USD; balances are derived from the transactions below) ----
-const ACCT = { checking: id('0002', '01'), card: id('0002', '02'), savings: id('0002', '03'), cash: id('0002', '04') };
+// ---- Accounts (mixed currency; balances are derived from the transactions below).
+// EUR/ARS accounts exercise the converted-totals rollup against seeded fx_rates. ----
+const ACCT = { checking: id('0002', '01'), card: id('0002', '02'), savings: id('0002', '03'), cash: id('0002', '04'), eur: id('0002', '05'), ars: id('0002', '06') };
 const DEMO_ACCOUNTS = [
   { id: ACCT.checking, name: 'Everyday Checking', type: 'checking', currency: 'USD', institution: 'Mercury Bank', last4: '4291' },
   { id: ACCT.card,     name: 'Sapphire Card',     type: 'card',     currency: 'USD', institution: 'Chase',        last4: '7782' },
   { id: ACCT.savings,  name: 'Rainy Day Savings', type: 'savings',  currency: 'USD', institution: 'Ally',         last4: '0148' },
   { id: ACCT.cash,     name: 'Cash',              type: 'cash',     currency: 'USD', institution: null,           last4: null },
+  { id: ACCT.eur,      name: 'Euro Wallet',       type: 'checking', currency: 'EUR', institution: 'Wise',         last4: '6203' },
+  { id: ACCT.ars,      name: 'Peso Account',      type: 'checking', currency: 'ARS', institution: 'Galicia',      last4: '5519' },
 ];
 
 // ---- People (friends you split with) + the implicit "you" (isSelf, hidden from GET /people) ----
@@ -98,6 +102,7 @@ const d = (iso: string) => new Date(iso);
 type SeedTxn = {
   id: string; title: string; merchant: string | null; amount: number; category: string;
   accountId: string; status: string; source?: string; occurredAt: Date; splitId?: string;
+  currency?: string; // defaults to USD; set for non-USD (EUR/ARS) accounts
 };
 const DEMO_TXNS: SeedTxn[] = [
   // June 2026 — current month
@@ -125,6 +130,11 @@ const DEMO_TXNS: SeedTxn[] = [
   { id: id('0006', '21'), title: 'Rent',             merchant: 'Sunset Apartments', amount: -165000, category: 'housing',       accountId: ACCT.checking, status: 'recurring', source: 'recurring', occurredAt: d('2026-05-01T12:00:00Z') },
   { id: id('0006', '22'), title: 'Groceries',        merchant: 'Whole Foods',       amount:   -9120, category: 'groceries',     accountId: ACCT.card,     status: 'cleared',                       occurredAt: d('2026-05-15T18:00:00Z') },
   { id: id('0006', '23'), title: 'Dinner out',       merchant: 'Nopa',              amount:   -6740, category: 'dining',        accountId: ACCT.card,     status: 'cleared',                       occurredAt: d('2026-05-20T20:00:00Z') },
+  // June 2026 — non-USD accounts (fxBase* left null; converted views use latest fx_rates)
+  { id: id('0006', '30'), title: 'Café in Lisbon',   merchant: 'A Brasileira',      amount:   -1450, category: 'dining',        accountId: ACCT.eur,      status: 'cleared',                       occurredAt: d('2026-06-09T09:30:00Z'), currency: 'EUR' },
+  { id: id('0006', '31'), title: 'Groceries (EUR)',  merchant: 'Pingo Doce',        amount:   -3820, category: 'groceries',     accountId: ACCT.eur,      status: 'cleared',                       occurredAt: d('2026-06-12T17:00:00Z'), currency: 'EUR' },
+  { id: id('0006', '32'), title: 'Asado (ARS)',      merchant: 'Don Julio',         amount: -4500000, category: 'dining',        accountId: ACCT.ars,      status: 'cleared',                       occurredAt: d('2026-06-08T21:00:00Z'), currency: 'ARS' },
+  { id: id('0006', '33'), title: 'Subte (ARS)',      merchant: 'SUBE',              amount:  -150000, category: 'transport',     accountId: ACCT.ars,      status: 'cleared',                       occurredAt: d('2026-06-10T08:00:00Z'), currency: 'ARS' },
 ];
 
 // ---- Budgets (monthly, USD) ----
@@ -196,13 +206,23 @@ async function seed() {
   await db.insert(groupMembers).values(DEMO_GROUP_MEMBERS).onConflictDoNothing();
 
   // 4) transactions + budgets
-  await db.insert(transactions).values(DEMO_TXNS.map((t) => ({ ...t, currency: 'USD', userId: DEMO_USER_ID }))).onConflictDoNothing();
+  await db.insert(transactions).values(DEMO_TXNS.map((t) => ({ ...t, currency: t.currency ?? 'USD', userId: DEMO_USER_ID }))).onConflictDoNothing();
   await db.insert(budgets).values(DEMO_BUDGETS.map((b) => ({ ...b, userId: DEMO_USER_ID }))).onConflictDoNothing();
 
   // 5) splits + shares + a settlement (drives the Split page balances)
   await db.insert(splits).values(DEMO_SPLITS.map((s) => ({ ...s, userId: DEMO_USER_ID }))).onConflictDoNothing();
   await db.insert(splitShares).values(DEMO_SPLIT_SHARES).onConflictDoNothing();
   await db.insert(settlements).values(DEMO_SETTLEMENTS.map((s) => ({ ...s, userId: DEMO_USER_ID }))).onConflictDoNothing();
+
+  // 6) fx_rates — so EUR/ARS conversions resolve immediately without running the cron.
+  // Global (not user-owned); unique on (base, quote, date) makes re-seeding idempotent.
+  await db
+    .insert(fxRates)
+    .values([
+      { base: 'USD', quote: 'EUR', date: '2026-06-18', rate: '0.92' },
+      { base: 'USD', quote: 'ARS', date: '2026-06-18', rate: '950' },
+    ])
+    .onConflictDoNothing();
 
   console.log(
     `Seeded demo user (${DEMO_USER_ID}): ${DEFAULT_CATEGORIES.length} categories, ` +

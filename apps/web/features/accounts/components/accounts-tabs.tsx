@@ -106,6 +106,7 @@ export function AccountsTabs({ balances }: { balances: AccountBalance[] }) {
   // any account whose rate is unavailable (baseBalance === null).
   const totalBase = balances.reduce((sum, b) => sum + (b.baseBalance ?? 0), 0);
   const rateAsOf = balances.find((b) => b.rateAsOf != null)?.rateAsOf ?? null;
+  const notConverted = balances.filter((b) => b.baseBalance === null && b.balance !== 0).length;
 
   // Per-currency exact subtotals (native minor units).
   const subtotals = currencies.map((c) => ({
@@ -158,6 +159,9 @@ export function AccountsTabs({ balances }: { balances: AccountBalance[] }) {
           >
             <Info size={13} strokeWidth={2} aria-hidden="true" />
             {rateAsOf ? `Approx · converted as of ${rateAsOf}` : 'Approx · converted at latest rates'}
+            {notConverted > 0
+              ? ` · ${notConverted} account${notConverted > 1 ? 's' : ''} not converted (no rate)`
+              : ''}
           </div>
           {subtotals.length > 1 ? (
             <div style={{ display: 'flex', gap: 12, marginTop: 18 }}>

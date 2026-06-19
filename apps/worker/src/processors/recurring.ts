@@ -1,8 +1,8 @@
 import { and, eq, lte } from 'drizzle-orm';
-import { db, recurringRules, transactions } from '@spendlio/db';
+import { db, recurringRules, transactions, users, fxRates } from '@spendlio/db';
 import type { Job } from '@spendlio/queue';
 import type { RecurringJob } from '@spendlio/queue';
-import { dueOccurrences, type Cadence } from '@spendlio/core';
+import { dueOccurrences, computeFxSnapshot, type Cadence, type RateRow } from '@spendlio/core';
 
 /**
  * Materialize due recurring transactions.
@@ -25,6 +25,10 @@ export async function processRecurring(job: Job<RecurringJob>): Promise<void> {
         .from(recurringRules)
         .where(and(eq(recurringRules.active, true), lte(recurringRules.nextRunAt, now)));
 
+  const rates: RateRow[] = await db
+    .select({ base: fxRates.base, quote: fxRates.quote, date: fxRates.date, rate: fxRates.rate })
+    .from(fxRates);
+
   for (const rule of rules) {
     if (!rule.active) continue;
 
@@ -44,6 +48,10 @@ export async function processRecurring(job: Job<RecurringJob>): Promise<void> {
         .limit(1);
       if (exists.length > 0) continue; // already materialized — skip
 
+      const [u] = await db.select({ base: users.defaultCurrency }).from(users).where(eq(users.id, rule.userId)).limit(1);
+      const fx = computeFxSnapshot(rule.amount, rule.currency, u?.base ?? 'USD', rates)
+        ?? { fxBaseCurrency: null, fxBaseAmount: null, fxRate: null, fxAsOf: null };
+
       await db.insert(transactions).values({
         userId: rule.userId,
         title: rule.title,
@@ -56,6 +64,7 @@ export async function processRecurring(job: Job<RecurringJob>): Promise<void> {
         status: 'cleared',
         source: 'recurring',
         recurringId: rule.id,
+        ...fx,
       }).onConflictDoNothing();
     }
 

@@ -63,3 +63,27 @@ describe('convertMinor', () => {
     expect(out.amount).toBe(1500);
   });
 });
+
+import { computeFxSnapshot } from './accounts';
+
+describe('computeFxSnapshot', () => {
+  const rows = [{ base: 'USD', quote: 'ARS', date: '2026-06-18', rate: '950' }];
+
+  it('returns null when the txn currency already equals the base', () => {
+    expect(computeFxSnapshot(10000, 'USD', 'USD', rows)).toBeNull();
+  });
+
+  it('returns null when no rate connects the pair', () => {
+    expect(computeFxSnapshot(10000, 'BRL', 'USD', rows)).toBeNull();
+  });
+
+  it('snapshots an ARS expense into USD (inverse rate), rounded to USD minor units', () => {
+    // -950000 minor ARS = -9500.00 ARS; ÷ 950 = -10.00 USD = -1000 minor USD
+    expect(computeFxSnapshot(-950000, 'ARS', 'USD', rows)).toEqual({
+      fxBaseCurrency: 'USD',
+      fxBaseAmount: -1000,
+      fxRate: '950',
+      fxAsOf: '2026-06-18',
+    });
+  });
+});

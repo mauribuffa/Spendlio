@@ -8,6 +8,7 @@ import { enqueue, requeue } from '@spendlio/queue';
 import type { CreateReceiptInput, ConfirmReceiptInput } from '@spendlio/contracts';
 import { DB } from '../db/db.module';
 import { or404 } from '../common/or404';
+import { fxSnapshotFields } from '../common/fx';
 
 @Injectable()
 export class ReceiptsService {
@@ -88,6 +89,7 @@ export class ReceiptsService {
       throw new BadRequestException('This receipt has already been turned into an expense.');
     }
 
+    const fx = await fxSnapshotFields(this.db, userId, -Math.abs(dto.total), dto.currency);
     const [txn] = await this.db.insert(transactions).values({
       userId,
       title: dto.merchant ?? 'Receipt',
@@ -99,6 +101,7 @@ export class ReceiptsService {
       status: 'cleared',
       source: 'ocr',
       receiptId: id,
+      ...fx,
     }).returning();
 
     const ocr = { ...(row.ocr ?? {}), lineItems: dto.lineItems };

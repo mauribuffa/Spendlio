@@ -68,3 +68,35 @@ export function convertMinor(
   const toMinor = Math.round(toMajor * 10 ** getCurrencyDecimals(to));
   return { amount: toMinor, rateAsOf: picked.date };
 }
+
+/**
+ * A transaction's FX snapshot to the base currency, stored at entry time.
+ * Named `TxnFxSnapshot` (not `FxSnapshot`) to avoid shadowing the contracts
+ * `FxSnapshot` Zod schema; field names match the DB columns so they spread
+ * straight into the transactions insert.
+ */
+export interface TxnFxSnapshot {
+  fxBaseCurrency: string;
+  fxBaseAmount: number; // minor units in base currency (signed)
+  fxRate: string;       // the exact rate string used
+  fxAsOf: string;       // YYYY-MM-DD of the rate
+}
+
+/**
+ * Compute the base-currency snapshot for a transaction. Returns null when the
+ * transaction is already in the base currency (no snapshot needed) or when no
+ * rate connects the pair (caller stores nulls; the row is reported, not summed).
+ */
+export function computeFxSnapshot(
+  amountMinor: number,
+  currency: string,
+  baseCurrency: string,
+  rates: RateRow[],
+): TxnFxSnapshot | null {
+  if (currency.toUpperCase() === baseCurrency.toUpperCase()) return null;
+  const picked = pickRate(rates, currency, baseCurrency);
+  if (!picked) return null;
+  const { amount } = convertMinor(amountMinor, currency, baseCurrency, rates);
+  if (amount === null) return null;
+  return { fxBaseCurrency: baseCurrency, fxBaseAmount: amount, fxRate: picked.rate, fxAsOf: picked.date };
+}

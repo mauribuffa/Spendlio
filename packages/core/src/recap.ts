@@ -15,6 +15,7 @@ export interface RecapTxn {
   category: CategoryKey;
   merchant?: string | null;
   fxBaseAmount?: number | null; // minor units in base currency (signed), if snapshotted
+  fxBaseCurrency?: string | null;
 }
 
 export interface RecapResult {
@@ -72,7 +73,7 @@ export function computeRecap(txns: RecapTxn[], baseCurrency: string): RecapResul
 
 /** Resolve a transaction's amount in the base currency, or null if impossible. */
 function baseAmount(t: RecapTxn, baseCurrency: string): number | null {
-  if (t.fxBaseAmount != null) return t.fxBaseAmount;
+  if (t.fxBaseAmount != null && (t.fxBaseCurrency ?? baseCurrency) === baseCurrency) return t.fxBaseAmount;
   if (t.currency === baseCurrency) return t.amount;
   return null;
 }

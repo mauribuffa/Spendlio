@@ -32,6 +32,7 @@ export async function processRecap(job: Job<RecapJob>): Promise<void> {
       category: transactions.category,
       merchant: transactions.merchant,
       fxBaseAmount: transactions.fxBaseAmount,
+      fxBaseCurrency: transactions.fxBaseCurrency,
     })
     .from(transactions)
     .where(
@@ -44,6 +45,10 @@ export async function processRecap(job: Job<RecapJob>): Promise<void> {
     );
 
   const recap = computeRecap(rows as RecapTxn[], user.defaultCurrency);
+
+  if (recap.skipped > 0) {
+    console.log(`[recap] ${userId} ${month}: ${recap.skipped} txn(s) excluded (no base-currency snapshot)`);
+  }
 
   const values = {
     userId,

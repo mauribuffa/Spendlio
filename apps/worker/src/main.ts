@@ -1,10 +1,11 @@
-import { createWorker, closeRedisClient } from '@spendlio/queue';
+import { createWorker, closeRedisClient, getQueue, enqueue } from '@spendlio/queue';
 import { pool } from '@spendlio/db';
 import { processOcr } from './processors/ocr';
 import { processCategorize } from './processors/categorize';
 import { processRecurring } from './processors/recurring';
 import { processRecap } from './processors/recap';
 import { processNotify } from './processors/notify';
+import { processFxRefresh } from './processors/fx';
 import { isFinalAttempt, recordDeadLetter } from './lib/dead-letter';
 
 /**
@@ -21,6 +22,7 @@ const workers = [
   createWorker('recurring', processRecurring, { concurrency: 1 }),
   createWorker('recap', processRecap, { concurrency: 2 }),
   createWorker('notify', processNotify, { concurrency: 5 }),
+  createWorker('fx', processFxRefresh, { concurrency: 1 }),
 ];
 
 for (const w of workers) {
@@ -33,6 +35,18 @@ for (const w of workers) {
 }
 
 console.log(`worker up — consuming: ${workers.map((w) => w.name).join(', ')}`);
+
+// FX rates: a daily repeatable (06:00 UTC) + an immediate run so rates exist now.
+// First (and only) actual cron in the app — BullMQ's job scheduler manages repeats.
+void (async () => {
+  try {
+    await getQueue('fx').upsertJobScheduler('fx-daily', { pattern: '0 6 * * *' }, { name: 'fx', data: {} });
+    await enqueue('fx', {});
+    console.log('[fx] scheduled daily refresh + enqueued an immediate run');
+  } catch (err) {
+    console.error(`[fx] scheduling failed: ${(err as Error).message}`);
+  }
+})();
 
 async function shutdown(signal: string): Promise<void> {
   console.log(`\n${signal} — draining workers...`);

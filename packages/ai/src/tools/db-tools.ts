@@ -2,6 +2,7 @@ import { and, desc, eq, gte, ilike, inArray, isNull, lt, lte, or, sql } from 'dr
 import {
   accounts,
   budgets,
+  fxRates,
   people,
   settlements,
   splits,
@@ -11,9 +12,16 @@ import {
   type DB,
 } from '@spendlio/db';
 import { CategoryKey } from '@spendlio/contracts';
-import { netBalances as coreNetBalances, computeRecap, type RecapResult } from '@spendlio/core';
+import {
+  netBalances as coreNetBalances,
+  computeRecap,
+  convertMinor,
+  type RateRow,
+  type RecapResult,
+} from '@spendlio/core';
 import type {
   AccountBalanceLine,
+  AccountBalancesResult,
   AssistantTools,
   BalanceLine,
   BudgetLine,
@@ -452,6 +460,7 @@ export function createDbTools(db: DB, userId: string): AssistantTools {
           category: transactions.category,
           merchant: transactions.merchant,
           fxBaseAmount: transactions.fxBaseAmount,
+          fxBaseCurrency: transactions.fxBaseCurrency,
         })
         .from(transactions)
         .where(
@@ -469,18 +478,18 @@ export function createDbTools(db: DB, userId: string): AssistantTools {
         category: r.category as CategoryKey,
         merchant: r.merchant,
         fxBaseAmount: r.fxBaseAmount == null ? null : Number(r.fxBaseAmount),
+        fxBaseCurrency: r.fxBaseCurrency,
       }));
       return toMonthlyRecap(month, computeRecap(recapTxns, baseCurrency));
     },
 
-    async accountBalances(): Promise<AccountBalanceLine[]> {
+    async accountBalances(): Promise<AccountBalancesResult> {
       // An account balance is the signed sum of ALL its postings (transfers included) —
       // intentionally unlike the spend tools, which exclude income/transfer.
       const accts = await db
         .select({ id: accounts.id, name: accounts.name, currency: accounts.currency })
         .from(accounts)
         .where(eq(accounts.userId, userId));
-      if (accts.length === 0) return [];
 
       const sums = await db
         .select({
@@ -492,11 +501,31 @@ export function createDbTools(db: DB, userId: string): AssistantTools {
         .groupBy(transactions.accountId);
       const totalOf = new Map(sums.map((s) => [s.accountId, Number(s.total)]));
 
-      return accts.map((a) => ({
+      const lines: AccountBalanceLine[] = accts.map((a) => ({
         accountName: a.name,
         currency: a.currency,
         balanceCents: totalOf.get(a.id) ?? 0,
       }));
+
+      // Roll up to the user's base currency. Accounts whose currency has no rate
+      // to base are reported as excluded rather than silently dropped.
+      const [user] = await db
+        .select({ base: users.defaultCurrency })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+      const baseCurrency = user?.base ?? 'USD';
+      const rates: RateRow[] = await db
+        .select({ base: fxRates.base, quote: fxRates.quote, date: fxRates.date, rate: fxRates.rate })
+        .from(fxRates);
+      let baseTotalCents = 0;
+      const excluded = new Set<string>();
+      for (const l of lines) {
+        const { amount } = convertMinor(l.balanceCents, l.currency, baseCurrency, rates);
+        if (amount === null) excluded.add(l.currency);
+        else baseTotalCents += amount;
+      }
+      return { lines, baseCurrency, baseTotalCents, excludedCurrencies: [...excluded] };
     },
   };
 }

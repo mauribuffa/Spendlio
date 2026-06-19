@@ -6,6 +6,7 @@ export const QUEUES = {
   recurring: 'recurring',
   recap: 'recap',
   notify: 'notify',
+  fx: 'fx',
 } as const;
 export type QueueName = typeof QUEUES[keyof typeof QUEUES];
 
@@ -36,3 +37,8 @@ export const NotifyJob = z.object({
   dedupeKey: z.string().min(1).optional(),
 });
 export type NotifyJob = z.infer<typeof NotifyJob>;
+
+// FX rates refresh — parameterless daily cron; the worker fetches for each
+// distinct users.defaultCurrency and upserts fx_rates. id-only/empty payload.
+export const FxRefreshJob = z.object({});
+export type FxRefreshJob = z.infer<typeof FxRefreshJob>;
