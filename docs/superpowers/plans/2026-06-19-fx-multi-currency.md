@@ -71,8 +71,13 @@ Expected: FAIL — `computeFxSnapshot` not exported.
 In `packages/core/src/accounts.ts`, add (it reuses the existing `pickRate`/`convertMinor`/`RateRow`):
 
 ```ts
-/** A transaction's FX snapshot to the base currency, stored at entry time. */
-export interface FxSnapshot {
+/**
+ * A transaction's FX snapshot to the base currency, stored at entry time.
+ * Named `TxnFxSnapshot` (not `FxSnapshot`) to avoid shadowing the contracts
+ * `FxSnapshot` Zod schema; field names match the DB columns so they spread
+ * straight into the transactions insert.
+ */
+export interface TxnFxSnapshot {
   fxBaseCurrency: string;
   fxBaseAmount: number; // minor units in base currency (signed)
   fxRate: string;       // the exact rate string used
@@ -89,7 +94,7 @@ export function computeFxSnapshot(
   currency: string,
   baseCurrency: string,
   rates: RateRow[],
-): FxSnapshot | null {
+): TxnFxSnapshot | null {
   if (currency.toUpperCase() === baseCurrency.toUpperCase()) return null;
   const picked = pickRate(rates, currency, baseCurrency);
   if (!picked) return null;
@@ -123,11 +128,9 @@ Today `computeRecap` uses `fxBaseAmount` whenever present, even if that snapshot
 
 - [ ] **Step 1: Write failing test**
 
-Append to `packages/core/src/recap.test.ts`:
+Append to `packages/core/src/recap.test.ts` (note: `computeRecap` is **already imported** at the top of that file — do NOT re-import it, or `tsc` flags TS2300):
 
 ```ts
-import { computeRecap } from './recap';
-
 describe('computeRecap base-awareness', () => {
   it('uses a snapshot only when its fxBaseCurrency matches the requested base', () => {
     const txns = [
@@ -197,6 +200,7 @@ git commit -m "feat(core): base-aware computeRecap (use snapshot only on base ma
 - Modify: `packages/contracts/src/jobs.ts`
 - Modify: `packages/queue/src/jobs.ts` (JobPayloadMap)
 - Modify: `packages/queue/src/queues.ts` (JOB_SCHEMAS + defaultJobId)
+- Modify: `packages/queue/src/queue.test.ts` (the hard-coded QUEUES-names assertion)
 - Test: `packages/contracts/src/contracts.test.ts` (or the existing contracts test file)
 
 - [ ] **Step 1: Add the queue + payload to contracts**
@@ -216,6 +220,7 @@ export type FxRefreshJob = z.infer<typeof FxRefreshJob>;
 
 - `packages/queue/src/jobs.ts`: import `FxRefreshJob`, add `fx: FxRefreshJob;` to `JobPayloadMap`, and re-export `FxRefreshJob` in the `export type { ... }` line.
 - `packages/queue/src/queues.ts`: import `FxRefreshJob` from `@spendlio/contracts`; add `fx: FxRefreshJob,` to `JOB_SCHEMAS`; add a case to `defaultJobId`: `case 'fx': return 'fx-refresh';`.
+- `packages/queue/src/queue.test.ts`: this test **hard-codes the registry names** (queue re-exports the contracts `QUEUES`), so adding `fx` breaks it. Update the assertion to include `fx`, e.g. `expect(Object.keys(QUEUES).sort()).toEqual(['categorize', 'fx', 'notify', 'ocr', 'recap', 'recurring']);`, and bump any "five pipelines"/"5 queues" wording to six.
 
 - [ ] **Step 3: Test the new schema + a smoke of the registry**
 
@@ -231,13 +236,13 @@ describe('fx job', () => {
 
 - [ ] **Step 4: Verify**
 
-Run: `pnpm --filter @spendlio/contracts test && pnpm --filter @spendlio/contracts typecheck && pnpm --filter @spendlio/queue typecheck`
-Expected: clean + green.
+Run: `pnpm --filter @spendlio/contracts test && pnpm --filter @spendlio/contracts typecheck && pnpm --filter @spendlio/queue typecheck && pnpm --filter @spendlio/queue test`
+Expected: clean + green (the queue test now expects the six queue names).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/contracts/src/jobs.ts packages/queue/src/jobs.ts packages/queue/src/queues.ts packages/contracts/src/contracts.test.ts
+git add packages/contracts/src/jobs.ts packages/queue/src/jobs.ts packages/queue/src/queues.ts packages/queue/src/queue.test.ts packages/contracts/src/contracts.test.ts
 git commit -m "feat(contracts/queue): register the fx rates-refresh job"
 ```
 
@@ -249,7 +254,7 @@ git commit -m "feat(contracts/queue): register the fx rates-refresh job"
 - Create: `apps/worker/src/fx/provider.ts`
 - Create: `apps/worker/src/fx/provider.test.ts`
 
-> `apps/worker` has no Vitest runner today. Add a minimal one so the offline provider (pure, deterministic) is unit-tested: create `apps/worker/vitest.config.ts` (copy `packages/ai/vitest.config.ts`) and a `"test": "vitest run"` script in `apps/worker/package.json`. If that proves to pull in DB-touching files, scope the config's `include` to `src/fx/**`. (The live adapter is exercised only via the manual gate in Task 11.)
+> `apps/worker` has no Vitest runner today. Add one, mirroring `@spendlio/ai` (which runs bare `vitest run` with **no config file**): add `"vitest": "^2.1.9"` (the repo-wide pin) to `apps/worker/package.json` devDependencies + a `"test": "vitest run"` script, then run `pnpm install` (updates `pnpm-lock.yaml` — stage it). **Do NOT** create a `vitest.config.ts` — there is no `packages/ai/vitest.config.ts` to copy and none is needed: every test file imports `{ describe, it, expect }` from `vitest` explicitly, and the gated integration test uses `describe.skipIf(!RUN)` + lazy `await import('@spendlio/db')`, so no DB pool opens during discovery. (The live adapter is exercised only via the manual gate in Task 11.)
 
 - [ ] **Step 1: Write the provider + offline table**
 
@@ -358,7 +363,7 @@ Expected: PASS (3).
 Run: `pnpm --filter @spendlio/worker typecheck`
 
 ```bash
-git add apps/worker/src/fx/provider.ts apps/worker/src/fx/provider.test.ts apps/worker/vitest.config.ts apps/worker/package.json
+git add apps/worker/src/fx/provider.ts apps/worker/src/fx/provider.test.ts apps/worker/package.json pnpm-lock.yaml
 git commit -m "feat(worker): RatesProvider — offline default + live Frankfurter adapter"
 ```
 
@@ -655,7 +660,21 @@ Update the tool description to mention it now also returns an approximate base-c
 
 - [ ] **Step 4: Integration assertion**
 
-In `packages/ai/src/db-tools.integration.test.ts`, extend the `accountBalances` case: with the seeded multi-currency accounts (Task 10) + fx_rates, assert `result.baseCurrency === 'USD'`, `result.baseTotalCents` > 0, and `result.excludedCurrencies` is empty when all rates exist.
+In `packages/ai/src/db-tools.integration.test.ts`, the **existing** `accountBalances` case binds `const lines = await tools.accountBalances()` and asserts `lines.length` / `lines[0]!.balanceCents` / `subtotalByCurrency(lines)`. Since the return type is now `AccountBalancesResult` (an object), those break (TS2339/TS2345). **Rewrite** that case (don't just append) to bind the object and read `.lines`, keeping the existing per-account value (280655, unaffected by the base rollup) and adding the base-rollup assertions:
+
+```ts
+  it('accountBalances sums ALL postings + rolls up to base currency', async () => {
+    const tools = createDbTools(db, UA);
+    const result = await tools.accountBalances();
+    expect(result.lines.length).toBe(1);
+    expect(result.lines[0]!.balanceCents).toBe(282655 - 2000); // per-account; unchanged by the rollup
+    expect(subtotalByCurrency(result.lines)).toEqual([{ currency: 'USD', totalCents: 280655 }]);
+    // base rollup: the single USD account converts to itself; nothing excluded.
+    expect(result.baseCurrency).toBe('USD');
+    expect(result.baseTotalCents).toBe(280655);
+    expect(result.excludedCurrencies).toEqual([]);
+  });
+```
 
 - [ ] **Step 5: Verify + commit**
 
@@ -735,7 +754,7 @@ git commit -m "chore(db): seed EUR/ARS demo accounts + fx_rates so converted tot
 
 - [ ] **Step 1: Resolve ADR-016 + add the posture ADR**
 
-In `docs/learning/decisions.md`: change ADR-016's status to `✅` and update its `**Open:**` line to **resolved** — provider = Frankfurter (ECB) behind a `RatesProvider` interface, **daily** cadence, **half-up to target minor units** rounding. Append a new **ADR-042** (`### ADR-042 · ✅ · FX rates ingestion + snapshot-on-create`) capturing: interface + offline-default + live-adapter (parallel to `@spendlio/ai`); lives in `apps/worker`; **per-base** fetch (no triangulation); snapshot written on every create path; **base-aware `computeRecap`** (no recompute job); **first real BullMQ scheduler** (`upsertJobScheduler`, daily + boot run); deferred follow-ups (recap "N excluded" badge — needs a column/migration; Insights/Overview conversion; per-account budgets).
+In `docs/learning/decisions.md`: change ADR-016's status to `✅` and update its `**Open:**` line to **resolved** — provider = Frankfurter (ECB) behind a `RatesProvider` interface, **daily** cadence, **half-up to target minor units** rounding. Append a new **ADR-042** (`### ADR-042 · ✅ · FX rates ingestion + snapshot-on-create`) capturing: interface + offline-default + live-adapter (parallel to `@spendlio/ai`); lives in `apps/worker`; **per-base** fetch (no triangulation); snapshot written on every create path; **base-aware `computeRecap`** (no recompute job); **first real BullMQ scheduler** (`upsertJobScheduler`, daily + boot run); deferred follow-ups (recap "N excluded" badge — needs a column/migration; Insights/Overview conversion; per-account budgets). Note the core snapshot type is `TxnFxSnapshot` with DB-column field names (`fxBase*`), realigned from the spec's `{ baseCurrency, … }` sketch so it spreads straight into the insert.
 
 - [ ] **Step 2: Update the currency learning doc**
 
@@ -750,7 +769,7 @@ Tick the FX follow-up in the Follow-ups list; add a build-log row (newest first)
 Run:
 ```bash
 pnpm -r typecheck
-pnpm --filter @spendlio/core test && pnpm --filter @spendlio/contracts test && pnpm --filter @spendlio/ai test && pnpm --filter @spendlio/worker test
+pnpm --filter @spendlio/core test && pnpm --filter @spendlio/contracts test && pnpm --filter @spendlio/queue test && pnpm --filter @spendlio/ai test && pnpm --filter @spendlio/worker test
 pnpm --filter web build
 ```
 With docker up: `pnpm db:seed` then the gated integration suites (`DATABASE_URL=… pnpm --filter @spendlio/ai test -- src/db-tools.integration.test.ts` and the worker fx integration test).
@@ -771,5 +790,5 @@ git commit -m "docs(fx): resolve ADR-016 + ADR-042 (rates ingestion, snapshot, b
 - **Spec coverage:** §3 architecture → Tasks 1/4/6 (core math; provider in worker; api reads fx_rates). §4 ingestion → Tasks 3 (job), 4 (provider), 5 (cron + scheduler), 10 (seed). §5 snapshot-on-create → Tasks 6 (txn + receipt) + 7 (recurring). §6 conversion model → Task 2 (base-aware recap) + existing latest-rate balances. §7 consumers → Task 9 (accounts All), Task 2/recap totals, Task 8 (assistant). §8 seed → Task 10. §9 rounding → ratified (convertMinor; noted). §12 ADRs → Task 11.
 - **Known spec deviation (recorded):** the recap **"N excluded" UI badge** is deferred (persisting `skipped` needs a migration the spec forbids); snapshot-based recap totals + a worker log ship instead. Captured in Task 11's ADR + PROGRESS.
 - **Placeholder scan:** code shown for every code step; the lighter "read the file then add" steps (9, 10, parts of 8) are additive label/seed edits a subagent applies against the real file — no logic left unspecified.
-- **Type consistency:** `FxSnapshot`/`fxBase*` field names match across core (Task 1), the api helper (Task 6), recurring (Task 7), and the DB columns. `RecapTxn.fxBaseCurrency` (Task 2) matches the recap worker select. `AccountBalancesResult` (Task 8) is defined once and used by the wrapper + stub + integration test. `FxRefreshJob`/`QUEUES.fx` consistent across contracts + queue (Task 3) + worker (Task 5).
+- **Type consistency:** `TxnFxSnapshot`/`fxBase*` field names match across core (Task 1), the api helper (Task 6), recurring (Task 7), and the DB columns. `RecapTxn.fxBaseCurrency` (Task 2) matches the recap worker select. `AccountBalancesResult` (Task 8) is defined once and used by the wrapper + stub + integration test. `FxRefreshJob`/`QUEUES.fx` consistent across contracts + queue (Task 3) + worker (Task 5).
 - **Caveat:** `apps/worker` gains a Vitest runner (Task 4) for the pure offline provider; DB-touching worker code stays integration-gated, consistent with the repo's test policy.
