@@ -460,6 +460,7 @@ export function createDbTools(db: DB, userId: string): AssistantTools {
           category: transactions.category,
           merchant: transactions.merchant,
           fxBaseAmount: transactions.fxBaseAmount,
+          fxBaseCurrency: transactions.fxBaseCurrency,
         })
         .from(transactions)
         .where(
@@ -477,6 +478,7 @@ export function createDbTools(db: DB, userId: string): AssistantTools {
         category: r.category as CategoryKey,
         merchant: r.merchant,
         fxBaseAmount: r.fxBaseAmount == null ? null : Number(r.fxBaseAmount),
+        fxBaseCurrency: r.fxBaseCurrency,
       }));
       return toMonthlyRecap(month, computeRecap(recapTxns, baseCurrency));
     },
