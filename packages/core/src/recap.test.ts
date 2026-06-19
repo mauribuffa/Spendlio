@@ -63,3 +63,17 @@ describe('computeRecap', () => {
     expect(r.skipped).toBe(1);
   });
 });
+
+describe('computeRecap base-awareness', () => {
+  it('uses a snapshot only when its fxBaseCurrency matches the requested base', () => {
+    const txns = [
+      { amount: -950000, currency: 'ARS', category: 'dining' as const, merchant: 'Cafe',
+        fxBaseAmount: -1000, fxBaseCurrency: 'USD' }, // snapshot in USD → used
+      { amount: -500000, currency: 'ARS', category: 'dining' as const, merchant: 'Bar',
+        fxBaseAmount: -3, fxBaseCurrency: 'EUR' },    // snapshot in EUR → NOT used → skipped
+    ];
+    const r = computeRecap(txns, 'USD');
+    expect(r.totalExpense).toBe(1000); // only the USD-snapshot row
+    expect(r.skipped).toBe(1);         // the EUR-snapshot row excluded
+  });
+});
