@@ -1,4 +1,4 @@
-import type { OcrJob, CategorizeJob, RecapJob, RecurringJob, NotifyJob } from '@spendlio/contracts';
+import type { OcrJob, CategorizeJob, RecapJob, RecurringJob, NotifyJob, FxRefreshJob } from '@spendlio/contracts';
 
 /**
  * The payload type for each queue, keyed by the QUEUES registry name from
@@ -11,8 +11,9 @@ export interface JobPayloadMap {
   recurring: RecurringJob;
   recap: RecapJob;
   notify: NotifyJob;
+  fx: FxRefreshJob;
 }
 
 // Re-exported so consumers (worker processors) get the payload types from the
 // queue package they already depend on.
-export type { OcrJob, CategorizeJob, RecapJob, RecurringJob, NotifyJob };
+export type { OcrJob, CategorizeJob, RecapJob, RecurringJob, NotifyJob, FxRefreshJob };

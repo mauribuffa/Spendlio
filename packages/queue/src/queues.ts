@@ -7,6 +7,7 @@ import {
   RecapJob,
   RecurringJob,
   NotifyJob,
+  FxRefreshJob,
 } from '@spendlio/contracts';
 import { getConnectionOptions } from './connection';
 import type { JobPayloadMap } from './jobs';
@@ -28,6 +29,7 @@ const JOB_SCHEMAS: Record<QueueName, PayloadValidator> = {
   recap: RecapJob,
   recurring: RecurringJob,
   notify: NotifyJob,
+  fx: FxRefreshJob,
 };
 
 /**
@@ -76,6 +78,7 @@ function defaultJobId<N extends QueueName>(name: N, payload: JobPayloadMap[N]): 
     case 'recap':       return `recap-${p.userId}-${p.month}`;
     case 'recurring':   return `recurring-${p.ruleId ?? 'all'}`;
     case 'notify':      return `notify-${p.userId}-${p.type}${p.dedupeKey ? `-${p.dedupeKey}` : ''}`;
+    case 'fx':          return 'fx-refresh';
     default:            return undefined;
   }
 }

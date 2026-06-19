@@ -9,6 +9,7 @@ import {
   UpdateUserInput,
   CompleteOnboardingInput,
 } from './index';
+import { QUEUES, FxRefreshJob } from './jobs';
 
 const sampleTransaction = {
   id: '11111111-1111-1111-1111-111111111111',
@@ -144,4 +145,9 @@ describe('CompleteOnboardingInput', () => {
     } as any);
     expect('onboardedAt' in r).toBe(false); // server-managed; stripped here
   });
+});
+
+describe('fx job', () => {
+  it('registers the fx queue', () => { expect(QUEUES.fx).toBe('fx'); });
+  it('accepts an empty payload', () => { expect(FxRefreshJob.safeParse({}).success).toBe(true); });
 });

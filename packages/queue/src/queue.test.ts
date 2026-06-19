@@ -12,8 +12,8 @@ describe('DEFAULT_JOB_OPTIONS', () => {
 });
 
 describe('QUEUES registry', () => {
-  it('exposes the five pipelines from contracts', () => {
-    expect(Object.keys(QUEUES).sort()).toEqual(['categorize', 'notify', 'ocr', 'recap', 'recurring']);
+  it('exposes the six pipelines from contracts', () => {
+    expect(Object.keys(QUEUES).sort()).toEqual(['categorize', 'fx', 'notify', 'ocr', 'recap', 'recurring']);
   });
 });
 
