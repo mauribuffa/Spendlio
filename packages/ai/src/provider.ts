@@ -117,6 +117,14 @@ export interface AccountBalanceLine {
   balanceCents: number;
 }
 
+/** Per-account balances plus an approximate base-currency grand total (with honest exclusions). */
+export interface AccountBalancesResult {
+  lines: AccountBalanceLine[];
+  baseCurrency: string;
+  baseTotalCents: number; // sum of convertible accounts, in base
+  excludedCurrencies: string[]; // currencies with no rate to base (excluded from the total)
+}
+
 /** Filters for transaction search. All optional; combined with AND. `text` is matched case-insensitively across title/merchant/note. */
 export interface TransactionFilter {
   text?: string;
@@ -152,8 +160,8 @@ export interface AssistantTools {
   spendingTrend(args: { categories?: CategoryKey[]; fromMonth: string; toMonth: string }): Promise<MonthSpend[]>;
   /** Income/expense/net + category breakdown + top merchant for a month (YYYY-MM). */
   monthlyRecap(month: string): Promise<MonthlyRecap>;
-  /** Net balance per account (sum of its transactions), in each account's own currency. */
-  accountBalances(): Promise<AccountBalanceLine[]>;
+  /** Net balance per account (sum of its transactions), plus an approximate base-currency grand total. */
+  accountBalances(): Promise<AccountBalancesResult>;
 }
 
 /** A single turn in the assistant conversation. */

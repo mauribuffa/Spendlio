@@ -175,13 +175,15 @@ describe.skipIf(!RUN)('createDbTools (live DB)', () => {
     expect(r.netCents).toBe(300000 - (12345 + 5000 + 2000));
   });
 
-  it('accountBalances sums ALL postings (transfer included) + subtotals by currency', async () => {
+  it('accountBalances sums ALL postings + rolls up to base currency', async () => {
     const tools = createDbTools(db, UA);
-    const lines = await tools.accountBalances();
-    expect(lines.length).toBe(1); // exactly A's one account
-    // Signed sum of every posting on ACC_A: -12345 - 5000 + 300000 - 2000 = 280655.
-    // The transfer (-2000) is excluded from spend tools but DOES count here.
-    expect(lines[0]!.balanceCents).toBe(282655 - 2000); // 280655
-    expect(subtotalByCurrency(lines)).toEqual([{ currency: 'USD', totalCents: 280655 }]);
+    const result = await tools.accountBalances();
+    expect(result.lines.length).toBe(1);
+    expect(result.lines[0]!.balanceCents).toBe(282655 - 2000); // per-account; unchanged by the rollup
+    expect(subtotalByCurrency(result.lines)).toEqual([{ currency: 'USD', totalCents: 280655 }]);
+    // base rollup: the single USD account converts to itself; nothing excluded.
+    expect(result.baseCurrency).toBe('USD');
+    expect(result.baseTotalCents).toBe(280655);
+    expect(result.excludedCurrencies).toEqual([]);
   });
 });

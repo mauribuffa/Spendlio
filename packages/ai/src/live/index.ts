@@ -300,13 +300,17 @@ function buildTools(t: AssistantTools) {
     }),
     accountBalances: tool({
       description:
-        'The net balance of each account, in that account\'s own currency. Do NOT sum across different currencies; report each, and a per-currency subtotal at most. Returns exact amounts.',
+        'The net balance of each account, in that account\'s own currency, with per-currency subtotals AND an approximate grand total converted to your base currency (at latest rates; currencies with no rate are excluded and named). Report each exact amount; the base total is an approximation.',
       inputSchema: z.object({}),
       execute: async () => {
-        const lines = await t.accountBalances();
+        const r = await t.accountBalances();
         return {
-          accounts: lines.map((l) => ({ account: l.accountName, balance: money(l.balanceCents, l.currency) })),
-          byCurrency: subtotalByCurrency(lines).map((s) => ({ currency: s.currency, total: money(s.totalCents, s.currency) })),
+          accounts: r.lines.map((l) => ({ account: l.accountName, balance: money(l.balanceCents, l.currency) })),
+          byCurrency: subtotalByCurrency(r.lines).map((s) => ({ currency: s.currency, total: money(s.totalCents, s.currency) })),
+          baseTotal: money(r.baseTotalCents, r.baseCurrency),
+          baseTotalNote: r.excludedCurrencies.length
+            ? `approx — excludes ${r.excludedCurrencies.join(', ')} (no rate)`
+            : 'approx, at latest rates',
         };
       },
     }),
