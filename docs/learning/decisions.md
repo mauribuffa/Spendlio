@@ -64,9 +64,9 @@ Format: `ADR-NNN · status · title` — context → decision → alternatives.
 ### ADR-015 · ✅ · Learning docs go deeper (theory included)
 - **Decision:** each topic gets concept + why + tradeoffs **and** a "Deep dive (theory)" section (e.g. DB indexing, BullMQ internals) as we build.
 
-### ADR-016 · ✅ (model) / ⬜ (rates provider) · Multi-currency
+### ADR-016 · ✅ · Multi-currency
 - **Decision:** every amount stores its **original currency**; amounts are never raw-summed across currencies. **Two views:** native (per-account/-currency, exact, the "pesos/dollars tabs") and converted (the user's **base currency**, approximate, labeled "as of <date>"). Original amount+currency is the source of truth; transactions also store an **FX snapshot** to the base currency at entry time for stable historical totals. Minor-unit scale is **per-currency** (not always 2 decimals). Splits computed in the expense currency; balances tracked per currency.
-- **Open:** rates provider (ECB/openexchangerates/…), refresh cadence, exact rounding rule. (Because this is still open, the assistant's `accountBalances` tool reports per-account + per-currency subtotals only and must not invent a converted cross-currency total — see ADR-041.)
+- **Resolved (rates provider/cadence/rounding):** the provider is **Frankfurter** (ECB data, free, no key) behind a `RatesProvider` interface (offline static default + live Frankfurter adapter, env-gated `FX_PROVIDER=frankfurter`), refreshed **daily** (a BullMQ scheduler + run-at-boot), with conversion rounding **half-up to the target currency's minor units** (`core.convertMinor`). The assistant's `accountBalances` now also reports an approximate base-currency rollup (excluded-currency honesty). See **ADR-042** for the full ingestion/snapshot posture.
 - **Why / full model:** `12-currency-and-fx.md`.
 
 ### ADR-017 · ✅ (model) / 🟡 (tooling) · Internationalization
@@ -209,11 +209,23 @@ Format: `ADR-NNN · status · title` — context → decision → alternatives.
   - **Injection hardening (pragmatic baseline):** input caps on the chat contract; system-prompt spotlighting (tool output + stored text is DATA, not instructions); plain-text web rendering locked by a guard test; per-user Redis rate limit (30/min). Defense-in-depth (classifier pass, audit log, render allowlist) deferred.
 - **Consequences:** No new tables/migration. New search angles work without an embedding pipeline or re-embed-on-edit. If shared/multi-tenant data later flows into the assistant, revisit the deferred defense-in-depth layer.
 
+### ADR-042 · ✅ · FX rates ingestion + snapshot-on-create
+- **Context:** ADR-016 settled the multi-currency *model* (native + converted views, per-transaction FX snapshot, per-currency minor units) and ADR-020 settled the `fx_rates` table shape, but the rates provider, refresh cadence, rounding rule, and the actual snapshot-write path were all left open. Converted totals (the "All" accounts tab, the recap headline, the assistant rollup) had nothing to convert against — `fx_rates` was empty and transactions never wrote their `fxBase*` columns.
+- **Decision:**
+  - **`RatesProvider` interface, offline-default + live-adapter, parallel to `@spendlio/ai` (ADR-019/022).** The default is a deterministic **`OfflineRatesProvider`** (a small static USD-hub table, zero network — used in dev/CI/tests/seed parity); the live **`FrankfurterRatesProvider`** (ECB data, free, no key) is selected only when `FX_PROVIDER=frankfurter`. The provider **lives in `apps/worker`** (it does network I/O), not in `core`/`contracts` (golden rule #1).
+  - **Per-base fetch, no triangulation.** The daily job fetches rates for each **distinct `users.defaultCurrency`** → every supported currency and upserts `fx_rates` on `(base, quote, date)`. Fetching per base guarantees every user's base↔account-currency pair exists directly, so `core.convertMinor` never has to triangulate through a hub.
+  - **Snapshot written on every create path.** A shared `core.computeFxSnapshot` (pure) produces the four `fxBase*` columns; the API writes it on manual transaction create + receipt-confirm (`apps/api/src/common/fx.ts`), and the worker writes it on recurring-transaction materialization. Null when same-currency / no rate (the row is then reported by recap, never summed).
+  - **Base-aware `computeRecap`, no recompute job.** The recap uses a transaction's snapshot **only when its `fxBaseCurrency` matches the requested base**; otherwise the row counts as `skipped`. This makes the recap correct after a base-currency change **without** a background recompute job (the `12-currency-and-fx.md` "recompute snapshots" idea is dropped in favor of match-or-skip).
+  - **First real BullMQ scheduler.** The worker boot uses `getQueue('fx').upsertJobScheduler('fx-daily', { pattern: '0 6 * * *' }, …)` for the daily refresh **plus** an immediate enqueue so rates exist at first boot. This is the **first actual repeatable/cron** in the app (every other job was producer-triggered).
+  - **Core snapshot type `TxnFxSnapshot` with DB-column field names.** Named `TxnFxSnapshot` (not `FxSnapshot`) to avoid shadowing the contracts `FxSnapshot` Zod schema, and its fields are `{ fxBaseCurrency, fxBaseAmount, fxRate, fxAsOf }` — **realigned from the spec's `{ baseCurrency, baseAmount, rate, asOf }` sketch** so the snapshot spreads straight into the `transactions` insert with no field renaming.
+- **Consequences:** No migration (the `fx_rates` table + transaction `fxBase*` columns already existed, ADR-020). Offline + DB paths are proven automatically (unit + `DATABASE_URL`-gated integration); the live Frankfurter fetch stays a **manual gate** (like the ADR-041 live-LLM gate).
+- **Deferred follow-ups:** the recap **"N excluded (no rate)" UI badge** — surfacing the `skipped` count needs a new `monthly_summaries` column → a migration the plan/spec forbade, so the worker only **logs** `skipped` for now (correct totals ship; the badge is deferred). Conversion in **Insights / Overview** charts (they still mix currencies un-converted). **Per-account-currency budgets** (budgets stay base-currency; ADR-016).
+
 ---
 
 ## Open questions parked for you
 1. **AI/OCR providers + privacy posture** (ADR-011) — pick when we build the OCR/AI features.
 2. **Final hosting target** (ADR-013) — free managed tiers vs a ~$5/mo VPS; decide at deploy time.
-3. **FX rates provider + rounding rule** (ADR-016) — pick when we build multi-currency totals.
+3. ~~**FX rates provider + rounding rule** (ADR-016)~~ — ✅ RESOLVED: Frankfurter (ECB) behind a `RatesProvider` interface, daily cadence, half-up-to-target-minor-units rounding (ADR-042).
 
 Everything else is decided ✅ — see the ADRs above.

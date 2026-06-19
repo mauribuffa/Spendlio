@@ -61,5 +61,5 @@ Decision: budgets are set **in the base currency** and compare against the conve
 - **Totals/recap/budgets:** base currency, labeled approximate where converted.
 - **Settle-up:** balances tracked per currency; FX shown explicitly when converting.
 
-## Open decision → ADR-016
-Rates provider + refresh cadence + the exact rounding rule. Everything else above is the model we build to.
+## Resolved → ADR-016 / ADR-042
+Rates provider + refresh cadence + the exact rounding rule are now decided: the provider is **Frankfurter** (ECB data, free, no key) behind a `RatesProvider` interface (offline static default + live adapter, env-gated), refreshed **daily** (a BullMQ scheduler + a run at boot), with conversion rounding **half-up to the target currency's minor units** (`core.convertMinor`). Ingestion + snapshot-on-create posture is **ADR-042**. Everything else above is the model we build to.
