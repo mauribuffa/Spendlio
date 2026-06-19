@@ -6,6 +6,7 @@ import type { CreateTransactionInput, UpdateTransactionInput } from '@spendlio/c
 import { DB } from '../db/db.module';
 import { decodeCursor, encodeCursor } from '../common/pagination';
 import { or404 } from '../common/or404';
+import { fxSnapshotFields } from '../common/fx';
 
 @Injectable()
 export class TransactionsService {
@@ -41,9 +42,9 @@ export class TransactionsService {
 
   async create(userId: string, dto: CreateTransactionInput) {
     await this.assertAccountOwned(userId, dto.accountId);
-    // TODO: if dto.currency !== user's base, compute fx snapshot (see 12-currency-and-fx.md)
+    const fx = await fxSnapshotFields(this.db, userId, dto.amount, dto.currency);
     const [row] = await this.db.insert(transactions)
-      .values({ ...dto, userId, occurredAt: new Date(dto.occurredAt),
+      .values({ ...dto, ...fx, userId, occurredAt: new Date(dto.occurredAt),
         category: dto.category ?? 'transfer', status: dto.status ?? 'cleared' })
       .returning();
     // TODO: if uncategorized, enqueue a 'categorize' job (Phase 4)
